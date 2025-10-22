@@ -1,5 +1,7 @@
 --sound
 sfxt = {
+    heal = 4,
     thud = 1,
-    win = 2
+    healed = 2,
+    lvlup = 3
 }

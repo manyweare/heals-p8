@@ -55,11 +55,11 @@ function add_fx(x, y, lt, dx, dy, r, clrs)
 end
 
 function lvlup_fx()
-	for i = 0, 3 do
+	for i = 0, 1 do
 		add_fx(
 			p.x + rnd(7),
 			p.y + p.h,
-			15 + rnd(5),
+			20 + rnd(10),
 			0,
 			rnd(1) - 1.3,
 			rnd(1) + 1,

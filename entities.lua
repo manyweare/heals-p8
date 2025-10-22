@@ -104,7 +104,7 @@ function anim_healed(e)
 	if e.frame == 1 then
 		healed += 1
 		addxp(1)
-		sfx(sfxt.win)
+		sfx(sfxt.healed)
 	end
 	if e.frame <= 45 then
 		if (e.frame % 5 == 0) then

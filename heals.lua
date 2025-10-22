@@ -100,6 +100,7 @@ function fire_heal(h)
 	add(heals, h)
 	heal_entity(h.tgt, h.pwr)
 	heal_fx(h.tx, h.ty + 3, hclr, 3)
+	sfx(sfxt.heal)
 end
 
 function heal_entity(e, hpwr)

@@ -16,7 +16,8 @@ function update_hud()
 	hud.y = cam.y
 	hud.dead = dead
 	hud.healed = healed
-	hud.xp = (p.curxp / xpmax) * 100
+	hud.xpw = 50
+	hud.xp = (p.curxp / xpmax) * hud.xpw
 end
 
 function draw_hud()
@@ -31,11 +32,12 @@ function draw_hud()
 	d_xp_bar()
 	-- --border
 	rect(hud.x, hud.y, hud.x + 127, hud.y + 127, 1)
-	print("xp: " .. tostr(p.curxp), hud.x + 2, hud.y + 10, 7)
-	print("total: " .. tostr(p.totalxp), hud.x + 2 + 26, hud.y + 10, 7)
+	print("xp:" .. tostr(p.curxp) .. "/" .. tostr(xpmax) .. " (" .. tostr(p.totalxp) .. ")", hud.x + 2, hud.y + 121, 1)
+	-- print("t:" .. tostr(p.totalxp), hud.x + 2 + 32, 115, 7)
 end
 
 function d_xp_bar()
+	rectfill(hud.x + 76, hud.y + 3, hud.x + 76 + hud.xpw, hud.y + 5, 15)
 	rectfill(hud.x + 76, hud.y + 3, hud.x + 76 + hud.xp, hud.y + 5, 11)
-	rrect(hud.x + 76, hud.y + 2, 50, 5, 1, 7)
+	rrect(hud.x + 76, hud.y + 2, hud.xpw, 5, 1, 7)
 end

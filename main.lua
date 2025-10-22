@@ -69,12 +69,14 @@ function lvlup()
 	xpmax = flr(xpmax * 1.5)
 	p.lvl += 1
 	lvlanim = 1
+	sfx(-1)
+	sfx(sfxt.lvlup)
 end
 
 function draw_lvlup()
 	if lvlanim > 0 then
 		lvlup_fx()
-		print("lvl up!", p.x - 8, p.y + 10, 7)
+		-- print("lvl up!", p.x - 8, p.y + 10, 7)
 		lvlanim += 1
 		if (lvlanim > 60) lvlanim = 0
 	end
