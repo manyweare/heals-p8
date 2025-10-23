@@ -20,6 +20,7 @@ function _init()
 	player_setup()
 	heals_setup()
 	setup_entities()
+	s_enemies()
 	setup_fx()
 	setup_cam()
 end
@@ -30,6 +31,7 @@ function _update()
 	-- update funcs
 	update_heals()
 	update_entities()
+	u_enemies()
 	update_player()
 	update_fx()
 	update_hud()
@@ -43,6 +45,7 @@ function _draw()
 	draw_heals()
 	draw_fx()
 	draw_entities()
+	d_enemies()
 	draw_player()
 	draw_hud()
 	draw_lvlup()
@@ -87,9 +90,15 @@ function log(text)
 	printh(text, "log", true)
 end
 
-function angle_move(x, y, targetx, targety, speed)
-	local a = atan2(x - targetx, y - targety)
-	return { x = -speed * cos(a), y = -speed * sin(a) }
+-- function angle_move(x, y, targetx, targety, speed)
+-- 	local a = atan2(x - targetx, y - targety)
+-- 	return { x = -speed * cos(a), y = -speed * sin(a) }
+-- end
+
+function move_to_plr(e)
+	local a = atan2(e.x - 63, e.y - 63)
+	e.x -= sin(a) * -e.spd
+	e.y -= cos(a) * -e.spd
 end
 
 function approx_dist(x1, y1, x2, y2)

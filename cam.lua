@@ -7,8 +7,8 @@ function setup_cam()
 end
 
 function update_cam()
-    cam.x = p.x + flr(p.w / 2) - 63
-    cam.y = p.y - flr(p.h / 2) - 63
+    cam.x = flr(p.x + (p.w / 2) - 63)
+    cam.y = flr(p.y - (p.h / 2) - 63)
 end
 
 function draw_cam()

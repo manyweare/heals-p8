@@ -87,7 +87,7 @@ function trail_fx(x, y, clrs)
 	local emit = rnd() < .5
 	if emit then
 		add_fx(
-			x,
+			x + 1,
 			y,
 			4 + rnd(4),
 			0,

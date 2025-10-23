@@ -21,7 +21,6 @@ function spawn_entities(i)
 			dist = 0,
 			decay = 0,
 			frame = 0,
-			--rnd() < .5 = rand boolean
 			flip = rnd() < .5,
 			tgl = true,
 			dead = false
@@ -76,6 +75,10 @@ function toggle_entity(e)
 	e.spr = 1
 end
 
+function anim_entity(e)
+	e.spr = e.ss[flr(e.hp + 1)]
+end
+
 function anim_spawn(e)
 	--if animated for 30 frames
 	--set it to the right spr and move e to entities
@@ -94,10 +97,6 @@ function anim_spawn(e)
 	else
 		toggle_entity(e)
 	end
-end
-
-function anim_entity(e)
-	e.spr = e.ss[flr(e.hp + 1)]
 end
 
 function anim_healed(e)
