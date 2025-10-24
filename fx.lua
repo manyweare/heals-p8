@@ -87,7 +87,7 @@ function trail_fx(x, y, clrs)
 	local emit = rnd() < .5
 	if emit then
 		add_fx(
-			x + 1,
+			x - 1,
 			y,
 			4 + rnd(4),
 			0,
@@ -99,16 +99,41 @@ function trail_fx(x, y, clrs)
 end
 
 function aoe_fx(x, y, r, clrs)
-	for i = 0, 20 do
+	-- TODO: radiating waves
+	-- for i = 0, 2 do
+	-- 	local pt = rand_in_circle(x, y, r / 3)
+	-- 	add_fx(
+	-- 		pt.x,
+	-- 		pt.y + 2,
+	-- 		4 + rnd(2),
+	-- 		0,
+	-- 		-.3,
+	-- 		1,
+	-- 		clrs
+	-- 	)
+	-- end
+	-- for i = 0, 4 do
+	-- 	local pt = rand_in_circle(x, y, 2 * r / 3)
+	-- 	add_fx(
+	-- 		pt.x,
+	-- 		pt.y + 2,
+	-- 		6 + rnd(2),
+	-- 		0,
+	-- 		-.3,
+	-- 		1,
+	-- 		clrs
+	-- 	)
+	-- end
+	for i = 0, 6 do
 		local pt = rand_in_circle(x, y, r)
 		add_fx(
 			pt.x,
-			pt.y,
+			pt.y + 2,
 			6 + rnd(4),
 			0,
 			-.3,
 			1,
-			{ 3, 15, 2 }
+			clrs
 		)
 	end
 	-- aoe_fx_fill(x, y, r, clrs)

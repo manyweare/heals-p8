@@ -10,13 +10,17 @@ function player_setup()
 		lvl = 1,
 		curxp = 0,
 		totalxp = 0,
+		inv_f = 30, --invulnerability frames
+		inv_c = 0, --inv count
+		hp = 100,
+		hpmax = 100,
+		regen = .1,
 		x = 60,
 		y = 60,
-		-- destination
 		dx = 0,
 		dy = 0,
-		w = 6,
-		h = 6,
+		w = 8,
+		h = 8,
 		xspd = 1,
 		yspd = 1,
 		a = 1,
@@ -26,14 +30,34 @@ function player_setup()
 		f = 0,
 		animspd = 3,
 		flipx = false,
-		flipy = false
+		flipy = false,
+		col = {},
+		col_offset = {}
+	}
+	--player collision rect offsets
+	p.col_offset = {
+		x = 1,
+		y = 2,
+		h = -2,
+		w = -3
+	}
+	--collision rect
+	p.col = {
+		x = p.x + p.col_offset.x,
+		y = p.y + p.col_offset.y,
+		h = p.h + p.col_offset.h,
+		w = p.w + p.col_offset.w
 	}
 	-- trail fx colors
 	tclrs = { 7, 11, -13 }
 end
 
 function draw_player()
-	spr(p.spr, p.x, p.y, 1, 1, p.flipx, p.flipy)
+	if not (p.inv_c / 2 % 2 < 1) then
+		spr(0, p.x, p.y, 1, 1, p.flipx, p.flipy)
+	else
+		spr(p.spr, p.x, p.y, 1, 1, p.flipx, p.flipy)
+	end
 end
 
 function draw_range()
@@ -48,10 +72,14 @@ end
 function update_player()
 	move_player()
 	anim_player()
+	--update player's collision rect coords
+	u_col(p)
+	--invulnerability counters
+    p.inv_c = max(p.inv_c - 1, 0)
 end
 
 function anim_player()
-	if is_moving() then
+	if is_moving(p) then
 		p.f += 1
 		p.flipx = p.dx < 0
 		if p.f == p.animspd then
@@ -145,7 +173,15 @@ function move_player()
 	if (abs(p.dy) < 0.02) p.dy = 0
 end
 
-function is_moving()
-	if ((p.dx != 0) or (p.dy != 0)) return true
-	return false
+--player take damage
+---d is dmg
+---i is boolean for iframes
+function p_take_damage(d, i)
+	add_shake(3)
+    local _d = d
+    if _d < ceil(d * 0.4) then
+        _d = ceil(d * 0.4)
+    end
+    p.hp = max(p.hp - max(1, d), 0)
+    if (i) p.inv_c = p.inv_f
 end

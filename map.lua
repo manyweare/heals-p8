@@ -3,7 +3,8 @@ function map_setup()
     flags = {
         wall = 0,
         entity = 1,
-        pickup = 2
+        pickup = 2,
+        enemy = 3
     }
     w = 128
     h = 128

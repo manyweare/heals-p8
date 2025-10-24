@@ -7,16 +7,16 @@ function heals_setup()
 		spd = 1,
 		range = 48,
 		tmr = 0,
-		clrs = { 9, 11, -1 },
+		clrs = { 11, 3, 15 },
 		chains = 3
 	}
 	aoe = {
 		pwr = .25,
 		freq = 10,
 		spd = 1,
-		range = 32,
+		range = 24,
 		tmr = 0,
-		clrs = { 9, 11, -1 }
+		clrs = { 10, 3, 15 }
 	}
 	timers = {
 		beam.tmr,
@@ -99,8 +99,8 @@ end
 function fire_heal(h)
 	add(heals, h)
 	heal_entity(h.tgt, h.pwr)
-	heal_fx(h.tx, h.ty + 3, hclr, 3)
-	sfx(sfxt.heal)
+	heal_fx(h.tx, h.ty, hclr, 3)
+	if (h.type != "aoe") sfx(sfxt.heal)
 end
 
 function heal_entity(e, hpwr)

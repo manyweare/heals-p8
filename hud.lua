@@ -1,4 +1,5 @@
 -- hud
+
 function setup_hud()
 	hud = {
 		dead = 0,
@@ -7,24 +8,23 @@ function setup_hud()
 		spr = { 5, 6 },
 		x = 0,
 		y = 0,
-		h = 9
+		h = 8,
+		w = 127
 	}
 end
 
 function update_hud()
 	hud.x = cam.x
 	hud.y = cam.y
-	hud.dead = dead
-	hud.healed = healed
-	hud.xpw = 125
-	hud.xp = flr((p.curxp / xpmax) * hud.xpw)
+	-- hud.dead = dead
+	-- hud.healed = healed
+	hud.xp = flr(p.curxp / xpmax) * hud.w
+	hud.hp = flr(p.hp / p.hpmax) * hud.w
 end
 
 function draw_hud()
 	-- bg
-	rectfill(hud.x, hud.y, hud.x + 127, hud.y + hud.h, 0)
-	line(hud.x, hud.y + hud.h, hud.x + 127, hud.y + hud.h, 7)
-	d_xp_bar()
+	rectfill(hud.x, hud.y, hud.x + hud.w, hud.y + hud.h, 1)
 	-- healed
 	spr(hud.spr[2], hud.x, hud.y + 0)
 	print(":" .. tostr(hud.healed), hud.x + 9, hud.y + 2, 7)
@@ -35,11 +35,20 @@ function draw_hud()
 	-- rect(hud.x, hud.y, hud.x + 127, hud.y + 127, 1)
 	-- text
 	print("lvl:" .. tostr(p.lvl), hud.x + 50, hud.y + 2, 7)
-	print("xp:" .. tostr(p.curxp) .. "/" .. tostr(xpmax) .. " (" .. tostr(p.totalxp) .. ")", hud.x + 80, hud.y + 2, 7)
+	print("xp:" .. tostr(p.curxp) .. "/" .. tostr(xpmax) .. " (" .. tostr(p.totalxp) .. ")", hud.x + 78, hud.y + 2, 7)
+	d_xp_bar()
+	d_hp_bar()
+	print(version, hud.x, hud.y + 122, 1)
 end
 
+--TODO: fix bars
+
 function d_xp_bar()
-	-- rectfill(hud.x + 1, hud.y + 1, hud.x + 1 + hud.xpw, hud.y + hud.h - 1, 15)
-	line(hud.x, hud.y + hud.h, hud.x + hud.xp, hud.y + hud.h, 11)
-	-- rrect(hud.x + 76, hud.y + 2, hud.xpw, 5, 1, 7)
+	line(hud.x, hud.y + hud.h + 1, hud.x + hud.w, hud.y + hud.h + 1, 13)
+	line(hud.x, hud.y + hud.h + 1, hud.x + hud.xp, hud.y + hud.h + 1, 11)
+end
+
+function d_hp_bar()
+	line(hud.x, hud.y + hud.h + 2, hud.x + hud.w, hud.y + hud.h + 2, 13)
+	line(hud.x, hud.y + hud.h + 2, hud.x + hud.hp, hud.y + hud.h + 2, 8)
 end

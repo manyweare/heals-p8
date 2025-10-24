@@ -1,9 +1,13 @@
 -- main
 function _init()
+	version = "0.1"
 	pi = 3.14
 	-- color pal
 	poke(0x5f2e, 1)
 	pal({ [0] = 0, 1, 129, 3, 133, 5, 6, 7, 8, 138, 139, 11, 141, 13, 130, 131 }, 1)
+	--switch to a more NES palette
+	--this isn't it but better than the above
+	-- pal({ [0] = 0, 1, 129, 3, 133, 5, 6, 7, 8, 9, 135, 141, 12, 142, 11, 138 }, 1)
 	-- manager
 	healed = 0
 	dead = 0
@@ -69,9 +73,12 @@ function addxp(xp)
 end
 
 function lvlup()
-	xpmax = flr(xpmax * 1.5)
+	--log leveling scaling
+	--value = steepness * log_b(level + 1) + offset
 	p.lvl += 1
 	lvlanim = 1
+	xpmax = flr(xpmax * 1.5)
+	aoe.range = flr(10 * log10(p.lvl + 1) + 24)
 	sfx(-1)
 	sfx(sfxt.lvlup)
 end
@@ -83,60 +90,4 @@ function draw_lvlup()
 		lvlanim += 1
 		if (lvlanim > 60) lvlanim = 0
 	end
-end
-
--- utils
-function log(text)
-	printh(text, "log", true)
-end
-
--- function angle_move(x, y, targetx, targety, speed)
--- 	local a = atan2(x - targetx, y - targety)
--- 	return { x = -speed * cos(a), y = -speed * sin(a) }
--- end
-
-function move_to_plr(e)
-	local a = atan2(e.x - 63, e.y - 63)
-	e.x -= sin(a) * -e.spd
-	e.y -= cos(a) * -e.spd
-end
-
-function approx_dist(x1, y1, x2, y2)
-	local dx = abs(x2 - x1)
-	local dy = abs(y2 - y1)
-	local maskx, masky = dx >> 31, dy >> 31
-	local a0, b0 = (dx + maskx) ^^ maskx, (dy + masky) ^^ masky
-	if a0 > b0 then
-		return a0 * 0.9609 + b0 * 0.3984
-	end
-	return b0 * 0.9609 + a0 * 0.3984
-end
-
-function is_empty(t)
-	for _, _ in pairs(t) do
-		return false
-	end
-	return true
-end
-
-function ease_out_quad(t, b, c, d)
-	t = t / d
-	return -c * t * (t - 2) + b
-end
-
---adapted from aioobe via stackoverflow
-function rand_in_circle(x, y, r)
-	local n = r * sqrt(rnd())
-	local theta = rnd() * 2 * pi
-	local rx = x + r * cos(theta)
-	local ry = y + r * sin(theta)
-	return { x = rx, y = ry }
-end
-
-function rand_in_circlefill(x, y, r)
-	local t = {}
-	for i = 1, r do
-		add(t, rand_in_circle(x, y, r))
-	end
-	return t
 end
