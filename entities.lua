@@ -47,6 +47,7 @@ function spawn_entities(i)
 			h = e.h + e.col_offset[4]
 		}
 		add(spawning, e)
+		game.live_es += 1
 	end
 end
 
@@ -155,8 +156,9 @@ function kill_entity(e)
 	e.state = "dead"
 	add(dead, e)
 	del(entities, e)
-	hud.dead += 1
 	sfx(sfxt.thud)
+	game.dead_es += 1
+	game.live_es -= 1
 end
 
 function toggle_entity(e)
@@ -190,9 +192,9 @@ end
 
 function anim_healed(e)
 	if e.frame == 1 then
-		hud.healed += 1
 		addxp(1)
 		sfx(sfxt.healed)
+		game.healed_es += 1
 	end
 	if e.frame <= 30 then
 		if (e.frame % 5 == 0) then e.tgl = not e.tgl end

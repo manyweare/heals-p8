@@ -13,7 +13,7 @@ function s_enemies()
 	en_spw_tmr = 0
 	enemies = {}
 	dead_enemies = {}
-	spawn_enemies(3)
+	spawn_enemies(1)
 end
 
 function spawn_enemies(i)
@@ -51,12 +51,13 @@ function spawn_enemies(i)
 			h = e.h + e.col_offset[4]
 		}
 		add(enemies, e)
+		game.live_ens += 1
 	end
 end
 
 function u_enemies()
 	en_spw_tmr += 1
-	if (en_spw_tmr % 60 == 0) then
+	if (en_spw_tmr % 90 == 0) then
 		en_spw_tmr = 0
 		spawn_enemies(0 + flr(rnd(2)))
 	end
@@ -145,4 +146,6 @@ function kill_enemy(e)
 	add(dead_enemies, e)
 	del(enemies, e)
 	sfx(sfxt.enemy_dead, 2)
+	game.dead_ens += 1
+	game.live_ens -= 1
 end
