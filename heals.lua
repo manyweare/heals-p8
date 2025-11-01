@@ -133,16 +133,6 @@ end
 
 function draw_heals()
 	for h in all(heals) do
-		-- updates p in relation to player
-		h.x = p.x + flr(p.w / 2)
-		h.y = p.y + flr(p.h / 2)
-		-- places heal on tip of staff
-		if not p.flipx then
-			h.x += 4
-		else
-			h.x += -3
-		end
-		h.y += -3
 		-- TODO: animate different types of heals
 		if (h.type == "beam") then
 			-- staff orb glow
@@ -163,7 +153,17 @@ function animate_heals()
 		--	del(heals, h)
 		--end
 		h.lt -= 1
-		if (h.lt == 0) del(heals, h)
+		if (h.lt == 0) then del(heals, h) end
+		-- updates p in relation to player
+		h.x = p.x + flr(p.w / 2)
+		h.y = p.y + flr(p.h / 2)
+		-- places heal on tip of staff
+		if not p.flipx then
+			h.x += 3
+		else
+			h.x += -4
+		end
+		h.y += -4
 	end
 end
 
@@ -211,20 +211,9 @@ function is_hurt(e)
 	return (e.hp > 0) and (e.hp < e.maxhp)
 end
 
-function closest_hurt(o, t)
+function closest_hurt(e, t)
 	local ht = all_hurt(t)
-	-- setting the initial check to 32767 because
-	-- it is the highest int p8 supports
-	local c = 32767
-	local ce = {}
-	for e in all(ht) do
-		e.dist = approx_dist(o.x, o.y, e.x, e.y)
-		if (e.dist < c) then
-			c = e.dist
-			ce = e
-		end
-	end
-	return ce
+	return find_closest(e, ht)
 end
 
 function all_hurt(t)

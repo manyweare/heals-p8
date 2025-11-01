@@ -1,9 +1,12 @@
--- player
+--player
 
--- l, r, u, d, lu, ru, rd, ld
--- dir_bit = { 1, 2, 4, 8, 5, 6, 10, 9 }
--- dirx = { -1, 1, 0, 0, -1, 1, 1, -1 }
--- diry = { 0, 0, -1, 1, -1, -1, 1, 1 }
+--l, r, u, d, lu, ru, rd, ld
+--dir_bit = { 1, 2, 4, 8, 5, 6, 10, 9 }
+--dirx = { -1, 1, 0, 0, -1, 1, 1, -1 }
+--diry = { 0, 0, -1, 1, -1, -1, 1, 1 }
+
+--TODO:
+--use quickset to save tokens
 
 function player_setup()
 	p = {
@@ -15,58 +18,41 @@ function player_setup()
 		hp = 100,
 		hpmax = 100,
 		regen = .1,
-		x = 60,
-		y = 60,
+		x = 64,
+		y = 64,
 		dx = 0,
 		dy = 0,
 		w = 8,
 		h = 8,
-		xspd = 1,
-		yspd = 1,
-		a = 1,
-		drg = .8,
+		spd = 1,
+		maxspd = 1,
 		spr = 16,
 		ss = { 16, 17, 18, 19 },
 		f = 0,
 		animspd = 3,
 		flipx = false,
 		flipy = false,
-		col = {},
-		col_offset = {}
+		col = {}
 	}
 	--player collision rect offsets
-	p.col_offset = {
-		x = 1,
-		y = 2,
-		h = -2,
-		w = -3
-	}
+	p.col_offset = { 1, 2, -3, -2 }
 	--collision rect
 	p.col = {
-		x = p.x + p.col_offset.x,
-		y = p.y + p.col_offset.y,
-		h = p.h + p.col_offset.h,
-		w = p.w + p.col_offset.w
+		x = p.x + p.col_offset[1],
+		y = p.y + p.col_offset[2],
+		w = p.w + p.col_offset[3],
+		h = p.h + p.col_offset[4]
 	}
-	-- trail fx colors
+	--trail fx colors
 	tclrs = { 7, 11, -13 }
 end
 
 function draw_player()
 	if not (p.inv_c / 2 % 2 < 1) then
-		spr(0, p.x, p.y, 1, 1, p.flipx, p.flipy)
+		spr(1, p.x, p.y, 1, 1, p.flipx, p.flipy)
 	else
 		spr(p.spr, p.x, p.y, 1, 1, p.flipx, p.flipy)
 	end
-end
-
-function draw_range()
-	fillp(0x7fdf)
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 16, 2)
-	fillp(0x7ada)
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 8, 2)
-	fillp()
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange, 2)
 end
 
 function update_player()
@@ -75,7 +61,7 @@ function update_player()
 	--update player's collision rect coords
 	u_col(p)
 	--invulnerability counters
-    p.inv_c = max(p.inv_c - 1, 0)
+	p.inv_c = max(p.inv_c - 1, 0)
 end
 
 function anim_player()
@@ -85,72 +71,85 @@ function anim_player()
 		if p.f == p.animspd then
 			p.f = 0
 			p.spr += 1
-			-- 4 is hardcoded, length of ss table
-			if (p.spr > p.ss[4]) p.spr = p.ss[1]
+			if (p.spr > p.ss[#p.ss]) p.spr = p.ss[1]
 		end
 	else
-		-- temp idle spr
+		--temp idle spr
 		p.spr = 17
 	end
-	-- flip trail if player is flipped
+	--flip trail if player is flipped
 	local xo = p.w
-	if (p.flipx) xo += -7
-	-- fire fx
+	if (p.flipx) xo -= p.w - 1
+	--fire fx
 	trail_fx(p.x + xo, p.y, tclrs, 1)
 end
 
 function move_player()
-	-- bitmask to remove triple presses
+	local dx, dy = 0, 0
+
+	--drag coeficient
+	local drg = .8
+
+	--bitmask to remove triple presses
 	local btnm = btn() & 0b1111
-	-- normalized diag coef
-	local ndiag = 0.2
-	-- left
+
+	--normalized diagonal coeficient
+	local n = .7
+
 	if (btnm == 1) then
-		p.dx -= p.a
-		p.dy = 0
-		-- right
+		--left
+		dx -= 1
+		dy = 0
 	elseif (btnm == 2) then
-		p.dx += p.a
-		p.dy = 0
-		-- up
+		--right
+		dx += 1
+		dy = 0
 	elseif (btnm == 4) then
-		p.dx = 0
-		p.dy -= p.a
-		-- down
+		--up
+		dx = 0
+		dy -= 1
 	elseif (btnm == 8) then
-		p.dx = 0
-		p.dy += p.a
-		-- left + up
+		--down
+		dx = 0
+		dy += 1
 	elseif (btnm == 5) then
-		p.dx -= p.a * ndiag
-		p.dy -= p.a * ndiag
-		-- right + up
+		--left + up
+		dx -= 1
+		dy -= 1
 	elseif (btnm == 6) then
-		p.dx += p.a * ndiag
-		p.dy -= p.a * ndiag
-		-- right + down
+		--right + up
+		dx += 1
+		dy -= 1
 	elseif (btnm == 10) then
-		p.dx += p.a * ndiag
-		p.dy += p.a * ndiag
-		-- left + down
+		--right + down
+		dx += 1
+		dy += 1
 	elseif (btnm == 9) then
-		p.dx -= p.a * ndiag
-		p.dy += p.a * ndiag
+		--left + down
+		dx -= 1
+		dy += 1
 	else
-		p.dx = 0
-		p.dy = 0
+		dx = 0
+		dy = 0
 	end
-	p.dx = mid(-p.xspd, p.dx, p.xspd)
-	p.dy = mid(-p.yspd, p.dy, p.yspd)
+
+	dx = mid(-p.maxspd, dx, p.maxspd)
+	dy = mid(-p.maxspd, dy, p.maxspd)
+
+	--normalize diagonals
+	if abs(dx) == abs(dy) then
+		dx *= n
+		dy *= n
+	end
 
 	wall_check(p)
 
-	if can_move(p, p.dx, p.dy) then
-		p.x += p.dx
-		p.y += p.dy
+	if can_move(p, dx, dy) then
+		p.x += dx
+		p.y += dy
 	else
-		tdx = p.dx
-		tdy = p.dy
+		tdx = dx
+		tdy = dy
 		while not can_move(p, tdx, tdy) do
 			if (abs(tdx) <= 0.1) then
 				tdx = 0
@@ -167,21 +166,32 @@ function move_player()
 		p.y += tdy
 	end
 
-	if (abs(p.dx) > 0) p.dx *= p.drg
-	if (abs(p.dy) > 0) p.dy *= p.drg
-	if (abs(p.dx) < 0.02) p.dx = 0
-	if (abs(p.dy) < 0.02) p.dy = 0
+	--TODO: FIX COBBLESTONING
+	--anti-cobblestone
+	if (p.dx != dx) and (p.dy != dy) and (dx == dy) then
+		p.x = flr(p.x) + .5
+		p.y = flr(p.y) + .5
+	end
+
+	p.dx = dx
+	p.dy = dy
+
+	-- drag
+	if (abs(dx) > 0) dx *= drg
+	if (abs(dy) > 0) dy *= drg
+	if (abs(dx) < 0.02) dx = 0
+	if (abs(dy) < 0.02) dy = 0
 end
 
 --player take damage
----d is dmg
----i is boolean for iframes
+--d is dmg
+--i is boolean for iframes
 function p_take_damage(d, i)
 	add_shake(3)
-    local _d = d
-    if _d < ceil(d * 0.4) then
-        _d = ceil(d * 0.4)
-    end
-    p.hp = max(p.hp - max(1, d), 0)
-    if (i) p.inv_c = p.inv_f
+	local _d = d
+	if _d < ceil(d * 0.4) then
+		_d = ceil(d * 0.4)
+	end
+	p.hp = max(p.hp - max(1, d), 0)
+	if (i) p.inv_c = p.inv_f
 end
