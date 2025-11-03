@@ -1,5 +1,5 @@
 -- cam
-function setup_cam()
+function init_cam()
     cam = { x = 0, y = 0 }
     shk = { x = 0, y = 0 }
     shake = 0

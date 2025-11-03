@@ -1,5 +1,6 @@
--- fx
-function setup_fx()
+--fx
+
+function init_fx()
 	fx = {}
 	-- fx settings
 	hfx_size = 2
@@ -57,11 +58,11 @@ end
 function lvlup_fx()
 	for i = 0, 1 do
 		add_fx(
-			p.x + rnd(7),
-			p.y + p.h,
-			20 + rnd(10),
-			0,
-			rnd(1) - 1.3,
+			p.x + p.w / 2,
+			p.y + p.h / 2,
+			10 + rnd(10),
+			1 - rnd(2),
+			1 - rnd(2),
 			rnd(1) + 1,
 			{ 8, 7, 9 }
 		)
@@ -153,4 +154,43 @@ function aoe_fx_fill(x, y, r, clrs)
 			{ 3, 15, 2 }
 		)
 	end
+end
+
+function proj_fx(x, y)
+	for i = 0, 2 do
+		add_fx(
+			x + rnd(4) - 2,
+			y + rnd(4) - 2,
+			6 + rnd(4),
+			0,
+			0,
+			rnd(1) + 1,
+			{ 11, 10, 15 }
+		)
+	end
+end
+
+-- add_fx(x, y, lt, dx, dy, r, clrs)
+function explode(x, y, r, t, num)
+	for i = 0, num do
+		add_fx(
+			x,
+			y,
+			5 + rnd(10),
+			rnd(2) - 1,
+			rnd(2) - 1,
+			r,
+			t
+		)
+	end
+	--shockwave
+	add_fx(
+		x,
+		y,
+		3,
+		0,
+		0,
+		min(r * 2, 6),
+		t
+	)
 end

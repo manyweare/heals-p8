@@ -1,19 +1,13 @@
 --tools
 
+--TODOS:
+--fix draw_col function to help debug
+
 function log_to_terminal(text)
 	printh(text, "log", true)
 end
 
---count or reset
-function c_or_r(c, n)
-	if c > n then
-		return 0
-	else
-		return c + 1
-	end
-end
-
--- from pico-8 wiki math
+-- from pico-8 wiki math section
 function log10(n)
 	if (n <= 0) return nil
 	local f, t = 0, 0
@@ -36,7 +30,46 @@ function log10(n)
 	return t / 2.30259
 end
 
---by magic_chopstick
+-- function for calculating
+-- exponents to a higher degree of
+-- accuracy than using the ^ operator.
+-- created by samhocevar.
+-- https://www.lexaloffle.com/bbs/?tid=27864
+-- @param x number to apply exponent to.
+-- @param a exponent to apply.
+-- @return the result of the calculation.
+-- function pow(x, a)
+-- 	if (a == 0) return 1
+-- 	if (a < 0) x, a = 1 / x, -a
+-- 	local ret, a0, xn = 1, flr(a), x
+-- 	a -= a0
+-- 	while a0 >= 1 do
+-- 		if (a0 % 2 >= 1) ret *= xn xn, a0 = xn * xn, shr(a0, 1)
+-- 	end
+-- 	while a > 0 do
+-- 		while a < 1 do
+-- 			x, a = sqrt(x), a + a
+-- 		end
+-- 		ret, a = ret * x, a - 1
+-- 	end
+-- 	return ret
+-- end
+
+-- easing functions --
+-- t = elapsed time
+-- b = begin
+-- c = change == ending - beginning
+-- d = duration (total time)
+function ease_out_quad(t, b, c, d)
+	t = t / d
+	return -c * t * (t - 2) + b
+end
+
+function ease_in_quad(t, b, c, d)
+	return c * ((t / d) ^ 2) + b
+end
+
+--by magic_chopstick on bbs
 --sets multiple values on an object, less token intensive
 function quickset(obj, keys, vals)
 	local v, k = split(vals), split(keys)
@@ -57,10 +90,11 @@ function quickset(obj, keys, vals)
 	end
 end
 
--- function angle_move(x, y, targetx, targety, speed)
--- 	local a = atan2(x - targetx, y - targety)
--- 	return { x = -speed * cos(a), y = -speed * sin(a) }
--- end
+--used by projectiles
+function angle_move(x, y, tx, ty, spd)
+	local a = atan2(x - tx, y - ty)
+	return { x = -spd * cos(a), y = -spd * sin(a) }
+end
 
 function is_moving(e)
 	if ((e.dx != 0) or (e.dy != 0)) return true
@@ -92,6 +126,7 @@ function move_to(e, t)
 		e.y -= e.dy * e.spd
 	end
 end
+
 -- move entities in a table (t) apart from each other up to an r radius
 -- adapted from Beckon the Hellspawn
 function move_apart(t, r)
@@ -116,6 +151,7 @@ function flip_spr(e, t)
 	end
 end
 
+--updates col rect position
 function u_col(e)
 	e.col.x = e.x + e.col_offset[1]
 	e.col.y = e.y + e.col_offset[2]
@@ -140,14 +176,24 @@ function player_col(e)
 	return false
 end
 
+--reset pos when out of map bounds
 function reset_pos(e)
 	e.x, e.y = rpd(128, 32)
+end
+
+function rpd(d, rd)
+	local _dir = rnd(1)
+	local _rad = d + flr(rnd(rd))
+	local x = 64 + cos(_dir) * _rad
+	local y = 64 + sin(_dir) * _rad
+	return unpack({ x, y })
 end
 
 function get_dir(x1, y1, x2, y2)
 	return atan2(x2 - x1, y2 - y1)
 end
 
+--from bbs (TODO: find op and credit)
 function approx_dist(x1, y1, x2, y2)
 	local dx = abs(x2 - x1)
 	local dy = abs(y2 - y1)
@@ -174,25 +220,12 @@ function find_closest(o, t)
 	return ce
 end
 
-function rpd(d, rd)
-	local _dir = rnd(1)
-	local _rad = d + flr(rnd(rd))
-	local x = 64 + cos(_dir) * _rad
-	local y = 64 + sin(_dir) * _rad
-	return unpack({ x, y })
-end
-
+--from bbs (TODO: find op and credit)
 function is_empty(t)
 	for _, _ in pairs(t) do
 		return false
 	end
 	return true
-end
-
--- easing functions
-function ease_out_quad(t, b, c, d)
-	t = t / d
-	return -c * t * (t - 2) + b
 end
 
 --adapted from aioobe via stackoverflow
@@ -212,6 +245,7 @@ function rand_in_circlefill(x, y, r)
 	return t
 end
 
+--TODO: fix / doesn't work
 --draw collision
 function d_col(e)
 	line(e.col.x, e.col.y, e.col.w, e.col.h, 8)

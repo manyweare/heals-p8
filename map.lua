@@ -1,5 +1,5 @@
--- map
-function map_setup()
+--map
+function init_map()
     flags = {
         wall = 0,
         entity = 1,

@@ -8,7 +8,7 @@
 --TODO:
 --use quickset to save tokens
 
-function player_setup()
+function init_player()
 	p = {
 		lvl = 1,
 		curxp = 0,

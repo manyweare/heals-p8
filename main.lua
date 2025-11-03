@@ -1,7 +1,10 @@
 --main
 
 --TODOS:
+--check token count
 --adjust xp max increase curve
+--finish state machine
+--leveling system
 
 function _init()
 	version = "0.1"
@@ -16,6 +19,8 @@ function _init()
 
 	--manager--
 	game = {
+		--game states
+		state = "game",
 		--current xp max
 		xpmax = 3,
 		--current xp modifier
@@ -33,7 +38,7 @@ function _init()
 	}
 
 	--lvl anim frame
-	lvlanim = 0
+	lvlanim = 1
 
 	--easing vars--
 	lt = time()
@@ -41,42 +46,76 @@ function _init()
 	dt = 0
 
 	--setup--
-	map_setup()
-	setup_hud()
-	player_setup()
-	heals_setup()
-	setup_entities()
-	s_enemies()
-	setup_fx()
-	setup_cam()
+	init_state(game.state)
 end
 
 function _update()
-	--easing var
+	--for easing
 	t = time()
-
-	--update funcs--
-	update_heals()
-	update_entities()
-	u_enemies()
-	update_player()
-	update_hud()
-	update_fx()
-	update_cam()
+	update_state(game.state)
 end
 
 function _draw()
 	cls()
-	draw_map()
-	draw_range()
-	draw_fx()
-	draw_player()
-	draw_heals()
-	draw_entities()
-	d_enemies()
-	draw_hud()
-	draw_lvlup()
-	draw_cam()
+	draw_state(game.state)
+end
+
+--game states--
+
+function init_state(s)
+	if s == "start" then
+	elseif s == "game" then
+		init_map()
+		init_ui()
+		init_player()
+		init_heals()
+		init_entities()
+		init_enemies()
+		init_fx()
+		init_cam()
+	elseif s == "lvlup" then
+	elseif s == "gameover" then
+	end
+end
+
+function update_state(s)
+	if s == "start" then
+		update_ui()
+	elseif s == "game" then
+		update_heals()
+		update_entities()
+		update_enemies()
+		update_player()
+		update_ui()
+		update_fx()
+		update_cam()
+	elseif s == "lvlup" then
+		update_ui()
+	elseif s == "gameover" then
+		update_ui()
+	end
+end
+
+function draw_state(s)
+	if s == "start" then
+		draw_ui()
+	elseif s == "game" then
+		draw_map()
+		draw_range()
+		draw_fx()
+		draw_player()
+		draw_heals()
+		draw_entities()
+		draw_enemies()
+		draw_ui()
+		draw_lvlup()
+		draw_cam()
+	elseif s == "lvlup" then
+		draw_ui()
+		draw_lvlup()
+	elseif s == "gameover" then
+		draw_ui()
+	end
 end
 
 --manager functions--
@@ -87,7 +126,6 @@ function addxp(n)
 	if p.curxp + n >= game.xpmax then
 		ovrxp = (p.curxp + n) - game.xpmax
 		p.curxp = ovrxp
-		--TODO: adjust leveling curve
 		lvlup()
 	else
 		p.curxp += n * game.xpmod
@@ -102,7 +140,8 @@ function lvlup()
 	lvlanim = 1
 	--TODO: adjust xp max increase curve
 	game.xpmax = flr(game.xpmax * 1.5)
-	aoe.range = flr(10 * log10(p.lvl + 1) + 24)
+	aoe.range = flr(10 * log10(p.lvl + 1) + hrange / 2)
+	beam.range = flr(10 * log10(p.lvl + 1) + hrange)
 	sfx(-1)
 	sfx(sfxt.lvlup)
 end
@@ -110,9 +149,9 @@ end
 function draw_lvlup()
 	if lvlanim > 0 then
 		lvlup_fx()
-		--print("lvl up!", p.x - 8, p.y + 10, 7)
+		print("lvl up!", p.x - 8, p.y - 5 - (lvlanim / 2), 7)
 		lvlanim += 1
-		if (lvlanim > 60) lvlanim = 0
+		if (lvlanim > 30) lvlanim = 0
 	end
 end
 

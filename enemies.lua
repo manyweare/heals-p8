@@ -2,14 +2,18 @@
 
 --TODO:
 --use quickset to save tokens
---enemy state machine:
---enemies look for healthy entity in range -DONE
---enemies move to and attack it -DONE
---when entity dies, resume looking -DONE
---if none, attack player -DONE
---if dead, anim dead -DONE
+--add different types
+--anim taking damage
+--[[
+enemy state machine: -DONE???
+	enemies look for healthy entity in range -DONE
+	enemies move to and attack it -DONE
+	when entity dies, resume looking -DONE
+	if none, attack player -DONE
+	if dead, anim dead -DONE
+]]
 
-function s_enemies()
+function init_enemies()
 	en_spw_tmr = 0
 	enemies = {}
 	dead_enemies = {}
@@ -55,7 +59,7 @@ function spawn_enemies(i)
 	end
 end
 
-function u_enemies()
+function update_enemies()
 	en_spw_tmr += 1
 	if (en_spw_tmr % 90 == 0) then
 		en_spw_tmr = 0
@@ -85,7 +89,7 @@ function u_enemies()
 	move_apart(enemies, 8)
 end
 
-function d_enemies()
+function draw_enemies()
 	for e in all(enemies) do
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end

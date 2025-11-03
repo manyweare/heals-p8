@@ -1,9 +1,12 @@
--- entities
+--entities
 
 --TODO:
 --use quickset to save tokens
+--add different types
+--fix being hit anim: use a color change instead of spr change
+--fix attack anim not running
 
-function setup_entities()
+function init_entities()
 	spw_tmr = 0
 	decay_rate = 120
 	entities = {}
@@ -17,12 +20,12 @@ function spawn_entities(i)
 		e = {
 			hp = 1 + flr(rnd(3)),
 			maxhp = 4,
-			dmg = .5,
+			dmg = 1,
 			attspd = 15,
 			attframe = 1,
 			att_sfx = 5,
 			x = flr(rnd(120)),
-			y = flr(rnd(120)) + hud.h,
+			y = flr(rnd(120)) + ui.h,
 			w = 8,
 			h = 8,
 			ss = { 32, 33, 34, 35, 36, 37, 38, 39, 40, 41 },
@@ -55,7 +58,7 @@ function update_entities()
 	spw_tmr += 1
 	if (spw_tmr % 120 == 0) then
 		spw_tmr = 0
-		spawn_entities(1 + flr(rnd(2)))
+		spawn_entities(flr(rnd(2)))
 	end
 	for e in all(spawning) do
 		e.frame += 1
@@ -126,7 +129,7 @@ function decay_entity(e)
 		e.hp -= 1
 		e.decay = 0
 	elseif e.hp <= 0 then
-		kill_entity(e)
+		e_kill(e)
 	end
 end
 
@@ -148,15 +151,21 @@ end
 function e_take_dmg(e, dmg)
 	e.hit = true
 	e.hp -= dmg
-	if (e.hp <= 0) kill_entity(e)
+	if (e.hp <= 0) e_kill(e)
 end
 
-function kill_entity(e)
+function e_heal(e, hpwr)
+	e.hp = max(e.maxhp, e.hp + hpwr)
+	e.decay = 0
+	e.frame = 0
+end
+
+function e_kill(e)
 	e.frame = 0
 	e.state = "dead"
 	add(dead, e)
 	del(entities, e)
-	sfx(sfxt.thud)
+	sfx(sfxt.tui)
 	game.dead_es += 1
 	game.live_es -= 1
 end

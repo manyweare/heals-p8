@@ -1,83 +1,101 @@
--- heals
-function heals_setup()
+--heals
+
+--TODOS:
+--chain heal
+--projectile heal
+
+function init_heals()
+	--current heals in the queue
 	heals = {}
+	-- each heal must have: x,y,tx,ty,pwr,lt
+	--tx, ty = target x, y
+	--pwr = heals power
+	--lt = heals anim lifetime
+
+	--base range for non aura heals
+	hrange = 32
+	--heals color palette
+	hclrs = { 11, 10, 3, 15 }
+	--staff orb glow lt
+	orb_lt = 12
+
+	curr_heals = {}
+
+	--heal archetypes
 	beam = {
+		lvl = 1,
 		pwr = .5,
 		freq = 15,
 		spd = 1,
-		range = 48,
+		range = hrange,
 		tmr = 0,
-		clrs = { 11, 3, 15 },
+		clrs = hclrs,
 		chains = 3
 	}
 	aoe = {
+		lvl = 1,
 		pwr = .25,
 		freq = 10,
 		spd = 1,
-		range = 24,
+		range = hrange / 2,
 		tmr = 0,
 		clrs = { 10, 3, 15 }
 	}
-	timers = {
-		beam.tmr,
-		aoe.tmr
+	proj = {
+		lvl = 1,
+		pwr = 3,
+		freq = 30,
+		spd = 2,
+		range = min(hrange * 2, 128),
+		tmr = 0,
+		spr = 53
 	}
-	hspr = 48
-	hfreq = 15
-	htimer = 0
-	hspd = 1
-	hrange = 48
-	hchains = 3
-	-- heals color palette
-	hclr = { 9, 11, -13 }
-	-- each heal {} has: x,y,tx,ty,pwr,lt
-	-- pwr = heals power
-	-- lt = heals anim lifetime
 end
 
 function update_heals()
-	-- for the easing functions
-	dt = t - lt
-	lt = t
-	te += dt
-	-- htimer += 1
-	beam.tmr += 1
-	aoe.tmr += 1
+	update_h_timers()
 	if beam.tmr == beam.freq then
 		beam.tmr = 0
-		beam_heals()
+		new_beam_heal()
 	end
 	if aoe.tmr == aoe.freq then
 		aoe.tmr = 0
-		aoe_heals()
+		new_aoe_heal()
+	end
+	if proj.tmr == proj.freq then
+		proj.tmr = 0
+		new_proj_heal()
 	end
 	animate_heals()
 end
 
-function beam_heals()
-	-- must find a closest hurt entity
+function update_h_timers()
+	beam.tmr += 1
+	aoe.tmr += 1
+	proj.tmr += 1
+end
+
+function new_beam_heal()
+	--must find a closest hurt entity
 	local c = closest_hurt(p, entities)
 	if not is_empty(c) and is_in_range(c, beam.range) then
-		queue_beam_heal(p, c)
-		-- chain_heals(c)
+		local h = {
+			tgt = c,
+			type = "beam",
+			x = p.x + flr(p.w / 2),
+			y = p.y + flr(p.h / 2),
+			tx = c.x + flr(c.w / 2),
+			ty = c.y + flr(c.h / 2),
+			pwr = beam.pwr,
+			lt = 12
+		}
+		add(heals, h)
+		fire_heal(h)
+		orb_glow()
 	end
 end
 
-function queue_beam_heal(o, tgt)
-	local h = {
-		tgt = tgt,
-		type = "beam",
-		x = o.x + flr(o.w / 2),
-		y = o.y + flr(o.h / 2),
-		tx = tgt.x + flr(tgt.w / 2),
-		ty = tgt.y + flr(tgt.h / 2),
-		pwr = beam.pwr,
-		lt = 12
-	}
-	fire_heal(h)
-end
-
-function aoe_heals()
+function new_aoe_heal()
 	local t = all_hurt(entities)
 	for e in all(t) do
 		if is_in_range(e, aoe.range) then
@@ -91,26 +109,41 @@ function aoe_heals()
 				pwr = aoe.pwr,
 				lt = 12
 			}
+			add(heals, h)
 			fire_heal(h)
 		end
 	end
 end
 
+function new_proj_heal()
+	--must find hurt entity
+	local t = all_hurt(entities)
+	local r = rnd(t)
+	if not is_empty(r) and is_in_range(r, proj.range) then
+		local h = {
+			tgt = r,
+			type = "projectile",
+			x = p.x + p.w,
+			y = p.y,
+			tx = r.x + flr(r.w / 2),
+			ty = r.y + flr(r.h / 2),
+			pwr = proj.pwr,
+			spd = proj.spd,
+			lt = 60
+		}
+		add(heals, h)
+		orb_glow()
+	end
+end
+
 function fire_heal(h)
-	add(heals, h)
-	heal_entity(h.tgt, h.pwr)
-	heal_fx(h.tx, h.ty, hclr, 3)
+	e_heal(h.tgt, h.pwr)
+	heal_fx(h.tx, h.ty, hclrs, 3)
+	--play heal sfx unless aoe
 	if (h.type != "aoe") sfx(sfxt.heal)
 end
 
-function heal_entity(e, hpwr)
-	e.hp += hpwr
-	if (e.hp > e.maxhp) e.hp = e.maxhp
-	e.decay = 0
-	e.frame = 0
-end
-
--- TODO: fix the chaining
+-- TODO: chain heal
 -- going from player to all closest instead of chain
 -- function chain_heals(c)
 -- 	-- find all chainable entities
@@ -133,47 +166,73 @@ end
 
 function draw_heals()
 	for h in all(heals) do
-		-- TODO: animate different types of heals
+		-- staff orb glow for all but aoe
+		if (h.type != "aoe") then d_orb_fx() end
 		if (h.type == "beam") then
-			-- staff orb glow
-			d_orb(h)
 			d_beam_heal(h)
+		elseif (h.type == "projectile") then
+			d_proj_heal(h)
 		end
 	end
 	d_aoe_heal()
 end
 
 function animate_heals()
+	--for the easing functions
+	dt = t - lt
+	lt = t
+	te += dt
 	for h in all(heals) do
-		-- for projectile heals:
-		--local pos = angle_move(h.x, h.y, h.tx, h.ty, hspd)
-		--h.x += pos.x
-		--h.y += pos.y
-		--if (flr(h.x) == flr(h.tx)) or (flr(h.y) == flr(h.ty)) then
-		--	del(heals, h)
-		--end
-		h.lt -= 1
-		if (h.lt == 0) then del(heals, h) end
-		-- updates p in relation to player
-		h.x = p.x + flr(p.w / 2)
-		h.y = p.y + flr(p.h / 2)
-		-- places heal on tip of staff
-		if not p.flipx then
-			h.x += 3
+		if h.type == "projectile" then
+			--TODO: ease in
+			local pos = angle_move(h.x, h.y, h.tx, h.ty, h.spd)
+			h.x += pos.x
+			h.y += pos.y
+			--replace with colision?
+			local d = approx_dist(h.x, h.y, h.tx, h.ty)
+			if d < 1 then
+				fire_heal(h)
+				explode(h.x, h.y, 3, { 7, 11, 15 }, 7)
+				del(heals, h)
+			end
 		else
-			h.x += -4
+			-- updates h pos in relation to player
+			h.x = p.x + flr(p.w / 2)
+			h.y = p.y + flr(p.h / 2)
+			-- places heal on tip of staff
+			if not p.flipx then
+				h.x += (p.w / 2) - 1
+			else
+				h.x -= p.w / 2
+			end
+			h.y -= p.h / 2
 		end
-		h.y += -4
+		h.lt -= 1
+		--clear heal once lt over
+		if (h.lt == 0) then del(heals, h) end
 	end
 end
 
-function d_orb(h)
-	if (h.lt > 10) then
-		circfill(h.x, h.y, 2, hclr[2])
-		circ(h.x, h.y, 2, hclr[1])
-	elseif (h.lt > 6) then
-		circfill(h.x, h.y, 1, hclr[2])
+--orb glow on tip of staff
+function orb_glow()
+	orb_lt = 12
+end
+
+function d_orb_fx()
+	local staffx, staffy
+	if not p.flipx then
+		staffx = p.x + p.w - 1
+	else
+		staffx = p.x
 	end
+	staffy = p.y - 1
+	if (orb_lt > 10) then
+		circfill(staffx, staffy, 2, hclrs[2])
+		circ(staffx, staffy, 2, hclrs[1])
+	elseif (orb_lt > 6) then
+		circfill(staffx, staffy, 1, hclrs[2])
+	end
+	orb_lt -= 1
 end
 
 function d_beam_heal(h)
@@ -187,11 +246,12 @@ function d_beam_heal(h)
 end
 
 function d_aoe_heal()
-	local d = aoe.freq / 30
-	local c = -2
+	local d = aoe.freq / 10
+	local c = -3
 	local x = p.x + flr(p.w / 2)
 	local y = p.y + flr(p.h / 2)
-	local r = ease_out_quad(te, aoe.range + c, -c, d)
+	-- local r = ease_out_quad(te, aoe.range + c, -c, d)
+	local r = aoe.range
 	-- fillp(0x8124)
 	-- circ(x, y, r, 15)
 	-- fillp()
@@ -200,6 +260,11 @@ function d_aoe_heal()
 		-- circ(x, y, hrange, 15)
 	end
 	aoe_fx(x, y, r, aoe.clrs)
+end
+
+function d_proj_heal(h)
+	circfill(h.x, h.y, 2, 10)
+	proj_fx(h.x, h.y)
 end
 
 function is_in_range(e, r)
