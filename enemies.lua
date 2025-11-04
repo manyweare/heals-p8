@@ -63,7 +63,7 @@ function update_enemies()
 	en_spw_tmr += 1
 	if (en_spw_tmr % 90 == 0) then
 		en_spw_tmr = 0
-		spawn_enemies(0 + flr(rnd(2)))
+		spawn_enemies(1 + flr(rnd(p.lvl / 2)))
 	end
 	for e in all(enemies) do
 		u_col(e)
@@ -149,7 +149,7 @@ function kill_enemy(e)
 	e.state = "dead"
 	add(dead_enemies, e)
 	del(enemies, e)
-	sfx(sfxt.enemy_dead, 2)
+	sfx(sfxt.thud, 2)
 	game.dead_ens += 1
 	game.live_ens -= 1
 end

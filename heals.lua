@@ -35,7 +35,7 @@ function init_heals()
 	aoe = {
 		lvl = 1,
 		pwr = .25,
-		freq = 10,
+		freq = 20,
 		spd = 1,
 		range = hrange / 2,
 		tmr = 0,
@@ -43,7 +43,7 @@ function init_heals()
 	}
 	proj = {
 		lvl = 1,
-		pwr = 3,
+		pwr = 1,
 		freq = 30,
 		spd = 2,
 		range = min(hrange * 2, 128),
@@ -138,7 +138,7 @@ end
 
 function fire_heal(h)
 	e_heal(h.tgt, h.pwr)
-	heal_fx(h.tx, h.ty, hclrs, 3)
+	heal_fx(h.tx, h.ty)
 	--play heal sfx unless aoe
 	if (h.type != "aoe") sfx(sfxt.heal)
 end

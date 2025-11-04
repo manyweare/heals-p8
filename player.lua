@@ -86,16 +86,13 @@ end
 
 function move_player()
 	local dx, dy = 0, 0
-
 	--drag coeficient
 	local drg = .8
-
 	--bitmask to remove triple presses
 	local btnm = btn() & 0b1111
-
 	--normalized diagonal coeficient
 	local n = .7
-
+	--input code
 	if (btnm == 1) then
 		--left
 		dx -= 1
@@ -132,18 +129,14 @@ function move_player()
 		dx = 0
 		dy = 0
 	end
-
 	dx = mid(-p.maxspd, dx, p.maxspd)
 	dy = mid(-p.maxspd, dy, p.maxspd)
-
 	--normalize diagonals
 	if abs(dx) == abs(dy) then
 		dx *= n
 		dy *= n
 	end
-
 	wall_check(p)
-
 	if can_move(p, dx, dy) then
 		p.x += dx
 		p.y += dy
@@ -165,17 +158,14 @@ function move_player()
 		p.x += tdx
 		p.y += tdy
 	end
-
 	--TODO: FIX COBBLESTONING
-	--anti-cobblestone
+	-- anti-cobblestone
 	if (p.dx != dx) and (p.dy != dy) and (dx == dy) then
 		p.x = flr(p.x) + .5
 		p.y = flr(p.y) + .5
 	end
-
 	p.dx = dx
 	p.dy = dy
-
 	-- drag
 	if (abs(dx) > 0) dx *= drg
 	if (abs(dy) > 0) dy *= drg

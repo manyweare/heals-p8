@@ -18,12 +18,15 @@ function update_fx()
 			f.c = f.clrs[1]
 		elseif f.t / f.lt < 2 / #f.clrs then
 			f.c = f.clrs[2]
+			f.r = 3 * (f.r / 4)
 		elseif f.t / f.lt < 3 / #f.clrs then
 			f.c = f.clrs[3]
+			f.r = f.r / 2
 		else
 			f.c = f.clrs[4]
+			f.r = f.r / 4
 		end
-		f.r -= .1
+		-- f.r -= .1
 		f.x += f.dx
 		f.y += f.dy
 	end
@@ -63,22 +66,22 @@ function lvlup_fx()
 			10 + rnd(10),
 			1 - rnd(2),
 			1 - rnd(2),
-			rnd(1) + 1,
+			rnd(1) + 2,
 			{ 8, 7, 9 }
 		)
 	end
 end
 
-function heal_fx(x, y, clrs, n)
-	for i = 0, n do
+function heal_fx(x, y)
+	for i = 0, 5 do
 		add_fx(
 			x + rnd(7) - 2,
 			y,
-			4 + rnd(4),
+			8 + rnd(5),
 			0,
 			rnd(1) - 1.2,
-			rnd(1) + 1,
-			clrs
+			rnd(1) + 2,
+			{ 11, 10, 15 }
 		)
 	end
 end

@@ -5,6 +5,8 @@
 --add different types
 --fix being hit anim: use a color change instead of spr change
 --fix attack anim not running
+--create more complex movement
+--don't overlap player
 
 function init_entities()
 	spw_tmr = 0
@@ -21,6 +23,7 @@ function spawn_entities(i)
 			hp = 1 + flr(rnd(3)),
 			maxhp = 4,
 			dmg = 1,
+			spd = .5,
 			attspd = 15,
 			attframe = 1,
 			att_sfx = 5,
@@ -58,7 +61,7 @@ function update_entities()
 	spw_tmr += 1
 	if (spw_tmr % 120 == 0) then
 		spw_tmr = 0
-		spawn_entities(flr(rnd(2)))
+		spawn_entities(flr(rnd(3)))
 	end
 	for e in all(spawning) do
 		e.frame += 1
@@ -78,6 +81,11 @@ function update_entities()
 				anim_healed(e)
 			end
 		elseif e.state == "ready" then
+			u_col(e)
+			if not rect_rect_collision(e.col, p) then
+				move_to(e, p)
+				e.flip = flip_spr(e, p)
+			end
 			if not is_empty(enemies) then
 				local tgt = find_closest(e, enemies)
 				e.flip = flip_spr(e, tgt)
@@ -101,26 +109,7 @@ function update_entities()
 		-- 	anim_dead(e)
 		-- end
 	end
-	-- for e in all(ready) do
-	-- 	e.frame += 1
-	-- 	if (e.hp <= 0) then
-	-- 		e.dead = true
-	-- 		add(entities, e)
-	-- 		del(ready, e)
-	-- 	else
-	-- 		if not is_empty(enemies) then
-	-- 			local tgt = find_closest(e, enemies)
-	-- 			e.flip = flip_spr(e, tgt)
-	-- 			if rect_rect_collision(e.col, tgt.col) then
-	-- 				e.frame = 0
-	-- 				attack(e, tgt)
-	-- 			else
-	-- 				e.attframe = 0
-	-- 			end
-	-- 		end
-	-- 		anim_ready(e)
-	-- 	end
-	-- end
+	move_apart(entities, 8)
 end
 
 function decay_entity(e)
@@ -165,7 +154,7 @@ function e_kill(e)
 	e.state = "dead"
 	add(dead, e)
 	del(entities, e)
-	sfx(sfxt.tui)
+	sfx(sfxt.thud)
 	game.dead_es += 1
 	game.live_es -= 1
 end

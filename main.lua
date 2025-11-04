@@ -3,7 +3,7 @@
 --TODOS:
 --check token count
 --adjust xp max increase curve
---finish state machine
+--improve state machine (change init upd draw)
 --leveling system
 
 function _init()
@@ -103,10 +103,10 @@ function draw_state(s)
 		draw_map()
 		draw_range()
 		draw_fx()
+		draw_enemies()
+		draw_entities()
 		draw_player()
 		draw_heals()
-		draw_entities()
-		draw_enemies()
 		draw_ui()
 		draw_lvlup()
 		draw_cam()

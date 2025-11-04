@@ -1,4 +1,5 @@
--- cam
+--cam
+
 function init_cam()
     cam = { x = 0, y = 0 }
     shk = { x = 0, y = 0 }
