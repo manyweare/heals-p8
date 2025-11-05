@@ -17,6 +17,8 @@ function init_enemies()
 	en_spw_tmr = 0
 	enemies = {}
 	dead_enemies = {}
+	--enemy search range
+	en_s_range = 128
 	spawn_enemies(1)
 end
 
@@ -35,7 +37,7 @@ function spawn_enemies(i)
 			dmg = 1,
 			spd = .25,
 			tgt = {},
-			attspd = 30,
+			attspd = 15,
 			attframe = 1,
 			animspd = 30,
 			hit = false,
@@ -67,17 +69,24 @@ function update_enemies()
 	end
 	for e in all(enemies) do
 		u_col(e)
+		--default tgt is player
 		local tgt = p
 		--if there are entities ready
 		--find closest, make it the target
 		if not is_empty(entities) then
-			tgt = find_closest(e, entities)
-			move_to(e, tgt)
-			e.flip = flip_spr(e, tgt)
+			tgt = find_closest(e, entities, en_s_range)
+			if not is_empty(tgt) then
+				move_to(e, tgt)
+				e.flip = flip_spr(e, tgt)
+			else
+				move_to_plr(e)
+				e.flip = flip_spr(e, p)
+			end
 		else
 			move_to_plr(e)
 			e.flip = flip_spr(e, p)
 		end
+		--check for collision with p or tgt if found
 		if rect_rect_collision(e.col, tgt.col) then
 			e.frame = 0
 			e_attack(e, tgt)
@@ -85,6 +94,9 @@ function update_enemies()
 			e.attframe = 0
 			e_anim(e)
 		end
+	end
+	for e in all(dead_enemies) do
+		e_anim_dead(e)
 	end
 	move_apart(enemies, 8)
 end
@@ -118,6 +130,12 @@ function e_anim(e)
 	-- end
 end
 
+function e_anim_dead(e)
+	e.frame += 1
+	e.spr = 68
+	if (e.frame > 600) del(dead_enemies, e)
+end
+
 function take_dmg(e, dmg)
 	e.hit = true
 	e.hp -= dmg
@@ -145,7 +163,6 @@ end
 
 function kill_enemy(e)
 	e.frame = 0
-	e.spr = 68
 	e.state = "dead"
 	add(dead_enemies, e)
 	del(enemies, e)

@@ -11,6 +11,7 @@
 function init_entities()
 	spw_tmr = 0
 	decay_rate = 120
+	e_s_range = 128
 	entities = {}
 	spawning = {}
 	dead = {}
@@ -22,8 +23,8 @@ function spawn_entities(i)
 		e = {
 			hp = 1 + flr(rnd(3)),
 			maxhp = 4,
-			dmg = 1,
-			spd = .5,
+			dmg = .5,
+			spd = .25,
 			attspd = 15,
 			attframe = 1,
 			att_sfx = 5,
@@ -31,7 +32,7 @@ function spawn_entities(i)
 			y = flr(rnd(120)) + ui.h,
 			w = 8,
 			h = 8,
-			ss = { 32, 33, 34, 35, 36, 37, 38, 39, 40, 41 },
+			ss = { 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42 },
 			spr = 33,
 			dist = 0,
 			decay = 0,
@@ -61,7 +62,7 @@ function update_entities()
 	spw_tmr += 1
 	if (spw_tmr % 120 == 0) then
 		spw_tmr = 0
-		spawn_entities(flr(rnd(3)))
+		spawn_entities(1 + flr(rnd(p.lvl / 2)))
 	end
 	for e in all(spawning) do
 		e.frame += 1
@@ -82,32 +83,19 @@ function update_entities()
 			end
 		elseif e.state == "ready" then
 			u_col(e)
-			if not rect_rect_collision(e.col, p) then
-				move_to(e, p)
-				e.flip = flip_spr(e, p)
-			end
 			if not is_empty(enemies) then
-				local tgt = find_closest(e, enemies)
+				local tgt = find_closest(e, enemies, e_s_range)
 				e.flip = flip_spr(e, tgt)
 				if rect_rect_collision(e.col, tgt.col) then
 					e.frame = 0
 					attack(e, tgt)
 				else
 					e.attframe = 0
+					move_to(e, tgt)
+					anim_ready(e)
 				end
 			end
-			anim_ready(e)
 		end
-		-- if not e.dead then
-		-- 	if e.hp < e.maxhp then
-		-- 		decay_entity(e)
-		-- 		anim_entity(e)
-		-- 	else
-		-- 		anim_healed(e)
-		-- 	end
-		-- else
-		-- 	anim_dead(e)
-		-- end
 	end
 	move_apart(entities, 8)
 end
@@ -128,11 +116,11 @@ function attack(e, tgt)
 			-- sfx(e.att_sfx, 2)
 			take_dmg(tgt, e.dmg)
 		end
-		-- e.spr = 41 --hardcoded attack sprite
+		e.spr = 41 --hardcoded attack sprite
 	elseif e.attframe == e.attspd then
 		e.attframe = 0
-		-- else
-		-- 	e.spr = 39
+	else
+		e.spr = 42 --hardcoded idle frame
 	end
 	e.attframe += 1
 end
@@ -194,14 +182,14 @@ function anim_healed(e)
 		sfx(sfxt.healed)
 		game.healed_es += 1
 	end
-	if e.frame <= 30 then
+	if e.frame <= 15 then
 		if (e.frame % 5 == 0) then e.tgl = not e.tgl end
 		if e.tgl then
 			e.spr = 36
 		else
 			e.spr = 37
 		end
-	elseif e.frame > 30 then
+	elseif e.frame > 15 then
 		e.frame = 0
 		e.state = "ready"
 	end
@@ -212,23 +200,26 @@ function anim_ready(e)
 	if e.tgl then
 		e.spr = 38
 	else
-		--flash to hit sprite instead of reg sprite if hit
-		if e.hit then
-			e.spr = 40
-		else
-			e.spr = 39
-		end
+		e.spr = 39
 	end
+	--TODO: getting hit animation
+	-- --flash to hit sprite instead of reg sprite if hit
+	-- if e.hit then
+	-- 	e.spr = 40
+	-- else
+	-- 	e.spr = 39
+	-- end
+	-- end
 	--reset to avoid hit flash more than once
-	if (e.frame > 10) then
-		e.hit = false
-		e.frame = 0
-	end
+	-- if (e.frame > 10) then
+	-- 	e.hit = false
+	-- 	e.frame = 0
+	-- end
 end
 
 function anim_dead(e)
 	e.spr = e.ss[1]
-	if (e.frame >= 6000) del(dead, e)
+	if (e.frame > 600) del(dead, e)
 end
 
 function draw_entities()

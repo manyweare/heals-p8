@@ -205,14 +205,15 @@ function approx_dist(x1, y1, x2, y2)
 	return b0 * 0.9609 + a0 * 0.3984
 end
 
-function find_closest(o, t)
+function find_closest(o, t, r)
 	-- setting the initial dist check to 32767 (a large num)
 	-- because it is the highest int p8 supports
 	local c, d = 32767, 0
+	if (r == nil) r = c
 	local ce = {}
 	for e in all(t) do
 		d = approx_dist(o.x, o.y, e.x, e.y)
-		if (d < c) then
+		if (d < c) and (d < r) then
 			c = d
 			ce = e
 		end

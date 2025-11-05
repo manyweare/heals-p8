@@ -38,7 +38,7 @@ function _init()
 	}
 
 	--lvl anim frame
-	lvlanim = 1
+	lvlanim = 0
 
 	--easing vars--
 	lt = time()

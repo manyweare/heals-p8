@@ -17,7 +17,7 @@ function init_player()
 		inv_c = 0, --inv count
 		hp = 100,
 		hpmax = 100,
-		regen = .1,
+		regen = .01,
 		x = 64,
 		y = 64,
 		dx = 0,
@@ -62,6 +62,8 @@ function update_player()
 	u_col(p)
 	--invulnerability counters
 	p.inv_c = max(p.inv_c - 1, 0)
+	--regen
+	p.hp = max(p.hp + p.regen, p.maxhp)
 end
 
 function anim_player()
