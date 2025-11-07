@@ -2,7 +2,6 @@
 
 --TODOS:
 --chain heal
---projectile heal
 
 function init_heals()
 	--current heals in the queue
@@ -19,10 +18,9 @@ function init_heals()
 	--staff orb glow lt
 	orb_lt = 12
 
-	curr_heals = {}
-
 	--heal archetypes
 	beam = {
+		name = "beam",
 		lvl = 1,
 		pwr = .5,
 		freq = 15,
@@ -30,53 +28,77 @@ function init_heals()
 		range = hrange,
 		tmr = 0,
 		clrs = hclrs,
-		chains = 3
+		chain = false,
+		func = new_beam_heal
 	}
 	aoe = {
+		name = "aura",
 		lvl = 1,
-		pwr = .25,
+		pwr = .1,
 		freq = 20,
 		spd = 1,
-		range = hrange / 2,
+		range = flr(hrange * .66),
 		tmr = 0,
-		clrs = { 10, 3, 15 }
+		clrs = { 10, 3, 15 },
+		func = new_aoe_heal
 	}
 	proj = {
+		name = "bomb",
 		lvl = 1,
 		pwr = 1,
 		freq = 30,
 		spd = 2,
 		range = min(hrange * 2, 128),
 		tmr = 0,
-		spr = 53
+		spr = 53,
+		func = new_proj_heal
 	}
+	chain = {
+		name = "chain",
+		lvl = 1,
+		pwr = beam.pwr / 2,
+		freq = beam.freq,
+		spd = beam.spd,
+		range = flr(hrange / 2),
+		tmr = 0,
+		clrs = beam.clrs
+	}
+
+	-- lvl curve:
+	-- stat = stat + flr(10 * log10(lvl + 1))
+
+	-- player abilities
+	all_heals = { beam, aoe, proj }
+	curr_heals = { beam }
 end
 
 function update_heals()
 	update_h_timers()
-	if beam.tmr == beam.freq then
-		beam.tmr = 0
-		new_beam_heal()
-	end
-	if aoe.tmr == aoe.freq then
-		aoe.tmr = 0
-		new_aoe_heal()
-	end
-	if proj.tmr == proj.freq then
-		proj.tmr = 0
-		new_proj_heal()
-	end
 	animate_heals()
 end
 
+-- updates timer and check ellapsed
+-- if ellapsed, fire off a heal
+-- current heals only
 function update_h_timers()
-	beam.tmr += 1
-	aoe.tmr += 1
-	proj.tmr += 1
+	for h in all(curr_heals) do
+		h.tmr += 1
+		if h.tmr == h.freq then
+			h.tmr = 0
+			h.func()
+		end
+	end
+end
+
+function heal_upgrade(h)
+	h.lvl += 1
+	h.pwr += flr(10 * log10(h.lvl + 1))
+	h.freq = max(h.freq - 1, 5)
+	if (h == aoe) h.range = min(h.range + 2, 48)
 end
 
 function new_beam_heal()
-	--must find a closest hurt entity
+	-- must find a closest hurt entity
 	local c = closest_hurt(p, entities)
 	if not is_empty(c) and is_in_range(c, beam.range) then
 		local h = {
@@ -116,7 +138,7 @@ function new_aoe_heal()
 end
 
 function new_proj_heal()
-	--must find hurt entity
+	-- must find hurt entity
 	local t = all_hurt(entities)
 	local r = rnd(t)
 	if not is_empty(r) and is_in_range(r, proj.range) then
@@ -134,13 +156,6 @@ function new_proj_heal()
 		add(heals, h)
 		orb_glow()
 	end
-end
-
-function fire_heal(h)
-	e_heal(h.tgt, h.pwr)
-	heal_fx(h.tx, h.ty)
-	--play heal sfx unless aoe
-	if (h.type != "aoe") sfx(sfxt.heal)
 end
 
 -- TODO: chain heal
@@ -164,8 +179,15 @@ end
 -- 	end
 -- end
 
+function fire_heal(h)
+	e_heal(h.tgt, h.pwr)
+	heal_fx(h.tx, h.ty)
+	--play heal sfx unless aoe
+	if (h.type != "aoe") sfx(sfxt.heal)
+end
+
 function draw_heals()
-	for h in all(heals) do
+	for i, h in pairs(heals) do
 		-- staff orb glow for all but aoe
 		if (h.type != "aoe") then d_orb_fx() end
 		if (h.type == "beam") then
@@ -174,7 +196,9 @@ function draw_heals()
 			d_proj_heal(h)
 		end
 	end
-	d_aoe_heal()
+	--out of for loop because it isn't drawn
+	--when heals are fired, but constantly
+	if (count(curr_heals, aoe) == 1) d_aoe_heal()
 end
 
 function animate_heals()

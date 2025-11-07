@@ -101,19 +101,6 @@ function is_moving(e)
 	return false
 end
 
-function move_to_plr(e)
-	local a = get_dir(p.x - (p.w / 2), p.y - (p.h / 2), e.x, e.y)
-	local dx = cos(a)
-	local dy = sin(a)
-	if not rect_rect_collision(e.col, p.col) then
-		--update the direction vars to allow is_moving check
-		e.dx = dx
-		e.dy = dy
-		e.x -= e.dx * e.spd
-		e.y -= e.dy * e.spd
-	end
-end
-
 function move_to(e, t)
 	local a = get_dir(t.x - (t.w / 2), t.y - (t.h / 2), e.x, e.y)
 	local dx = cos(a)
@@ -125,6 +112,7 @@ function move_to(e, t)
 		e.x -= e.dx * e.spd
 		e.y -= e.dy * e.spd
 	end
+	e.flip = flip_spr(e, t)
 end
 
 -- move entities in a table (t) apart from each other up to an r radius

@@ -187,3 +187,14 @@ function p_take_damage(d, i)
 	p.hp = max(p.hp - max(1, d), 0)
 	if (i) p.inv_c = p.inv_f
 end
+
+--draws circle around player
+function draw_range()
+	local c = 2
+	fillp(0x7fdf)
+	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 16, c)
+	fillp(0x7ada)
+	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 8, c)
+	fillp()
+	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange, c)
+end

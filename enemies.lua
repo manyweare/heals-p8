@@ -65,7 +65,7 @@ function update_enemies()
 	en_spw_tmr += 1
 	if (en_spw_tmr % 90 == 0) then
 		en_spw_tmr = 0
-		spawn_enemies(1 + flr(rnd(p.lvl / 2)))
+		spawn_enemies(1 + flr(rnd(p.lvl / 3)))
 	end
 	for e in all(enemies) do
 		u_col(e)
@@ -74,19 +74,11 @@ function update_enemies()
 		--if there are entities ready
 		--find closest, make it the target
 		if not is_empty(entities) then
-			tgt = find_closest(e, entities, en_s_range)
-			if not is_empty(tgt) then
-				move_to(e, tgt)
-				e.flip = flip_spr(e, tgt)
-			else
-				move_to_plr(e)
-				e.flip = flip_spr(e, p)
-			end
-		else
-			move_to_plr(e)
-			e.flip = flip_spr(e, p)
+			local c = find_closest(e, entities, en_s_range)
+			if (not is_empty(c)) tgt = c
 		end
-		--check for collision with p or tgt if found
+		move_to(e, tgt)
+		--check for collision and attack or just anim
 		if rect_rect_collision(e.col, tgt.col) then
 			e.frame = 0
 			e_attack(e, tgt)
@@ -98,13 +90,18 @@ function update_enemies()
 	for e in all(dead_enemies) do
 		e_anim_dead(e)
 	end
-	move_apart(enemies, 8)
+	if not is_empty(enemies) then
+		move_apart(enemies, 8)
+	end
 end
 
 function draw_enemies()
 	for e in all(enemies) do
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
+end
+
+function draw_dead_ens()
 	for e in all(dead_enemies) do
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end

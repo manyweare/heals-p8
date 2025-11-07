@@ -5,9 +5,10 @@ __lua__
 --by marcelo d. viana neto
 --includes
 #include main.lua
---#include gamestates.lua
+#include gamestates.lua
 #include tools.lua
 #include coll.lua
+#include manager.lua
 #include map.lua
 #include player.lua
 #include heals.lua

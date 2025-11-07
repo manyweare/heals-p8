@@ -62,7 +62,7 @@ function update_entities()
 	spw_tmr += 1
 	if (spw_tmr % 120 == 0) then
 		spw_tmr = 0
-		spawn_entities(1 + flr(rnd(p.lvl / 2)))
+		spawn_entities(1 + flr(rnd(p.lvl / 3)))
 	end
 	for e in all(spawning) do
 		e.frame += 1
@@ -83,8 +83,9 @@ function update_entities()
 			end
 		elseif e.state == "ready" then
 			u_col(e)
+			local tgt = p
 			if not is_empty(enemies) then
-				local tgt = find_closest(e, enemies, e_s_range)
+				tgt = find_closest(e, enemies, e_s_range)
 				e.flip = flip_spr(e, tgt)
 				if rect_rect_collision(e.col, tgt.col) then
 					e.frame = 0
@@ -229,6 +230,9 @@ function draw_entities()
 	for e in all(entities) do
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
+end
+
+function draw_dead_es()
 	for e in all(dead) do
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
