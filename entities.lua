@@ -4,9 +4,11 @@
 --use quickset to save tokens
 --add different types
 --fix being hit anim: use a color change instead of spr change
---fix attack anim not running
+--fix attack anim not running -DONE
 --create more complex movement
 --don't overlap player
+--don't spawn on invalid tiles
+--spawn scheduler
 
 function init_entities()
 	spw_tmr = 0

@@ -2,6 +2,7 @@
 
 --TODO:
 --more level up choices
+--better gameover screen
 
 function init_manager()
     game = {
@@ -71,4 +72,22 @@ end
 function draw_dead()
     draw_dead_ens()
     draw_dead_es()
+end
+
+function game_over()
+    _update = update_gameover
+    _draw = draw_gameover
+end
+
+function update_gameover_screen()
+    if btnp(5) then
+        reset_game()
+        _update = update_game
+        _draw = draw_game
+    end
+end
+
+function draw_gameover_screen()
+    print("you died!", ui.x + 4, ui.y + 46, 8)
+    print("press ❎ to restart", ui.x + 4, ui.y + 54, 7)
 end

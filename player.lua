@@ -15,11 +15,12 @@ function init_player()
 		totalxp = 0,
 		inv_f = 30, --invulnerability frames
 		inv_c = 0, --inv count
-		hp = 100,
-		hpmax = 100,
-		regen = .01,
-		x = 64,
-		y = 64,
+		hp = 10,
+		hpmax = 10,
+		regen = .5,
+		regen_spd = 1,
+		x = 59, --63 - p.w / 2
+		y = 59, --63 - p.h / 2
 		dx = 0,
 		dy = 0,
 		w = 8,
@@ -63,7 +64,9 @@ function update_player()
 	--invulnerability counters
 	p.inv_c = max(p.inv_c - 1, 0)
 	--regen
-	p.hp = max(p.hp + p.regen, p.maxhp)
+	if time() % p.regen_spd <= .02 then
+		p.hp = min(p.hp + p.regen, p.hpmax)
+	end
 end
 
 function anim_player()
@@ -90,7 +93,7 @@ function move_player()
 	local dx, dy = 0, 0
 	--drag coeficient
 	local drg = .8
-	--bitmask to remove triple presses
+	--uses a bitmask to remove triple presses
 	local btnm = btn() & 0b1111
 	--normalized diagonal coeficient
 	local n = .7
@@ -143,8 +146,7 @@ function move_player()
 		p.x += dx
 		p.y += dy
 	else
-		tdx = dx
-		tdy = dy
+		tdx, tdy = dx, dy
 		while not can_move(p, tdx, tdy) do
 			if (abs(tdx) <= 0.1) then
 				tdx = 0
@@ -160,14 +162,13 @@ function move_player()
 		p.x += tdx
 		p.y += tdy
 	end
+	p.dx, p.dy = dx, dy
 	--TODO: FIX COBBLESTONING
 	-- anti-cobblestone
-	if (p.dx != dx) and (p.dy != dy) and (dx == dy) then
-		p.x = flr(p.x) + .5
-		p.y = flr(p.y) + .5
-	end
-	p.dx = dx
-	p.dy = dy
+	-- if (p.dx != dx) and (p.dy != dy) and (dx == dy) then
+	-- 	p.x = flr(p.x) + .5
+	-- 	p.y = flr(p.y) + .5
+	-- end
 	-- drag
 	if (abs(dx) > 0) dx *= drg
 	if (abs(dy) > 0) dy *= drg
@@ -186,15 +187,15 @@ function p_take_damage(d, i)
 	end
 	p.hp = max(p.hp - max(1, d), 0)
 	if (i) p.inv_c = p.inv_f
+	if (p.hp <= 0) game_over()
 end
 
 --draws circle around player
 function draw_range()
-	local c = 2
 	fillp(0x7fdf)
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 16, c)
+	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 16, 2)
 	fillp(0x7ada)
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 8, c)
+	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 8, 2)
 	fillp()
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange, c)
+	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange, 2)
 end

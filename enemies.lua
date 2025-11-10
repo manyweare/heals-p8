@@ -4,6 +4,8 @@
 --use quickset to save tokens
 --add different types
 --anim taking damage
+--spawn scheduler
+--don't spawn on invalid tiles
 --[[
 enemy state machine: -DONE???
 	enemies look for healthy entity in range -DONE

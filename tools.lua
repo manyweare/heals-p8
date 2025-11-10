@@ -102,7 +102,7 @@ function is_moving(e)
 end
 
 function move_to(e, t)
-	local a = get_dir(t.x - (t.w / 2), t.y - (t.h / 2), e.x, e.y)
+	local a = get_dir(t.x, t.y, e.x, e.y)
 	local dx = cos(a)
 	local dy = sin(a)
 	if not rect_rect_collision(e.col, t.col) then

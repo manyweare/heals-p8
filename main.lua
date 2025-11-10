@@ -40,9 +40,11 @@ end
 function _update()
 	update_game()
 	-- update_upgrade()
+	-- update_debug()
 end
 
 function _draw()
 	draw_game()
 	-- draw_upgrade()
+	-- draw_debug()
 end

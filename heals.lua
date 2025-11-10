@@ -2,6 +2,7 @@
 
 --TODOS:
 --chain heal
+--player heal fx
 
 function init_heals()
 	--current heals in the queue
@@ -182,8 +183,11 @@ end
 function fire_heal(h)
 	e_heal(h.tgt, h.pwr)
 	heal_fx(h.tx, h.ty)
+	add_h_num(h)
 	--play heal sfx unless aoe
-	if (h.type != "aoe") sfx(sfxt.heal)
+	if (h.type != "aoe") then
+		sfx(sfxt.heal)
+	end
 end
 
 function draw_heals()
