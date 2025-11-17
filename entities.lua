@@ -17,11 +17,55 @@ function init_entities()
 	entities = {}
 	spawning = {}
 	dead = {}
+	--hero prototype
+	hero = {
+		hp = 0,
+		decay = 0,
+		x = 0,
+		y = 0,
+		w = 0,
+		h = 0,
+		spr = 0,
+		att_sfx = 5,
+		att_frame = 1,
+		frame = 0,
+		flip = false,
+		tgl = false,
+		hit = false,
+		state = "spawning"
+	}
+	--hero archetypes
+	h_melee = {
+		type = melee,
+		maxhp = 50,
+		dmg = 10,
+		spd = .5,
+		attspd = 15,
+		ss = { 54, 55, 56, 57, 58 }
+	}
+	h_tank = {
+		type = tank,
+		maxhp = 250,
+		dmg = 5,
+		spd = .25,
+		attspd = 10,
+		ss = { 38, 39, 40, 41, 42 }
+	}
+	h_ranged = {
+		type = ranged,
+		maxhp = 50,
+		dmg = 10,
+		spd = .5,
+		attspd = 15,
+		ss = { 22, 23, 24, 25, 26 }
+	}
+	--
 	spawn_entities(1)
 end
 
 function spawn_entities(i)
 	for i = 1, i do
+		e = h_tank
 		e = {
 			hp = 1 + flr(rnd(3)),
 			maxhp = 4,
