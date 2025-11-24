@@ -4,28 +4,46 @@
 --more level up choices
 --better gameover screen
 
+game = {
+    --current xp max
+    xpmax = 3,
+    --current xp modifier
+    xpmod = 1,
+    --current live enemies
+    live_ens = 0,
+    --total dead enemies
+    dead_ens = 0,
+    --current live entities
+    live_es = 0,
+    --total dead entities
+    dead_es = 0,
+    --total healed entities
+    healed_es = 0
+}
+
+lvlup_options = {}
+
 function init_manager()
-    game = {
-        --current xp max
-        xpmax = 3,
-        --current xp modifier
-        xpmod = 1,
-        --current live enemies
-        live_ens = 0,
-        --total dead enemies
-        dead_ens = 0,
-        --current live entities
-        live_es = 0,
-        --total dead entities
-        dead_es = 0,
-        --total healed entities
-        healed_es = 0
-    }
-    --
-    lvlup_options = {}
+    -- game = {
+    --     --current xp max
+    --     xpmax = 3,
+    --     --current xp modifier
+    --     xpmod = 1,
+    --     --current live enemies
+    --     live_ens = 0,
+    --     --total dead enemies
+    --     dead_ens = 0,
+    --     --current live entities
+    --     live_es = 0,
+    --     --total dead entities
+    --     dead_es = 0,
+    --     --total healed entities
+    --     healed_es = 0
+    -- }
+    -- lvlup_options = {}
 end
 
---leveling functions-----------
+-- leveling functions --
 
 function addxp(n)
     local ovrxp = 0

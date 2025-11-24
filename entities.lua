@@ -1,253 +1,224 @@
 --entities
 
 --TODO:
+--OOP system
 --use quickset to save tokens
---add different types
+--hero types
 --fix being hit anim: use a color change instead of spr change
 --fix attack anim not running -DONE
 --create more complex movement
+--return to player side if no enemies
 --don't overlap player
 --don't spawn on invalid tiles
 --spawn scheduler
 
+-- hero class
+-- hero = object:new()
+
+spw_tmr = 0
+decay_rate = 120
+e_s_range = 128
+heroes = {}
+spawning = {}
+dead_heroes = {}
+
+-- class definition
+hero = object:new({
+	hp = 0,
+	decay_state = 0,
+	x = 0,
+	y = 0,
+	w = 8,
+	h = 8,
+	spr = 0,
+	att_sfx = 5,
+	att_frame = 1,
+	frame = 0,
+	flip = false, --sprite flip x
+	tgl = true, --controls toggle-based animations
+	hit = false, --controls being hit animation
+	dist = 0,
+	state = "",
+	alive_table = heroes,
+	dead_table = dead_heroes,
+	alive_counter = game.live_es,
+	dead_counter = game.dead_es
+})
+
+--hero types
+h_melee = hero:new({
+	type = "melee",
+	hpmax = 4,
+	dmg = 1,
+	spd = .5,
+	attspd = 15,
+	ss = { 54, 55, 56, 57, 58 }
+})
+h_tank = hero:new({
+	type = "tank",
+	hpmax = 250,
+	dmg = .5,
+	spd = .25,
+	attspd = 10,
+	ss = { 38, 39, 40, 41, 42 }
+})
+h_ranged = hero:new({
+	type = "ranged",
+	hpmax = 50,
+	dmg = .25,
+	spd = .75,
+	attspd = 15,
+	ss = { 22, 23, 24, 25, 26 }
+})
+
 function init_entities()
-	spw_tmr = 0
-	decay_rate = 120
-	e_s_range = 128
-	entities = {}
-	spawning = {}
-	dead = {}
-	--hero prototype
-	hero = {
-		hp = 0,
-		decay = 0,
-		x = 0,
-		y = 0,
-		w = 0,
-		h = 0,
-		spr = 0,
-		att_sfx = 5,
-		att_frame = 1,
-		frame = 0,
-		flip = false,
-		tgl = false,
-		hit = false,
-		state = "spawning"
-	}
-	--hero archetypes
-	h_melee = {
-		type = melee,
-		maxhp = 50,
-		dmg = 10,
-		spd = .5,
-		attspd = 15,
-		ss = { 54, 55, 56, 57, 58 }
-	}
-	h_tank = {
-		type = tank,
-		maxhp = 250,
-		dmg = 5,
-		spd = .25,
-		attspd = 10,
-		ss = { 38, 39, 40, 41, 42 }
-	}
-	h_ranged = {
-		type = ranged,
-		maxhp = 50,
-		dmg = 10,
-		spd = .5,
-		attspd = 15,
-		ss = { 22, 23, 24, 25, 26 }
-	}
-	--
-	spawn_entities(1)
+	spawn_entities(3)
 end
 
-function spawn_entities(i)
-	for i = 1, i do
-		e = h_tank
-		e = {
+function spawn_entities(num)
+	for i = 1, num do
+		local h = h_melee:new({
 			hp = 1 + flr(rnd(3)),
-			maxhp = 4,
-			dmg = .5,
-			spd = .25,
-			attspd = 15,
+			-- hpmax = 4,
+			-- dmg = 1,
+			-- spd = .5,
+			-- attspd = 15,
 			attframe = 1,
 			att_sfx = 5,
 			x = flr(rnd(120)),
 			y = flr(rnd(120)) + ui.h,
-			w = 8,
-			h = 8,
+			-- w = 8,
+			-- h = 8,
 			ss = { 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42 },
 			spr = 33,
-			dist = 0,
-			decay = 0,
-			frame = 0,
+			-- dist = 0,
+			-- decay_state = 0,
+			-- frame = 0,
 			flip = rnd() < .5,
-			tgl = true, --controls toggle-based animations
-			hit = false, --controls being hit animation
+			-- tgl = true, --controls toggle-based animations
+			-- hit = false, --controls being hit animation
 			state = "spawning"
-		}
-		e.dist = approx_dist(p.x, p.y, e.x, e.y)
-		--collision rect offsets relative to e
-		-- x,y,w,h
-		e.col_offset = { 0, 0, -1, -2 }
-		--collision rect
-		e.col = {
-			x = e.x + e.col_offset[1],
-			y = e.y + e.col_offset[2],
-			w = e.w + e.col_offset[3],
-			h = e.h + e.col_offset[4]
-		}
-		add(spawning, e)
+		})
+		-- --collision rect offsets relative to h
+		-- -- x,y,w,h
+		-- h.col_offset = { 0, 0, -1, -2 }
+		-- --collision rect
+		-- h.col = {
+		-- 	x = h.x + h.col_offset[1],
+		-- 	y = h.y + h.col_offset[2],
+		-- 	w = h.w + h.col_offset[3],
+		-- 	h = h.h + h.col_offset[4]
+		-- }
+		h.dist = approx_dist(p.x, p.y, h.x, h.y)
+		h:setup_col({ 1, 1, -1, -4 })
+		-- heroes begin in spawning state
+		add(spawning, h)
 		game.live_es += 1
 	end
 end
 
-function update_entities()
-	spw_tmr += 1
-	if (spw_tmr % 120 == 0) then
-		spw_tmr = 0
-		spawn_entities(1 + flr(rnd(p.lvl / 3)))
-	end
-	for e in all(spawning) do
-		e.frame += 1
-		anim_spawn(e)
-	end
-	for e in all(dead) do
-		e.frame += 1
-		anim_dead(e)
-	end
-	for e in all(entities) do
-		e.frame += 1
-		if e.state == "hurt" then
-			if e.hp < e.maxhp then
-				decay_entity(e)
-				anim_entity(e)
-			else
-				anim_healed(e)
-			end
-		elseif e.state == "ready" then
-			u_col(e)
-			local tgt = p
-			if not is_empty(enemies) then
-				tgt = find_closest(e, enemies, e_s_range)
-				e.flip = flip_spr(e, tgt)
-				if rect_rect_collision(e.col, tgt.col) then
-					e.frame = 0
-					attack(e, tgt)
-				else
-					e.attframe = 0
-					move_to(e, tgt)
-					anim_ready(e)
-				end
-			end
-		end
-	end
-	move_apart(entities, 8)
-end
-
-function decay_entity(e)
-	e.decay += 1
-	if (e.hp > 0) and (e.decay >= decay_rate) then
-		e.hp -= 1
-		e.decay = 0
-	elseif e.hp <= 0 then
-		e_kill(e)
+function hero:decay()
+	self.decay_state += 1
+	if (self.hp > 0) and (self.decay_state >= decay_rate) then
+		self.hp -= 1
+		self.decay_state = 0
+	elseif self.hp <= 0 then
+		self:die()
 	end
 end
 
-function attack(e, tgt)
-	if e.attframe < e.attspd / 2 then
-		if (e.attframe == 1) then
+function hero:attack(tgt)
+	if self.attframe < self.attspd / 2 then
+		if (self.attframe == 1) then
 			-- sfx(e.att_sfx, 2)
-			take_dmg(tgt, e.dmg)
+			tgt:take_dmg(self.dmg)
 		end
-		e.spr = 41 --hardcoded attack sprite
-	elseif e.attframe == e.attspd then
-		e.attframe = 0
+		self.spr = 41 --hardcoded attack sprite
+	elseif self.attframe == self.attspd then
+		self.attframe = 0
 	else
-		e.spr = 42 --hardcoded idle frame
+		self.spr = 42 --hardcoded idle frame
 	end
-	e.attframe += 1
+	self.attframe += 1
 end
 
-function e_take_dmg(e, dmg)
-	e.hit = true
-	e.hp -= dmg
-	if (e.hp <= 0) e_kill(e)
+-- function hero:take_dmg(dmg)
+-- 	self.hit = true
+-- 	self.hp -= dmg
+-- 	if (self.hp <= 0) self:die()
+-- end
+
+function hero:heal(hpwr)
+	self.hp = max(self.hpmax, self.hp + hpwr)
+	self.decay_state = 0
+	self.frame = 0
 end
 
-function e_heal(e, hpwr)
-	e.hp = max(e.maxhp, e.hp + hpwr)
-	e.decay = 0
-	e.frame = 0
+-- function hero:die()
+-- 	-- self.frame = 0
+-- 	-- self.state = "dead"
+-- 	-- add(dead_heroes, self)
+-- 	-- del(heroes, self)
+-- 	-- sfx(sfxt.thud)
+-- 	game.dead_es += 1
+-- 	game.live_es -= 1
+-- 	self:die(heroes, dead_heroes)
+-- end
+
+-- function hero:toggle()
+-- 	self.spr = 1
+-- end
+
+function hero:anim()
+	self.spr = self.ss[flr(self.hp + 1)]
 end
 
-function e_kill(e)
-	e.frame = 0
-	e.state = "dead"
-	add(dead, e)
-	del(entities, e)
-	sfx(sfxt.thud)
-	game.dead_es += 1
-	game.live_es -= 1
-end
-
-function toggle_entity(e)
-	e.spr = 1
-end
-
-function anim_entity(e)
-	e.spr = e.ss[flr(e.hp + 1)]
-end
-
-function anim_spawn(e)
+function hero:anim_spawn()
 	--if animated for 30 frames
-	--set it to the right spr and move e to entities
+	--set it to the right spr and move e to heroes
 	--otherwise blink
-	if e.frame == 30 then
-		e.frame = 0
-		e.tgl = true
-		e.state = "hurt"
-		anim_entity(e)
-		add(entities, e)
-		del(spawning, e)
+	if self.frame == 30 then
+		self.frame = 0
+		self.tgl = true
+		self.state = "hurt"
+		self:anim()
+		add(heroes, self)
+		del(spawning, self)
 		return
 	end
-	if (e.frame % 3 == 0) e.tgl = not e.tgl
-	if e.tgl then
-		anim_entity(e)
+	if (self.frame % 3 == 0) self.tgl = not self.tgl
+	if self.tgl then
+		self:anim()
 	else
-		toggle_entity(e)
+		self:toggle()
 	end
 end
 
-function anim_healed(e)
-	if e.frame == 1 then
+function hero:anim_healed()
+	if self.frame == 1 then
 		addxp(1)
 		sfx(sfxt.healed)
 		game.healed_es += 1
 	end
-	if e.frame <= 15 then
-		if (e.frame % 5 == 0) then e.tgl = not e.tgl end
-		if e.tgl then
-			e.spr = 36
+	if self.frame <= 15 then
+		if (self.frame % 5 == 0) then self.tgl = not self.tgl end
+		if self.tgl then
+			self.spr = 36
 		else
-			e.spr = 37
+			self.spr = 37
 		end
-	elseif e.frame > 15 then
-		e.frame = 0
-		e.state = "ready"
+	elseif self.frame > 15 then
+		self.frame = 0
+		self.state = "ready"
 	end
 end
 
-function anim_ready(e)
-	if (e.frame % 5 == 0) e.tgl = not e.tgl
-	if e.tgl then
-		e.spr = 38
+function hero:anim_ready()
+	if (self.frame % 5 == 0) self.tgl = not self.tgl
+	if self.tgl then
+		self.spr = 38
 	else
-		e.spr = 39
+		self.spr = 39
 	end
 	--TODO: getting hit animation
 	-- --flash to hit sprite instead of reg sprite if hit
@@ -264,22 +235,68 @@ function anim_ready(e)
 	-- end
 end
 
-function anim_dead(e)
-	e.spr = e.ss[1]
-	if (e.frame > 600) del(dead, e)
+function hero:anim_dead()
+	self.spr = self.ss[1]
+	if (self.frame > 600) del(dead_heroes, self)
+end
+
+function update_entities()
+	spw_tmr += 1
+	if (spw_tmr % 150 == 0) then
+		spw_tmr = 0
+		spawn_entities(flr(rnd(p.lvl / 3)))
+	end
+	for e in all(spawning) do
+		e.frame += 1
+		e:anim_spawn()
+	end
+	for e in all(dead_heroes) do
+		e.frame += 1
+		e:anim_dead()
+	end
+	for e in all(heroes) do
+		e.frame += 1
+		if e.state == "hurt" then
+			if e.hp < e.hpmax then
+				e:decay()
+				e:anim()
+			else
+				e:anim_healed()
+			end
+		elseif e.state == "ready" then
+			e:update_col()
+			local tgt = p
+			if not is_empty(enemies) then
+				tgt = find_closest(e, enemies, e_s_range)
+				e.flip = e:flip_spr(tgt)
+				if rect_rect_collision(e.col, tgt.col) then
+					e.frame = 0
+					e:attack(tgt)
+				else
+					e.attframe = 0
+					e:move_to(tgt)
+					e:anim_ready()
+				end
+			end
+		end
+	end
+	move_apart(heroes, 8)
 end
 
 function draw_entities()
 	for e in all(spawning) do
+		sync_pos(e)
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
-	for e in all(entities) do
+	for e in all(heroes) do
+		sync_pos(e)
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
 end
 
 function draw_dead_es()
-	for e in all(dead) do
+	for e in all(dead_heroes) do
+		sync_pos(e)
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
 end

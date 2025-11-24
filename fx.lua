@@ -40,6 +40,7 @@ function draw_fx()
 		else
 			circfill(f.x, f.y, f.r, f.c)
 		end
+		sync_pos(f)
 	end
 end
 
@@ -143,7 +144,6 @@ function aoe_fx(x, y, r, clrs)
 	-- aoe_fx_fill(x, y, r, clrs)
 end
 
--- TODO: consider playing with SDF (sine dist func)
 function aoe_fx_fill(x, y, r, clrs)
 	for i = 8, r do
 		local pt = rand_in_circle(x, y, i)
@@ -174,6 +174,8 @@ function proj_fx(x, y)
 end
 
 -- add_fx(x, y, lt, dx, dy, r, clrs)
+
+-- TODO: add circle shockwave
 function explode(x, y, r, t, num)
 	for i = 0, num do
 		add_fx(

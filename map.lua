@@ -7,6 +7,7 @@
 --draw props
 
 function init_map()
+    s_map = { x = 0, y = 0 }
     flags = {
         wall = 0,
         entity = 1,
@@ -21,7 +22,25 @@ function init_map()
     end
 end
 
+function update_map()
+    s_map.x += p.sx
+    s_map.y += p.sy
+end
+
 function draw_map()
+    --draw scrolling map
+    for i = 0, 2 do
+        for j = 0, 2 do
+            map(
+                0, 0,
+                s_map.x % 128 + 128 * i - 128,
+                s_map.y % 128 + 128 * j - 128
+            )
+        end
+    end
+end
+
+function draw_map_f()
     --segment the player is on based on the cam y pos
     local s = flr(abs(cam.y) / 128) + 1
     --which segments to draw

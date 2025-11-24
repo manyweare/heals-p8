@@ -5,8 +5,8 @@
 function init_game()
     init_manager()
     init_map()
-    init_ui()
     init_player()
+    init_ui()
     init_heals()
     init_entities()
     init_enemies()
@@ -31,38 +31,45 @@ end
 function update_start()
     --for easing functions
     t = time()
+    get_inputs()
     update_ui()
 end
 
 function update_game()
     --for easing functions
     t = time()
-    update_heals()
+    get_inputs()
+    update_player()
     update_entities()
     update_enemies()
-    update_player()
+    update_heals()
     update_ui()
     update_fx()
     update_cam()
+    update_map()
     cheat()
 end
 
 function update_upgrade()
     --for easing functions
     t = time()
-    update_heals()
+    get_inputs()
+    -- update_heals()
     update_ui()
     update_fx()
-    update_cam()
+    -- update_cam()
+    -- update_map()
     update_lvlup()
 end
 
 function update_gameover()
+    get_inputs()
     -- update_ui()
     update_gameover_screen()
 end
 
 function update_debug()
+    get_inputs()
     -- update_heals()
     -- update_entities()
     -- update_enemies()
@@ -70,6 +77,7 @@ function update_debug()
     update_ui()
     -- update_fx()
     update_cam()
+    update_map()
     cheat()
 end
 
@@ -98,14 +106,14 @@ end
 
 function draw_upgrade()
     cls()
-    draw_map()
+    -- draw_map()
     -- draw_range()
-    draw_dead()
+    -- draw_dead()
     draw_fx()
     draw_player()
-    draw_entities()
-    draw_heals()
-    draw_enemies()
+    -- draw_entities()
+    -- draw_heals()
+    -- draw_enemies()
     draw_ui()
     draw_cam()
     draw_lvlup()

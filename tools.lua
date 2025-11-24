@@ -7,6 +7,113 @@ function log_to_terminal(text)
 	printh(text, "log", true)
 end
 
+-- constructor
+object = {}
+function object:new(o)
+	o = o or {}
+	local a = {}
+	-- copy in defaults first
+	for k, v in pairs(self) do
+		a[k] = v
+	end
+	-- write in extra parameters
+	for k, v in pairs(o) do
+		a[k] = v
+	end
+	-- metatable assignment
+	setmetatable(a, self)
+	self.__index = self
+	return a
+end
+
+-- functions used by all objects --
+
+function object:setup_col(t)
+	--collision rect offsets relative to self
+	-- x,y,w,h
+	self.col_offset = t
+	--collision rect
+	self.col = {
+		x = self.x + self.col_offset[1],
+		y = self.y + self.col_offset[2],
+		w = self.w + self.col_offset[3],
+		h = self.h + self.col_offset[4]
+	}
+end
+
+--updates col rect position
+function object:update_col()
+	self.col.x = self.x + self.col_offset[1]
+	self.col.y = self.y + self.col_offset[2]
+end
+
+--used for flashing anims
+function object:toggle()
+	self.spr = 1
+end
+
+function object:take_dmg(dmg)
+	self.hit = true
+	self.hp -= dmg
+	if (self.hp <= 0) self:die()
+end
+
+function object:die()
+	self.frame = 0
+	self.state = "dead"
+	add(self.dead_table, self)
+	del(self.alive_table, self)
+	sfx(sfxt.thud)
+	self.dead_counter += 1
+	self.alive_counter -= 1
+end
+
+function object:move_to(t)
+	local a = get_dir(t.x, t.y, self.x, self.y)
+	local dx = cos(a)
+	local dy = sin(a)
+	if not rect_rect_collision(self.col, t.col) then
+		--update the direction vars to allow is_moving check
+		self.dx = dx
+		self.dy = dy
+		self.x -= self.dx * self.spd
+		self.y -= self.dy * self.spd
+	end
+	self.flip = self:flip_spr(t)
+end
+
+function object:flip_spr(t)
+	return self.x > t.x
+end
+
+-- update position relative to player's
+-- used for scrolling map
+function sync_pos(a)
+	a.x += p.sx
+	a.y += p.sy
+end
+
+-- from Beckon the Hellspawn
+function get_inputs()
+	--register last inputs
+	for x = 1, 8 do
+		p_i_last[x] = p_inputs[x]
+	end
+	local wasd = split("4,7,26,22,0,40")
+	--register current inputs
+	for x = 1, 6 do
+		p_inputs[x] = btn(x - 1) or stat(28, wasd[x])
+	end
+	--assign direction values
+	for x = 1, 4 do
+		if p_inputs[x] then
+			p_i_data[x] = 1
+		else
+			p_i_data[x] = 0
+		end
+	end
+end
+
 -- from pico-8 wiki math section
 function log10(n)
 	if (n <= 0) return nil
@@ -19,7 +126,6 @@ function log10(n)
 		n /= 2.71828
 		t += 1
 	end
-
 	n -= 1
 	for i = 9, 1, -1 do
 		f = n * (1 / i - f)
@@ -101,20 +207,6 @@ function is_moving(e)
 	return false
 end
 
-function move_to(e, t)
-	local a = get_dir(t.x, t.y, e.x, e.y)
-	local dx = cos(a)
-	local dy = sin(a)
-	if not rect_rect_collision(e.col, t.col) then
-		--update the direction vars to allow is_moving check
-		e.dx = dx
-		e.dy = dy
-		e.x -= e.dx * e.spd
-		e.y -= e.dy * e.spd
-	end
-	e.flip = flip_spr(e, t)
-end
-
 -- move entities in a table (t) apart from each other up to an r radius
 -- adapted from Beckon the Hellspawn
 function move_apart(t, r)
@@ -129,20 +221,6 @@ function move_apart(t, r)
 			end
 		end
 	end
-end
-
-function flip_spr(e, t)
-	if (e.x < t.x) then
-		return false
-	else
-		return true
-	end
-end
-
---updates col rect position
-function u_col(e)
-	e.col.x = e.x + e.col_offset[1]
-	e.col.y = e.y + e.col_offset[2]
 end
 
 function col(a, b, r)

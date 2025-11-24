@@ -30,7 +30,7 @@ end
 function update_ui()
 	ui.x, ui.y = cam.x, cam.y
 	ui.xp = min((p.curxp / game.xpmax) * ui.w, ui.w)
-	ui.hp = min((p.hp / p.hpmax) * p.w, p.w)
+	-- animate numbers
 	for n in all(nums) do
 		n.f += 1
 		n.y -= .25
@@ -64,6 +64,7 @@ end
 function draw_ui()
 	print(version, ui.x + 117, ui.y + 122, 0)
 	print(version, ui.x + 116, ui.y + 121, 1)
+	-- numbers animation
 	for n in all(nums) do
 		--shadow
 		-- print(n.txt, n.x - 5, n.y - 7, 0)
@@ -93,7 +94,10 @@ function draw_hud()
 	print("lvl:" .. tostr(p.lvl), ui.x + 92, ui.y + 3, 7)
 	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(game.xpmax), ui.x + 90, ui.y + 3, 7)
 	d_xp_bar()
-	d_hp_bar()
+	d_hp_bar(p)
+	for h in all(heroes) do
+		d_hp_bar(h)
+	end
 	-- border
 	-- rect(ui.x, ui.y, ui.x + 127, ui.y + 127, 1)
 end
@@ -146,9 +150,11 @@ function d_xp_bar()
 	line(ui.x, ui.y, ui.x + ui.xp, ui.y, 11)
 end
 
-function d_hp_bar()
-	line(p.x, p.y - 5, p.x + p.w, p.y - 5, 7)
-	line(p.x, p.y - 5, p.x + ui.hp, p.y - 5, 8)
+function d_hp_bar(a)
+	if (a == p and a.hp >= a.hpmax) return
+	local hp = min((a.hp / a.hpmax) * a.w, a.w)
+	line(a.x, a.y - 4, a.x + a.w, a.y - 4, 7)
+	line(a.x, a.y - 4, a.x + hp, a.y - 4, 8)
 end
 
 function add_h_num(h)

@@ -3,6 +3,10 @@
 --TODOS:
 --chain heal
 --player heal fx
+--better heal "movement"
+
+-- heal class
+heal = object:new()
 
 function init_heals()
 	--current heals in the queue
@@ -19,8 +23,8 @@ function init_heals()
 	--staff orb glow lt
 	orb_lt = 12
 
-	--heal archetypes
-	beam = {
+	-- sub-classes
+	beam = heal:new({
 		name = "beam",
 		lvl = 1,
 		pwr = .5,
@@ -31,8 +35,9 @@ function init_heals()
 		clrs = hclrs,
 		chain = false,
 		func = new_beam_heal
-	}
-	aoe = {
+	})
+
+	aoe = heal:new({
 		name = "aura",
 		lvl = 1,
 		pwr = .1,
@@ -42,8 +47,9 @@ function init_heals()
 		tmr = 0,
 		clrs = { 10, 3, 15 },
 		func = new_aoe_heal
-	}
-	proj = {
+	})
+
+	proj = heal:new({
 		name = "bomb",
 		lvl = 1,
 		pwr = 1,
@@ -53,8 +59,9 @@ function init_heals()
 		tmr = 0,
 		spr = 53,
 		func = new_proj_heal
-	}
-	chain = {
+	})
+
+	chain = beam:new({
 		name = "chain",
 		lvl = 1,
 		pwr = beam.pwr / 2,
@@ -63,7 +70,7 @@ function init_heals()
 		range = flr(hrange / 2),
 		tmr = 0,
 		clrs = beam.clrs
-	}
+	})
 
 	-- lvl curve:
 	-- stat = stat + flr(10 * log10(lvl + 1))
@@ -100,7 +107,7 @@ end
 
 function new_beam_heal()
 	-- must find a closest hurt entity
-	local c = closest_hurt(p, entities)
+	local c = closest_hurt(p, heroes)
 	if not is_empty(c) and is_in_range(c, beam.range) then
 		local h = {
 			tgt = c,
@@ -119,7 +126,7 @@ function new_beam_heal()
 end
 
 function new_aoe_heal()
-	local t = all_hurt(entities)
+	local t = all_hurt(heroes)
 	for e in all(t) do
 		if is_in_range(e, aoe.range) then
 			local h = {
@@ -140,7 +147,7 @@ end
 
 function new_proj_heal()
 	-- must find hurt entity
-	local t = all_hurt(entities)
+	local t = all_hurt(heroes)
 	local r = rnd(t)
 	if not is_empty(r) and is_in_range(r, proj.range) then
 		local h = {
@@ -181,7 +188,7 @@ end
 -- end
 
 function fire_heal(h)
-	e_heal(h.tgt, h.pwr)
+	h.tgt:heal(h.pwr)
 	heal_fx(h.tx, h.ty)
 	add_h_num(h)
 	--play heal sfx unless aoe
@@ -212,7 +219,11 @@ function animate_heals()
 	te += dt
 	for h in all(heals) do
 		if h.type == "projectile" then
-			--TODO: ease in
+			-- sync to player pos
+			sync_pos(h)
+			h.tx += p.sx
+			h.ty += p.sy
+			--TODO: better projectile movement
 			local pos = angle_move(h.x, h.y, h.tx, h.ty, h.spd)
 			h.x += pos.x
 			h.y += pos.y
@@ -264,6 +275,10 @@ function d_orb_fx()
 end
 
 function d_beam_heal(h)
+	-- sync to player pos
+	sync_pos(h)
+	h.tx += p.sx
+	h.ty += p.sy
 	if (h.lt > 10) then
 		line(h.x, h.y, h.tx, h.ty, beam.clrs[1])
 	elseif (h.lt > 3) then
@@ -291,6 +306,8 @@ function d_aoe_heal()
 end
 
 function d_proj_heal(h)
+	-- sync to player pos
+	sync_pos(h)
 	circfill(h.x, h.y, 2, 10)
 	proj_fx(h.x, h.y)
 end
@@ -301,7 +318,7 @@ function is_in_range(e, r)
 end
 
 function is_hurt(e)
-	return (e.hp > 0) and (e.hp < e.maxhp)
+	return (e.hp > 0) and (e.hp < e.hpmax)
 end
 
 function closest_hurt(e, t)
