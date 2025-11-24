@@ -3,9 +3,9 @@ version 43
 __lua__
 --healers v0.1
 --by mdvn
+#include tools.lua
 #include main.lua
 #include gamestates.lua
-#include tools.lua
 #include coll.lua
 #include manager.lua
 #include map.lua
