@@ -33,6 +33,8 @@ en_s_range = 128
 function enemy:update()
 	--update colision position
 	self:update_col()
+	--update coords for mid of sprite
+	self:update_mid()
 	--default tgt is player
 	local tgt = p
 	--if there are entities ready
@@ -98,7 +100,7 @@ function spawn_enemies(num)
 		-- 	w = e.w + e.col_offset[3],
 		-- 	h = e.h + e.col_offset[4]
 		-- }
-		e:setup_col({ 1, 1, -2, -3 })
+		e:setup_col({ 0, 0, 0, 0 })
 		add(enemies, e)
 		game.live_ens += 1
 	end

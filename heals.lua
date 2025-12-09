@@ -19,7 +19,7 @@ function init_heals()
 	--base range for non aura heals
 	hrange = 32
 	--heals color palette
-	hclrs = { 11, 10, 3, 15 }
+	hclrs = { 9, 11, 10, 3 }
 	--staff orb glow lt
 	orb_lt = 12
 
@@ -112,10 +112,10 @@ function new_beam_heal()
 		local h = {
 			tgt = c,
 			type = "beam",
-			x = p.x + flr(p.w / 2),
-			y = p.y + flr(p.h / 2),
-			tx = c.x + flr(c.w / 2),
-			ty = c.y + flr(c.h / 2),
+			x = p.midx,
+			y = p.midy,
+			tx = c.x + c.w / 2,
+			ty = c.y + c.h / 2,
 			pwr = beam.pwr,
 			lt = 12
 		}
@@ -132,10 +132,10 @@ function new_aoe_heal()
 			local h = {
 				tgt = e,
 				type = "aoe",
-				x = p.x + flr(p.w / 2),
-				y = p.y + flr(p.h / 2),
-				tx = e.x + flr(e.w / 2),
-				ty = e.y + flr(e.h / 2),
+				x = p.midx,
+				y = p.midy,
+				tx = e.x + e.w / 2,
+				ty = e.y + e.h / 2,
 				pwr = aoe.pwr,
 				lt = 12
 			}
@@ -153,10 +153,10 @@ function new_proj_heal()
 		local h = {
 			tgt = r,
 			type = "projectile",
-			x = p.x + p.w,
-			y = p.y,
-			tx = r.x + flr(r.w / 2),
-			ty = r.y + flr(r.h / 2),
+			x = p.midx,
+			y = p.midy,
+			tx = r.x + r.w / 2,
+			ty = r.y + r.h / 2,
 			pwr = proj.pwr,
 			spd = proj.spd,
 			lt = 60
@@ -214,9 +214,9 @@ end
 
 function animate_heals()
 	--for the easing functions
-	dt = t - lt
-	lt = t
-	te += dt
+	-- dt = t - lt
+	-- lt = t
+	-- te += dt
 	for h in all(heals) do
 		if h.type == "projectile" then
 			-- sync to player pos
@@ -236,15 +236,10 @@ function animate_heals()
 			end
 		else
 			-- updates h pos in relation to player
-			h.x = p.x + flr(p.w / 2)
-			h.y = p.y + flr(p.h / 2)
+			h.x = p.midx
+			h.y = p.midy
 			-- places heal on tip of staff
-			if not p.flipx then
-				h.x += (p.w / 2) - 1
-			else
-				h.x -= p.w / 2
-			end
-			h.y -= p.h / 2
+			if (p.flipx) h.x -= 1
 		end
 		h.lt -= 1
 		--clear heal once lt over
@@ -258,18 +253,13 @@ function orb_glow()
 end
 
 function d_orb_fx()
-	local staffx, staffy
-	if not p.flipx then
-		staffx = p.x + p.w - 1
-	else
-		staffx = p.x
-	end
-	staffy = p.y - 1
+	local staffx = p.midx
+	if (p.flipx) staffx -= 1
 	if (orb_lt > 10) then
-		circfill(staffx, staffy, 2, hclrs[2])
-		circ(staffx, staffy, 2, hclrs[1])
+		circfill(staffx, p.midy, 2, hclrs[2])
+		circ(staffx, p.midy, 2, hclrs[1])
 	elseif (orb_lt > 6) then
-		circfill(staffx, staffy, 1, hclrs[2])
+		circfill(staffx, p.midy, 1, hclrs[2])
 	end
 	orb_lt -= 1
 end
@@ -291,8 +281,8 @@ end
 function d_aoe_heal()
 	local d = aoe.freq / 10
 	local c = -3
-	local x = p.x + flr(p.w / 2)
-	local y = p.y + flr(p.h / 2)
+	local x = p.midx
+	local y = p.midy
 	-- local r = ease_out_quad(te, aoe.range + c, -c, d)
 	local r = aoe.range
 	-- fillp(0x8124)
@@ -313,8 +303,7 @@ function d_proj_heal(h)
 end
 
 function is_in_range(e, r)
-	local d = approx_dist(p.x, p.y, e.x, e.y)
-	return d < r
+	return approx_dist(p.x, p.y, e.x, e.y) < r
 end
 
 function is_hurt(e)
@@ -322,8 +311,7 @@ function is_hurt(e)
 end
 
 function closest_hurt(e, t)
-	local ht = all_hurt(t)
-	return find_closest(e, ht)
+	return find_closest(e, all_hurt(t))
 end
 
 function all_hurt(t)

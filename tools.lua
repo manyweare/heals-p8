@@ -7,9 +7,36 @@ function log_to_terminal(text)
 	printh(text, "log", true)
 end
 
+-- vector functions
+-- @thacuber2a03's vector math library
+function vector(x, y) return { x = x or 0, y = y or 0 } end
+
+function v_polar(a, l) return vector(l * cos(a), l * sin(a)) end
+function v_add(a, b) return vector(a.x + b.x, a.y + b.y) end
+function v_sub(a, b) return v_add(a, v_neg(b)) end
+function v_scale(v, n) return vector(v.x * n, v.y * n) end
+function v_div(v, n) return v_scale(v, 1 / n) end
+function v_neg(v) return v_scale(v, -1) end
+
+function v_dot(a, b) return a.x * b.x + a.y * b.y end
+function v_magsq(v) return v_dot(v, v) end
+function v_mag(v) return sqrt(v_magsq(v)) end
+function v_setmag(v, n) return v_scale(v_norm(v), n) end
+function v_norm(v) return v_div(v, v_mag(v)) end
+
+function v_angle(v) return atan2(v.x, v.y) end
+function v_rot(v, a) return v_polar(a, v_mag(v)) end
+function v_rotby(v, a) return v_rot(v, v_angle(v) + a) end
+function v_lerp(a, b, t) return v_add(a, v_scale(v_sub(b, a), t)) end
+
+function v_limit(v, n)
+	if (v_magsq(v) > n * n) v = v_setmag(v, n)
+	return v
+end
+
 -- constructor
-object = {}
-function object:new(o)
+obj = {}
+function obj:new(o)
 	o = o or {}
 	local a = {}
 	-- copy in defaults first
@@ -26,7 +53,14 @@ function object:new(o)
 	return a
 end
 
--- functions used by all objects --
+-- functions used by all entities/enemies --
+
+object = obj:new()
+
+function object:update_mid()
+	self.midx = self.x + self.w / 2
+	self.midy = self.y + self.h / 2
+end
 
 function object:setup_col(t)
 	--collision rect offsets relative to self
@@ -61,6 +95,7 @@ end
 function object:die()
 	self.frame = 0
 	self.state = "dead"
+	drop_xp(vector(self.midx + p.sx, self.midy + p.sy), 1)
 	add(self.dead_table, self)
 	del(self.alive_table, self)
 	sfx(sfxt.thud)
@@ -86,7 +121,54 @@ function object:flip_spr(t)
 	return self.x > t.x
 end
 
--- update position relative to player's
+--agent functions
+--adapted from Daniel Shiffman's Nature of Code
+
+agent = obj:new({
+	pos = vector(),
+	vel = vector(),
+	accel = vector(),
+	maxspd = 1,
+	maxfrc = .1,
+	tgt = vector(63, 63)
+})
+
+function agent:update_pos()
+	if self.behavior == "seek" then
+		self:seek(self.tgt)
+		--not implemented yet
+		-- elseif self.behavior == "arrive" then
+		-- 	self:arrive(self.tgt, 12)
+		-- elseif self.behavior == "flock" then
+		-- 	self:flock(nearby)
+	end
+	-- self:separate(nearby)
+	-- basic locomotion
+	self:move()
+end
+
+function agent:apply_force(f)
+	self.accel = v_add(self.accel, f)
+end
+
+function agent:move()
+	self.accel = v_limit(self.accel, self.maxfrc)
+	self.vel = v_add(self.vel, self.accel)
+	self.vel = v_limit(self.vel, self.maxspd)
+	self.pos = v_add(self.pos, self.vel)
+	--update pos relative to player
+	self.pos = v_add(self.pos, vector(p.sx, p.sy))
+end
+
+function agent:seek(tgt)
+	local d = v_sub(tgt, self.pos)
+	d = v_setmag(d, self.maxspd)
+	local s = v_sub(d, self.vel)
+	self:apply_force(s)
+	return s
+end
+
+-- update position relative to player
 -- used for scrolling map
 function sync_pos(a)
 	a.x += p.sx
@@ -94,6 +176,7 @@ function sync_pos(a)
 end
 
 -- from Beckon the Hellspawn
+-- TODO: add author
 function get_inputs()
 	--register last inputs
 	for x = 1, 8 do
@@ -112,6 +195,10 @@ function get_inputs()
 			p_i_data[x] = 0
 		end
 	end
+end
+
+function round(n)
+	return (n % 1 < 0.5) and flr(n) or ceil(n)
 end
 
 -- from pico-8 wiki math section
@@ -134,6 +221,12 @@ function log10(n)
 	-- to change base, change the
 	-- divisor below to ln(base)
 	return t / 2.30259
+end
+
+-- map a value from one range to another
+-- similar to p5.js map
+function map_value(n, min1, max1, min2, max2)
+	return (((n - min1) * (max2 - min2)) / (max1 - min1)) + min2
 end
 
 -- function for calculating
@@ -231,17 +324,6 @@ function col(a, b, r)
 	return (x * x + y * y) < r * r
 end
 
-function player_col(e)
-	if p.inv_c < 1 then
-		if col(p, e, 4) then
-			add_shake(8)
-			p_take_damage(e.dmg, true)
-			return true
-		end
-	end
-	return false
-end
-
 --reset pos when out of map bounds
 function reset_pos(e)
 	e.x, e.y = rpd(128, 32)
@@ -271,9 +353,17 @@ function approx_dist(x1, y1, x2, y2)
 	return b0 * 0.9609 + a0 * 0.3984
 end
 
+function nearby(a, t, r)
+	local n = {}
+	for k, v in pairs(t) do
+		if (approx_dist(a.pos, v.pos) < r) add(n, v)
+	end
+	return n
+end
+
 function find_closest(o, t, r)
-	-- setting the initial dist check to 32767 (a large num)
-	-- because it is the highest int p8 supports
+	-- set initial dist check to 32767 (a large num)
+	-- because it is the largest int p8 supports
 	local c, d = 32767, 0
 	if (r == nil) r = c
 	local ce = {}
@@ -315,5 +405,47 @@ end
 --TODO: fix / doesn't work
 --draw collision
 function d_col(e)
-	line(e.col.x, e.col.y, e.col.w, e.col.h, 8)
+	rect(e.col.x, e.col.y, e.col.x + e.col.w, e.col.h + e.col.h, 8)
+end
+
+--tentacle functions
+function create_tentacles(n, start, r1, r2, l, s, c)
+	local t = {}
+	for i = 0, n - 1 do
+		add(
+			t, {
+				spos = start,
+				epos = rand_in_circle(start.x, start.y, l + rnd(4) - 2),
+				npos = vector(63, 63),
+				r1 = r1,
+				r2 = r2,
+				length = l,
+				samples = s,
+				colors = c
+			}
+		)
+	end
+	return t
+end
+
+--spos, epos, r1, r2, samples, colors
+function draw_tentacle(t)
+	-- t.epos = v_lerp(t.epos, t.npos, dt)
+	for i = 0, t.samples do
+		local x = t.spos.x + ((t.epos.x - t.spos.x) * i / t.samples)
+		local y = t.spos.y + ((t.epos.y - t.spos.y) * i / t.samples)
+		local r = t.r1 + ((t.r2 - t.r1) * i / t.samples)
+		local c = 1 + round((count(t.colors) - 1) * i / t.samples)
+		if r > 1.5 then
+			circfill(x, y, r, t.colors[c])
+		else
+			pset(x, y, t.colors[c])
+		end
+	end
+end
+
+function draw_tentacles(tentacles)
+	for t in all(tentacles) do
+		draw_tentacle(t)
+	end
 end

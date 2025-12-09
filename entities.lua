@@ -39,6 +39,7 @@ hero = object:new({
 	hit = false, --controls being hit animation
 	dist = 0,
 	state = "",
+	tentacles = {},
 	alive_table = heroes,
 	dead_table = dead_heroes,
 	alive_counter = game.live_es,
@@ -109,8 +110,17 @@ function spawn_entities(num)
 		-- 	w = h.w + h.col_offset[3],
 		-- 	h = h.h + h.col_offset[4]
 		-- }
+		h.midx = h.x + h.w / 2
+		h.midy = h.y + h.h / 2
 		h.dist = approx_dist(p.x, p.y, h.x, h.y)
-		h:setup_col({ 1, 1, -1, -4 })
+		-- function create_tentacles(n, start, r1, r2, l, s, c)
+		h.tentacles = create_tentacles(
+			8,
+			vector(h.x, h.y),
+			2, 1, 6, 8,
+			{ 7, 7, 7, 9 }
+		)
+		h:setup_col({ 0, 0, 0, 0 })
 		-- heroes begin in spawning state
 		add(spawning, h)
 		game.live_es += 1
@@ -235,6 +245,18 @@ function hero:anim_ready()
 	-- end
 end
 
+function hero:anim_tentacles()
+	for t in all(self.tentacles) do
+		local cx, cy = self.x + self.w / 2, self.y + self.h / 2
+		t.spos = vector(cx, cy)
+		sync_pos(t.epos)
+		if (t.epos.x < cx - t.length) or (t.epos.x > cx + t.length)
+				or (t.epos.y < cy - t.length) or (t.epos.y > cy + t.length) then
+			t.epos = rand_in_circle(cx, cy, t.length)
+		end
+	end
+end
+
 function hero:anim_dead()
 	self.spr = self.ss[1]
 	if (self.frame > 600) del(dead_heroes, self)
@@ -265,6 +287,7 @@ function update_entities()
 			end
 		elseif e.state == "ready" then
 			e:update_col()
+			e:anim_tentacles()
 			local tgt = p
 			if not is_empty(enemies) then
 				tgt = find_closest(e, enemies, e_s_range)
@@ -290,6 +313,9 @@ function draw_entities()
 	end
 	for e in all(heroes) do
 		sync_pos(e)
+		if e.state == "ready" then
+			draw_tentacles(e.tentacles)
+		end
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
 end

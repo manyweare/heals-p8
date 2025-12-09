@@ -1,5 +1,6 @@
 --player
 
+--bitmask values
 --l, r, u, d, lu, ru, rd, ld
 --dir_bit = { 1, 2, 4, 8, 5, 6, 10, 9 }
 --dirx = { -1, 1, 0, 0, -1, 1, 1, -1 }
@@ -7,6 +8,7 @@
 
 --TODO:
 --use quickset to save tokens
+--tentacles
 
 -- player class
 player = object:new()
@@ -34,13 +36,16 @@ p = player:new({
 	spr = 16,
 	ss = { 16, 17, 18, 19 },
 	f = 0,
-	animspd = 3,
+	animspd = 5,
 	flipx = false,
 	flipy = false,
-	col = {}
+	col = {},
+	tentacles = {}
 })
 
 function init_player()
+	p.midx = p.x + p.w / 2
+	p.midy = p.y + p.h / 2
 	--player collision rect offsets
 	p.col_offset = { 1, 2, -3, -2 }
 	--collision rect
@@ -52,9 +57,17 @@ function init_player()
 	}
 	--trail fx colors
 	tclrs = { 7, 11, -13 }
+	-- function create_tentacles(n, start, r1, r2, l, s, c)
+	p.tentacles = create_tentacles(
+		12,
+		vector(63, 63),
+		2, 1, 16, 12,
+		{ 7, 7, 7, 9 }
+	)
 end
 
 function draw_player()
+	draw_tentacles(p.tentacles)
 	if not (p.inv_c / 2 % 2 < 1) then
 		spr(1, p.x, p.y, 1, 1, p.flipx, p.flipy)
 	else
@@ -74,6 +87,18 @@ function update_player()
 	--regen
 	if time() % p.regen_spd <= .02 then
 		p.hp = min(p.hp + p.regen, p.hpmax)
+	end
+	--tentacles
+	for t in all(p.tentacles) do
+		-- TODO: each tentacle updates epos as p moves
+		local r = 12
+		sync_pos(t.epos)
+		if approx_dist(t.epos.x, t.epos.y, 63, 63) > r + 1 then
+			-- if (t.epos.x < 63 - r) or (t.epos.x > 63 + r)
+			-- 		or (t.epos.y < 63 - r) or (t.epos.y > 63 + r) then
+			-- t.npos = rand_in_circle(63, 63, r)
+			t.epos = rand_in_circle(63, 63, r)
+		end
 	end
 end
 
@@ -106,96 +131,15 @@ function anim_player()
 			if (p.spr > p.ss[#p.ss]) p.spr = p.ss[1]
 		end
 	else
-		--temp idle spr
+		--idle spr
 		p.spr = 17
 	end
 	--flip trail if player is flipped
-	local xo = p.w
-	if (p.flipx) xo -= p.w - 1
+	local xo = p.midx
+	if (p.flipx) xo -= 1
 	--fire fx
-	trail_fx(p.x + xo, p.y, tclrs, 1)
+	trail_fx(xo, p.midy, tclrs, 1)
 end
-
--- function move_player()
--- 	local dx, dy = 0, 0
--- 	--drag coeficient
--- 	local drg = .8
--- 	--uses a bitmask to remove triple presses
--- 	local btnm = btn() & 0b1111
--- 	--normalized diagonal coeficient
--- 	local n = .7
--- 	--input code
--- 	if (btnm == 1) then
--- 		--left
--- 		dx -= 1
--- 		dy = 0
--- 	elseif (btnm == 2) then
--- 		--right
--- 		dx += 1
--- 		dy = 0
--- 	elseif (btnm == 4) then
--- 		--up
--- 		dx = 0
--- 		dy -= 1
--- 	elseif (btnm == 8) then
--- 		--down
--- 		dx = 0
--- 		dy += 1
--- 	elseif (btnm == 5) then
--- 		--left + up
--- 		dx -= 1
--- 		dy -= 1
--- 	elseif (btnm == 6) then
--- 		--right + up
--- 		dx += 1
--- 		dy -= 1
--- 	elseif (btnm == 10) then
--- 		--right + down
--- 		dx += 1
--- 		dy += 1
--- 	elseif (btnm == 9) then
--- 		--left + down
--- 		dx -= 1
--- 		dy += 1
--- 	else
--- 		dx = 0
--- 		dy = 0
--- 	end
--- 	dx = mid(-p.maxspd, dx, p.maxspd)
--- 	dy = mid(-p.maxspd, dy, p.maxspd)
--- 	--normalize diagonals
--- 	if abs(dx) == abs(dy) then
--- 		dx *= n
--- 		dy *= n
--- 	end
--- 	wall_check(p)
--- 	if can_move(p, dx, dy) then
--- 		p.x += dx
--- 		p.y += dy
--- 	else
--- 		tdx, tdy = dx, dy
--- 		while not can_move(p, tdx, tdy) do
--- 			if (abs(tdx) <= 0.1) then
--- 				tdx = 0
--- 			else
--- 				tdx *= 0.9
--- 			end
--- 			if (abs(tdy) <= 0.1) then
--- 				tdy = 0
--- 			else
--- 				tdy *= 0.9
--- 			end
--- 		end
--- 		p.x += tdx
--- 		p.y += tdy
--- 	end
--- 	p.dx, p.dy = dx, dy
--- 	-- drag
--- 	if (abs(dx) > 0) dx *= drg
--- 	if (abs(dy) > 0) dy *= drg
--- 	if (abs(dx) < 0.02) dx = 0
--- 	if (abs(dy) < 0.02) dy = 0
--- end
 
 --player take damage
 --d is dmg
@@ -209,6 +153,17 @@ function p:take_dmg(d, i)
 	self.hp = max(self.hp - max(1, d), 0)
 	if (i) self.inv_c = self.inv_f
 	if (self.hp <= 0) game_over()
+end
+
+function player_col(e)
+	if p.inv_c < 1 then
+		if col(p, e, 4) then
+			add_shake(8)
+			p:take_dmg(e.dmg, true)
+			return true
+		end
+	end
+	return false
 end
 
 --draws circle around player

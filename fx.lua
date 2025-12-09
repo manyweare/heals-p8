@@ -14,19 +14,31 @@ function update_fx()
 		if f.t > f.lt then
 			del(fx, f)
 		end
-		if f.t / f.lt < 1 / #f.clrs then
-			f.c = f.clrs[1]
-		elseif f.t / f.lt < 2 / #f.clrs then
-			f.c = f.clrs[2]
-			f.r = 3 * (f.r / 4)
-		elseif f.t / f.lt < 3 / #f.clrs then
-			f.c = f.clrs[3]
-			f.r = f.r / 2
+		if f.is_sw then
+			f.r += f.maxr / f.lt
+			if f.t / f.lt < 1 / #f.clrs then
+				f.c = f.clrs[1]
+			elseif f.t / f.lt < 2 / #f.clrs then
+				f.c = f.clrs[2]
+			elseif f.t / f.lt < 3 / #f.clrs then
+				f.c = f.clrs[3]
+			else
+				f.c = f.clrs[4]
+			end
 		else
-			f.c = f.clrs[4]
-			f.r = f.r / 4
+			if f.t / f.lt < 1 / #f.clrs then
+				f.c = f.clrs[1]
+			elseif f.t / f.lt < 2 / #f.clrs then
+				f.c = f.clrs[2]
+				f.r = 3 * (f.r / 4)
+			elseif f.t / f.lt < 3 / #f.clrs then
+				f.c = f.clrs[3]
+				f.r = f.r / 2
+			else
+				f.c = f.clrs[4]
+				f.r = f.r / 4
+			end
 		end
-		-- f.r -= .1
 		f.x += f.dx
 		f.y += f.dy
 	end
@@ -44,7 +56,7 @@ function draw_fx()
 	end
 end
 
-function add_fx(x, y, lt, dx, dy, r, clrs)
+function add_fx(x, y, lt, dx, dy, r, clrs, is_sw)
 	local f = {
 		x = x,
 		y = y,
@@ -56,6 +68,11 @@ function add_fx(x, y, lt, dx, dy, r, clrs)
 		c = 0,
 		clrs = clrs
 	}
+	if is_sw then
+		f.is_sw = true
+		f.maxr = f.r
+		f.r = 0
+	end
 	add(fx, f)
 end
 
@@ -68,7 +85,7 @@ function lvlup_fx()
 			1 - rnd(2),
 			1 - rnd(2),
 			rnd(1) + 2,
-			{ 8, 7, 9 }
+			{ 7, 8, 9 }
 		)
 	end
 end
@@ -92,7 +109,7 @@ function trail_fx(x, y, clrs)
 	local emit = rnd() < .5
 	if emit then
 		add_fx(
-			x - 1,
+			x,
 			y,
 			4 + rnd(4),
 			0,
@@ -154,7 +171,7 @@ function aoe_fx_fill(x, y, r, clrs)
 			0,
 			0,
 			1,
-			{ 3, 15, 2 }
+			clrs
 		)
 	end
 end
@@ -168,7 +185,7 @@ function proj_fx(x, y)
 			0,
 			0,
 			rnd(1) + 1,
-			{ 11, 10, 15 }
+			{ 10, 11, 9 }
 		)
 	end
 end
@@ -192,10 +209,11 @@ function explode(x, y, r, t, num)
 	add_fx(
 		x,
 		y,
-		3,
+		7,
 		0,
 		0,
-		min(r * 2, 6),
-		t
+		16,
+		{ 7, 9, 3, 2 },
+		true
 	)
 end

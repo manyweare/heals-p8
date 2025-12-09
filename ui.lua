@@ -98,6 +98,7 @@ function draw_hud()
 	for h in all(heroes) do
 		d_hp_bar(h)
 	end
+	line()
 	-- border
 	-- rect(ui.x, ui.y, ui.x + 127, ui.y + 127, 1)
 end
@@ -153,7 +154,7 @@ end
 function d_hp_bar(a)
 	if (a == p and a.hp >= a.hpmax) return
 	local hp = min((a.hp / a.hpmax) * a.w, a.w)
-	line(a.x, a.y - 4, a.x + a.w, a.y - 4, 7)
+	line(a.x, a.y - 4, a.x + a.w, a.y - 4, 1)
 	line(a.x, a.y - 4, a.x + hp, a.y - 4, 8)
 end
 
