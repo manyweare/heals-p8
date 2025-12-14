@@ -1,11 +1,8 @@
 --tools
 
---TODOS:
---fix draw_col function to help debug
-
-function log_to_terminal(text)
-	printh(text, "log", true)
-end
+-- function log_to_terminal(text)
+-- 	printh(text, "log", true)
+-- end
 
 -- vector functions
 -- @thacuber2a03's vector math library
@@ -34,9 +31,24 @@ function v_limit(v, n)
 	return v
 end
 
--- constructor
-obj = {}
-function obj:new(o)
+--OOP example by kevinthompson
+--https://github.com/kevinthompson/object-oriented-pico-8?tab=readme-ov-file
+-- class = setmetatable(
+-- 	{
+-- 		new = function(_ENV, tbl)
+-- 			return setmetatable(
+-- 				tbl or {}, {
+-- 					__index = _ENV
+-- 				}
+-- 			)
+-- 		end
+-- 	}, { __index = _ENV }
+-- )
+
+-- object constructor
+
+object = {}
+function object:new(o)
 	o = o or {}
 	local a = {}
 	-- copy in defaults first
@@ -52,10 +64,6 @@ function obj:new(o)
 	self.__index = self
 	return a
 end
-
--- functions used by all entities/enemies --
-
-object = obj:new()
 
 function object:update_mid()
 	self.midx = self.x + self.w / 2
@@ -92,25 +100,12 @@ function object:take_dmg(dmg)
 	if (self.hp <= 0) self:die()
 end
 
-function object:die()
-	self.frame = 0
-	self.state = "dead"
-	drop_xp(vector(self.midx + p.sx, self.midy + p.sy), 1)
-	add(self.dead_table, self)
-	del(self.alive_table, self)
-	sfx(sfxt.thud)
-	self.dead_counter += 1
-	self.alive_counter -= 1
-end
-
 function object:move_to(t)
 	local a = get_dir(t.x, t.y, self.x, self.y)
-	local dx = cos(a)
-	local dy = sin(a)
+	local dx, dy = cos(a), sin(a)
 	if not rect_rect_collision(self.col, t.col) then
 		--update the direction vars to allow is_moving check
-		self.dx = dx
-		self.dy = dy
+		self.dx, self.dy = dx, dy
 		self.x -= self.dx * self.spd
 		self.y -= self.dy * self.spd
 	end
@@ -124,12 +119,10 @@ end
 --agent functions
 --adapted from Daniel Shiffman's Nature of Code
 
-agent = obj:new({
+agent = object:new({
 	pos = vector(),
 	vel = vector(),
 	accel = vector(),
-	maxspd = 1,
-	maxfrc = .1,
 	tgt = vector(63, 63)
 })
 
@@ -166,6 +159,15 @@ function agent:seek(tgt)
 	local s = v_sub(d, self.vel)
 	self:apply_force(s)
 	return s
+end
+
+function die(o)
+	o.frame = 0
+	o.state = "dead"
+	add(o.dead_table, o)
+	del(o.alive_table, o)
+	o.dead_counter += 1
+	o.alive_counter -= 1
 end
 
 -- update position relative to player
@@ -273,7 +275,7 @@ end
 function quickset(obj, keys, vals)
 	local v, k = split(vals), split(keys)
 	-- remove/comment out the assert below before publication
-	assert(#v == #k, "quickset() error: key/val count mismatch (" .. #k .. " keys, " .. #v .. " values)")
+	assert(#v == #k, "quickset() error: k/v count mismatch (" .. #k .. " keys, " .. #v .. " values)")
 	for i = 1, #k do
 		local p, o = v[i]
 		if p == "false" then
@@ -322,6 +324,14 @@ function col(a, b, r)
 	local y = abs(a.y - b.y)
 	if y > r then return false end
 	return (x * x + y * y) < r * r
+end
+
+--rect rect AABB
+function rect_rect_collision(r1, r2)
+	return r1.x < r2.x + r2.w
+			and r1.x + r1.w > r2.x
+			and r1.y < r2.y + r2.h
+			and r1.y + r1.h > r2.y
 end
 
 --reset pos when out of map bounds
@@ -404,9 +414,9 @@ end
 
 --TODO: fix / doesn't work
 --draw collision
-function d_col(e)
-	rect(e.col.x, e.col.y, e.col.x + e.col.w, e.col.h + e.col.h, 8)
-end
+-- function d_col(e)
+-- 	rect(e.col.x, e.col.y, e.col.x + e.col.w, e.col.h + e.col.h, 8)
+-- end
 
 --tentacle functions
 function create_tentacles(n, start, r1, r2, l, s, c)

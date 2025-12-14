@@ -34,6 +34,7 @@ function update_ui()
 	for n in all(nums) do
 		n.f += 1
 		n.y -= .25
+		sync_pos(n)
 		if (n.f > n.lt) del(nums, n)
 	end
 end
@@ -63,7 +64,7 @@ end
 
 function draw_ui()
 	print(version, ui.x + 117, ui.y + 122, 0)
-	print(version, ui.x + 116, ui.y + 121, 1)
+	print(version, ui.x + 116, ui.y + 121, 2)
 	-- numbers animation
 	for n in all(nums) do
 		--shadow
@@ -88,8 +89,8 @@ function draw_hud()
 	spr(ui.spr[2], ui.x + 10, ui.y + 1)
 	print(":" .. tostr(game.live_es), ui.x + 17, ui.y + 3, 7)
 	--current live enemies
-	spr(ui.spr[1], ui.x + 33, ui.y + 1)
-	print(":" .. tostr(game.live_ens), ui.x + 41, ui.y + 3, 7)
+	-- spr(ui.spr[1], ui.x + 33, ui.y + 1)
+	-- print(":" .. tostr(game.live_ens), ui.x + 41, ui.y + 3, 7)
 	--text
 	print("lvl:" .. tostr(p.lvl), ui.x + 92, ui.y + 3, 7)
 	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(game.xpmax), ui.x + 90, ui.y + 3, 7)

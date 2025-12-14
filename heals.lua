@@ -232,12 +232,12 @@ function animate_heals()
 			if d < 1 then
 				fire_heal(h)
 				explode(h.x, h.y, 3, { 7, 11, 15 }, 7)
+				sfx(sfxt.explode)
 				del(heals, h)
 			end
 		else
 			-- updates h pos in relation to player
-			h.x = p.midx
-			h.y = p.midy
+			h.x, h.y = p.midx, p.midy
 			-- places heal on tip of staff
 			if (p.flipx) h.x -= 1
 		end

@@ -16,14 +16,55 @@ enemy state machine: -DONE???
 	if dead, anim dead -DONE
 ]]
 
--- enemy class
-enemy = object:new()
-
 en_spw_tmr = 0
 enemies = {}
 dead_enemies = {}
 --enemy search range
-en_s_range = 128
+en_s_range = 86
+
+--enemy class
+enemy = object:new({
+	name = "enemy",
+	x = 0,
+	y = 0,
+	h = 8,
+	w = 8,
+	dx = 0,
+	dy = 0,
+	tgt = {},
+	attframe = 1,
+	hit = false,
+	frame = 1, --current frame
+	flip = false, --flip sprite
+	col = {},
+	state = "alive",
+	alive_table = enemies,
+	dead_table = dead_enemies,
+	alive_counter = game.live_ens,
+	dead_counter = game.dead_ens
+})
+
+--enemy types
+en_small = enemy:new({
+	hp = 5,
+	dmg = .5,
+	spd = .25,
+	xp = 3,
+	ss = { 64, 65, 66, 67, 68 },
+	spr = 64,
+	attspd = 15,
+	animspd = 30
+})
+en_medium = enemy:new({
+	hp = 10,
+	dmg = 1,
+	spd = .25,
+	xp = 5,
+	ss = { 80, 81, 82, 83, 68 },
+	spr = 80,
+	attspd = 20,
+	animspd = 30
+})
 
 -- TODO: subclasses
 -- en_type_1 = enemy:new()
@@ -59,47 +100,19 @@ function enemy:draw()
 end
 
 function init_enemies()
-	spawn_enemies(3)
+	-- spawn_enemies(6)
 end
 
 function spawn_enemies(num)
 	for i = 1, num do
-		local e = enemy:new({
-			x = flr(rnd(120)),
-			y = flr(rnd(120)),
-			h = 8,
-			w = 8,
-			dx = 0,
-			dy = 0,
-			ss = { 64, 65, 66, 67, 68 }, --spritesheet
-			spr = 64, --current sprite
-			hp = 5,
-			dmg = .5,
-			spd = .25,
-			tgt = {},
-			attspd = 15,
-			attframe = 1,
-			animspd = 30,
-			hit = false,
-			frame = 1, --current frame
-			flip = false, --flip sprite
-			col = {},
-			att_sfx = 5,
-			state = "alive",
-			alive_table = enemies,
-			dead_table = dead_enemies,
-			alive_counter = game.live_ens,
-			dead_counter = game.dead_ens
-		})
-		--collision rect offsets relative to e
-		-- e.col_offset = { 1, 1, -2, -3 }
-		-- --collision rect
-		-- e.col = {
-		-- 	x = e.x + e.col_offset[1],
-		-- 	y = e.y + e.col_offset[2],
-		-- 	w = e.w + e.col_offset[3],
-		-- 	h = e.h + e.col_offset[4]
-		-- }
+		local e = {}
+		local pos = rand_in_circle(p.midx, p.midy, 64)
+		--for every 3, spawn 1 medium
+		if num % 3 == 0 then
+			e = en_medium:new({ x = pos.x, y = pos.y })
+		else
+			e = en_small:new({ x = pos.x, y = pos.y })
+		end
 		e:setup_col({ 0, 0, 0, 0 })
 		add(enemies, e)
 		game.live_ens += 1
@@ -110,7 +123,7 @@ function update_enemies()
 	en_spw_tmr += 1
 	if (en_spw_tmr % 90 == 0) then
 		en_spw_tmr = 0
-		spawn_enemies(1 + flr(rnd(p.lvl / 3)))
+		spawn_enemies(2 + flr(rnd(p.lvl / 3)))
 	end
 	for e in all(enemies) do
 		e:update()
@@ -164,16 +177,10 @@ function enemy:anim_dead()
 	if (self.frame > 600) del(dead_enemies, self)
 end
 
--- function enemy:take_dmg(dmg)
--- 	self.hit = true
--- 	self.hp -= dmg
--- 	if (self.hp <= 0) self:kill()
--- end
-
 function enemy:attack(tgt)
 	if self.attframe < self.attspd / 2 then
 		if (self.attframe == 1) then
-			sfx(self.att_sfx, 2)
+			sfx(sfxt.en_atk)
 			if tgt == p then
 				p:take_dmg(self.dmg, true)
 			else
@@ -189,13 +196,17 @@ function enemy:attack(tgt)
 	self.attframe += 1
 end
 
--- function enemy:die()
--- 	-- self.frame = 0
--- 	-- self.state = "dead"
--- 	-- add(dead_enemies, self)
--- 	-- del(enemies, self)
--- 	-- sfx(sfxt.thud, 2)
--- 	game.dead_ens += 1
--- 	game.live_ens -= 1
--- 	self:die(enemies, dead_enemies)
+-- function enemy:take_dmg(dmg)
+-- 	self.hit = true
+-- 	self.hp -= dmg
+-- 	if (self.hp <= 0) self:die()
 -- end
+
+function enemy:die()
+	sfx(sfxt.en_die)
+	local mid = vector(self.midx, self.midy)
+	sync_pos(mid)
+	bloodfx(mid.x, mid.y)
+	drop_xp(mid, self.xp)
+	die(self)
+end

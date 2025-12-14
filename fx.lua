@@ -79,13 +79,13 @@ end
 function lvlup_fx()
 	for i = 0, 1 do
 		add_fx(
-			p.x + p.w / 2,
-			p.y + p.h / 2,
-			10 + rnd(10),
+			p.midx,
+			p.midy,
+			15 + rnd(15),
 			1 - rnd(2),
 			1 - rnd(2),
 			rnd(1) + 2,
-			{ 7, 8, 9 }
+			{ 7, 10, 9, 2 }
 		)
 	end
 end
@@ -111,7 +111,7 @@ function trail_fx(x, y, clrs)
 		add_fx(
 			x,
 			y,
-			4 + rnd(4),
+			6 + rnd(6),
 			0,
 			rnd(1) - 1.1,
 			1,
@@ -121,31 +121,6 @@ function trail_fx(x, y, clrs)
 end
 
 function aoe_fx(x, y, r, clrs)
-	-- TODO: radiating waves
-	-- for i = 0, 2 do
-	-- 	local pt = rand_in_circle(x, y, r / 3)
-	-- 	add_fx(
-	-- 		pt.x,
-	-- 		pt.y + 2,
-	-- 		4 + rnd(2),
-	-- 		0,
-	-- 		-.3,
-	-- 		1,
-	-- 		clrs
-	-- 	)
-	-- end
-	-- for i = 0, 4 do
-	-- 	local pt = rand_in_circle(x, y, 2 * r / 3)
-	-- 	add_fx(
-	-- 		pt.x,
-	-- 		pt.y + 2,
-	-- 		6 + rnd(2),
-	-- 		0,
-	-- 		-.3,
-	-- 		1,
-	-- 		clrs
-	-- 	)
-	-- end
 	for i = 0, 6 do
 		local pt = rand_in_circle(x, y, r)
 		add_fx(
@@ -158,7 +133,6 @@ function aoe_fx(x, y, r, clrs)
 			clrs
 		)
 	end
-	-- aoe_fx_fill(x, y, r, clrs)
 end
 
 function aoe_fx_fill(x, y, r, clrs)
@@ -192,7 +166,6 @@ end
 
 -- add_fx(x, y, lt, dx, dy, r, clrs)
 
--- TODO: add circle shockwave
 function explode(x, y, r, t, num)
 	for i = 0, num do
 		add_fx(
@@ -216,4 +189,20 @@ function explode(x, y, r, t, num)
 		{ 7, 9, 3, 2 },
 		true
 	)
+end
+
+-- add_fx(x, y, lt, dx, dy, r, clrs)
+
+function bloodfx(x, y)
+	for i = 0, 32 do
+		add_fx(
+			x,
+			y,
+			7 + rnd(8),
+			rnd(2) - 1,
+			rnd(2) - 1,
+			1,
+			{ 8, 8, 12, 14 }
+		)
+	end
 end

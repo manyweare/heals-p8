@@ -31,9 +31,9 @@ hero = object:new({
 	w = 8,
 	h = 8,
 	spr = 0,
-	att_sfx = 5,
 	att_frame = 1,
 	frame = 0,
+	col = {},
 	flip = false, --sprite flip x
 	tgl = true, --controls toggle-based animations
 	hit = false, --controls being hit animation
@@ -50,10 +50,10 @@ hero = object:new({
 h_melee = hero:new({
 	type = "melee",
 	hpmax = 4,
-	dmg = 1,
+	dmg = 1.5,
 	spd = .5,
 	attspd = 15,
-	ss = { 54, 55, 56, 57, 58 }
+	ss = split("54, 55, 56, 57, 58")
 })
 h_tank = hero:new({
 	type = "tank",
@@ -61,7 +61,7 @@ h_tank = hero:new({
 	dmg = .5,
 	spd = .25,
 	attspd = 10,
-	ss = { 38, 39, 40, 41, 42 }
+	ss = split("38, 39, 40, 41, 42")
 })
 h_ranged = hero:new({
 	type = "ranged",
@@ -69,7 +69,7 @@ h_ranged = hero:new({
 	dmg = .25,
 	spd = .75,
 	attspd = 15,
-	ss = { 22, 23, 24, 25, 26 }
+	ss = split("22, 23, 24, 25, 26")
 })
 
 function init_entities()
@@ -85,12 +85,11 @@ function spawn_entities(num)
 			-- spd = .5,
 			-- attspd = 15,
 			attframe = 1,
-			att_sfx = 5,
-			x = flr(rnd(120)),
-			y = flr(rnd(120)) + ui.h,
+			x = max(33, rnd(93)),
+			y = max(33, rnd(93)),
 			-- w = 8,
 			-- h = 8,
-			ss = { 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42 },
+			ss = split("32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42"),
 			spr = 33,
 			-- dist = 0,
 			-- decay_state = 0,
@@ -100,16 +99,6 @@ function spawn_entities(num)
 			-- hit = false, --controls being hit animation
 			state = "spawning"
 		})
-		-- --collision rect offsets relative to h
-		-- -- x,y,w,h
-		-- h.col_offset = { 0, 0, -1, -2 }
-		-- --collision rect
-		-- h.col = {
-		-- 	x = h.x + h.col_offset[1],
-		-- 	y = h.y + h.col_offset[2],
-		-- 	w = h.w + h.col_offset[3],
-		-- 	h = h.h + h.col_offset[4]
-		-- }
 		h.midx = h.x + h.w / 2
 		h.midy = h.y + h.h / 2
 		h.dist = approx_dist(p.x, p.y, h.x, h.y)
@@ -120,7 +109,7 @@ function spawn_entities(num)
 			2, 1, 6, 8,
 			{ 7, 7, 7, 9 }
 		)
-		h:setup_col({ 0, 0, 0, 0 })
+		h:setup_col({ -2, -2, 2, 2 })
 		-- heroes begin in spawning state
 		add(spawning, h)
 		game.live_es += 1
@@ -140,7 +129,7 @@ end
 function hero:attack(tgt)
 	if self.attframe < self.attspd / 2 then
 		if (self.attframe == 1) then
-			-- sfx(e.att_sfx, 2)
+			sfx(sfxt.hero_atk, 2)
 			tgt:take_dmg(self.dmg)
 		end
 		self.spr = 41 --hardcoded attack sprite
@@ -159,25 +148,15 @@ end
 -- end
 
 function hero:heal(hpwr)
-	self.hp = max(self.hpmax, self.hp + hpwr)
+	self.hp = min(self.hpmax, self.hp + hpwr)
 	self.decay_state = 0
 	self.frame = 0
 end
 
--- function hero:die()
--- 	-- self.frame = 0
--- 	-- self.state = "dead"
--- 	-- add(dead_heroes, self)
--- 	-- del(heroes, self)
--- 	-- sfx(sfxt.thud)
--- 	game.dead_es += 1
--- 	game.live_es -= 1
--- 	self:die(heroes, dead_heroes)
--- end
-
--- function hero:toggle()
--- 	self.spr = 1
--- end
+function hero:die()
+	sfx(sfxt.hero_die)
+	die(self)
+end
 
 function hero:anim()
 	self.spr = self.ss[flr(self.hp + 1)]
@@ -205,22 +184,9 @@ function hero:anim_spawn()
 end
 
 function hero:anim_healed()
-	if self.frame == 1 then
-		addxp(1)
-		sfx(sfxt.healed)
-		game.healed_es += 1
-	end
-	if self.frame <= 15 then
-		if (self.frame % 5 == 0) then self.tgl = not self.tgl end
-		if self.tgl then
-			self.spr = 36
-		else
-			self.spr = 37
-		end
-	elseif self.frame > 15 then
-		self.frame = 0
-		self.state = "ready"
-	end
+	sfx(sfxt.healed)
+	game.healed_es += 1
+	self.state = "ready"
 end
 
 function hero:anim_ready()

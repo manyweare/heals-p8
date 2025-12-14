@@ -168,10 +168,14 @@ end
 
 --draws circle around player
 function draw_range()
-	fillp(0x7fdf)
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 16, 2)
-	fillp(0x7ada)
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange + 8, 2)
-	fillp()
-	circfill(p.x + flr(p.w / 2), p.y + flr(p.h / 2), hrange, 2)
+	local r = hrange + 16
+	--inverted draw
+	poke(0x5f34, 0x2)
+	-- fillp(0x7fdf)
+	-- circfill(p.midx, p.midy, r + rnd(2), 2 | 0x1800)
+	-- fillp(0x7ada)
+	-- circfill(p.midx, p.midy, r + 12 + rnd(2), 2 | 0x1800)
+	-- fillp()
+	circfill(p.midx, p.midy, r, 0 | 0x1800)
+	-- fillp()
 end
