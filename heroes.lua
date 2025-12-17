@@ -1,19 +1,15 @@
 --entities
 
 --TODO:
---OOP system
+--OOP system -INPROGRESS
 --use quickset to save tokens
---hero types
+--hero types -INPROGRESS
 --fix being hit anim: use a color change instead of spr change
---fix attack anim not running -DONE
 --create more complex movement
 --return to player side if no enemies
 --don't overlap player
 --don't spawn on invalid tiles
 --spawn scheduler
-
--- hero class
--- hero = object:new()
 
 spw_tmr = 0
 decay_rate = 120
@@ -22,7 +18,7 @@ heroes = {}
 spawning = {}
 dead_heroes = {}
 
--- class definition
+-- hero class
 hero = object:new({
 	hp = 0,
 	decay_state = 0,
@@ -35,8 +31,8 @@ hero = object:new({
 	frame = 0,
 	col = {},
 	flip = false, --sprite flip x
-	tgl = true, --controls toggle-based animations
-	hit = false, --controls being hit animation
+	tgl = true, --for toggle-based animations
+	hit = false, --for being hit animation
 	dist = 0,
 	state = "",
 	tentacles = {},
@@ -80,40 +76,37 @@ function spawn_entities(num)
 	for i = 1, num do
 		local h = h_melee:new({
 			hp = 1 + flr(rnd(3)),
-			-- hpmax = 4,
-			-- dmg = 1,
-			-- spd = .5,
-			-- attspd = 15,
 			attframe = 1,
 			x = max(33, rnd(93)),
 			y = max(33, rnd(93)),
-			-- w = 8,
-			-- h = 8,
 			ss = split("32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42"),
 			spr = 33,
-			-- dist = 0,
-			-- decay_state = 0,
-			-- frame = 0,
 			flip = rnd() < .5,
-			-- tgl = true, --controls toggle-based animations
-			-- hit = false, --controls being hit animation
 			state = "spawning"
 		})
 		h.midx = h.x + h.w / 2
 		h.midy = h.y + h.h / 2
 		h.dist = approx_dist(p.x, p.y, h.x, h.y)
-		-- function create_tentacles(n, start, r1, r2, l, s, c)
 		h.tentacles = create_tentacles(
-			8,
-			vector(h.x, h.y),
-			2, 1, 6, 8,
-			{ 7, 7, 7, 9 }
+			8, vector(h.x, h.y), 2, 1, 6, 8,
+			split("7, 7, 7, 9")
 		)
-		h:setup_col({ -2, -2, 2, 2 })
+		h:setup_col(split("-2, -2, 2, 2"))
 		-- heroes begin in spawning state
 		add(spawning, h)
 		game.live_es += 1
 	end
+end
+
+function hero:update()
+end
+
+function hero:draw()
+	sync_pos(self)
+	if self.state == "ready" then
+		draw_tentacles(self.tentacles)
+	end
+	spr(self.spr, self.x, self.y, 1, 1, self.flip)
 end
 
 function hero:decay()
@@ -141,12 +134,6 @@ function hero:attack(tgt)
 	self.attframe += 1
 end
 
--- function hero:take_dmg(dmg)
--- 	self.hit = true
--- 	self.hp -= dmg
--- 	if (self.hp <= 0) self:die()
--- end
-
 function hero:heal(hpwr)
 	self.hp = min(self.hpmax, self.hp + hpwr)
 	self.decay_state = 0
@@ -164,19 +151,18 @@ end
 
 function hero:anim_spawn()
 	--if animated for 30 frames
-	--set it to the right spr and move e to heroes
+	--set it to the right spr and move to heroes
 	--otherwise blink
 	if self.frame == 30 then
 		self.frame = 0
-		self.tgl = true
+		-- self.tgl = true
 		self.state = "hurt"
 		self:anim()
 		add(heroes, self)
 		del(spawning, self)
 		return
 	end
-	if (self.frame % 3 == 0) self.tgl = not self.tgl
-	if self.tgl then
+	if (self.frame % 5 < 2.5) then
 		self:anim()
 	else
 		self:toggle()
@@ -190,36 +176,10 @@ function hero:anim_healed()
 end
 
 function hero:anim_ready()
-	if (self.frame % 5 == 0) self.tgl = not self.tgl
-	if self.tgl then
+	if (self.frame % 5 < 2.5) then
 		self.spr = 38
 	else
 		self.spr = 39
-	end
-	--TODO: getting hit animation
-	-- --flash to hit sprite instead of reg sprite if hit
-	-- if e.hit then
-	-- 	e.spr = 40
-	-- else
-	-- 	e.spr = 39
-	-- end
-	-- end
-	--reset to avoid hit flash more than once
-	-- if (e.frame > 10) then
-	-- 	e.hit = false
-	-- 	e.frame = 0
-	-- end
-end
-
-function hero:anim_tentacles()
-	for t in all(self.tentacles) do
-		local cx, cy = self.x + self.w / 2, self.y + self.h / 2
-		t.spos = vector(cx, cy)
-		sync_pos(t.epos)
-		if (t.epos.x < cx - t.length) or (t.epos.x > cx + t.length)
-				or (t.epos.y < cy - t.length) or (t.epos.y > cy + t.length) then
-			t.epos = rand_in_circle(cx, cy, t.length)
-		end
 	end
 end
 
@@ -236,6 +196,8 @@ function update_entities()
 	end
 	for e in all(spawning) do
 		e.frame += 1
+		e:update_mid()
+		e:update_col()
 		e:anim_spawn()
 	end
 	for e in all(dead_heroes) do
@@ -244,6 +206,8 @@ function update_entities()
 	end
 	for e in all(heroes) do
 		e.frame += 1
+		e:update_mid()
+		e:update_col()
 		if e.state == "hurt" then
 			if e.hp < e.hpmax then
 				e:decay()
@@ -252,8 +216,7 @@ function update_entities()
 				e:anim_healed()
 			end
 		elseif e.state == "ready" then
-			e:update_col()
-			e:anim_tentacles()
+			anim_tentacles(e)
 			local tgt = p
 			if not is_empty(enemies) then
 				tgt = find_closest(e, enemies, e_s_range)
@@ -274,21 +237,15 @@ end
 
 function draw_entities()
 	for e in all(spawning) do
-		sync_pos(e)
-		spr(e.spr, e.x, e.y, 1, 1, e.flip)
+		e:draw()
 	end
 	for e in all(heroes) do
-		sync_pos(e)
-		if e.state == "ready" then
-			draw_tentacles(e.tentacles)
-		end
-		spr(e.spr, e.x, e.y, 1, 1, e.flip)
+		e:draw()
 	end
 end
 
 function draw_dead_es()
 	for e in all(dead_heroes) do
-		sync_pos(e)
-		spr(e.spr, e.x, e.y, 1, 1, e.flip)
+		e:draw()
 	end
 end

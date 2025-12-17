@@ -8,20 +8,20 @@
 -- boss art
 -- level art
 -- hurt entity offscreen ui icon
--- xp pickup sprite
+-- xp pickup sprite -DONE
 
 -- DESIGN/CODE:
 -- start screen
--- "heal thyself" intro
+-- "heal thyself" intro -INPROGRESS
 -- adjust growth curve
 -- improve state machine -DONE
 -- leveling system -INPROGRESS
 -- fix cobblestoning -DONE
 -- game over screen -INPROGRESS
 -- boss
--- enemy types
+-- enemy types -INPROGRESS
 -- enemies that shoot projectiles
--- change xp system to use pickups
+-- change xp system to use pickups -DONE
 -- level design
 -- level progresses upwards towards bosses -CANCELED
 -- boss spawns after X time or X kills or...?
@@ -48,10 +48,8 @@ function _init()
 	pal({ [0] = 0, 1, 129, 3, 133, 5, 6, 7, 8, 138, 139, 11, 141, 13, 130, 131 }, 1)
 	-- pal({ [0] = 0, 1, 129, 3, 133, 5, 6, 7, 8, 9, 135, 141, 12, 142, 11, 138 }, 1)
 	--easing vars--
-	_t = 0
 	lt = time()
-	te = 0
-	dt = 0
+	_t, te, dt = 0, 0, 0
 	--setup--
 	init_game()
 end

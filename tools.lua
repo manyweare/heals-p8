@@ -1,11 +1,6 @@
 --tools
 
--- function log_to_terminal(text)
--- 	printh(text, "log", true)
--- end
-
--- vector functions
--- @thacuber2a03's vector math library
+-- vector library by @thacuber2a03
 function vector(x, y) return { x = x or 0, y = y or 0 } end
 
 function v_polar(a, l) return vector(l * cos(a), l * sin(a)) end
@@ -31,7 +26,7 @@ function v_limit(v, n)
 	return v
 end
 
---OOP example by kevinthompson
+--OOP implementation by kevinthompson
 --https://github.com/kevinthompson/object-oriented-pico-8?tab=readme-ov-file
 -- class = setmetatable(
 -- 	{
@@ -46,20 +41,18 @@ end
 -- )
 
 -- object constructor
-
 object = {}
 function object:new(o)
 	o = o or {}
 	local a = {}
-	-- copy in defaults first
+	-- copy defaults
 	for k, v in pairs(self) do
 		a[k] = v
 	end
-	-- write in extra parameters
+	-- extra parameters
 	for k, v in pairs(o) do
 		a[k] = v
 	end
-	-- metatable assignment
 	setmetatable(a, self)
 	self.__index = self
 	return a
@@ -129,14 +122,13 @@ agent = object:new({
 function agent:update_pos()
 	if self.behavior == "seek" then
 		self:seek(self.tgt)
-		--not implemented yet
+		--not implemented
 		-- elseif self.behavior == "arrive" then
 		-- 	self:arrive(self.tgt, 12)
 		-- elseif self.behavior == "flock" then
 		-- 	self:flock(nearby)
 	end
 	-- self:separate(nearby)
-	-- basic locomotion
 	self:move()
 end
 
@@ -271,7 +263,6 @@ function ease_in_quad(t, b, c, d)
 end
 
 --by magic_chopstick on bbs
---sets multiple values on an object, less token intensive
 function quickset(obj, keys, vals)
 	local v, k = split(vals), split(keys)
 	-- remove/comment out the assert below before publication
@@ -291,6 +282,14 @@ function quickset(obj, keys, vals)
 	end
 end
 
+--from bbs (TODO: find op and credit)
+function is_empty(t)
+	for _, _ in pairs(t) do
+		return false
+	end
+	return true
+end
+
 --used by projectiles
 function angle_move(x, y, tx, ty, spd)
 	local a = atan2(x - tx, y - ty)
@@ -302,7 +301,7 @@ function is_moving(e)
 	return false
 end
 
--- move entities in a table (t) apart from each other up to an r radius
+-- move entities in a table apart from each other up to an r radius
 -- adapted from Beckon the Hellspawn
 function move_apart(t, r)
 	for i = 1, #t - 1 do
@@ -387,14 +386,6 @@ function find_closest(o, t, r)
 	return ce
 end
 
---from bbs (TODO: find op and credit)
-function is_empty(t)
-	for _, _ in pairs(t) do
-		return false
-	end
-	return true
-end
-
 --adapted from aioobe via stackoverflow
 function rand_in_circle(x, y, r)
 	local n = r * sqrt(rnd())
@@ -411,12 +402,6 @@ function rand_in_circlefill(x, y, r)
 	end
 	return t
 end
-
---TODO: fix / doesn't work
---draw collision
--- function d_col(e)
--- 	rect(e.col.x, e.col.y, e.col.x + e.col.w, e.col.h + e.col.h, 8)
--- end
 
 --tentacle functions
 function create_tentacles(n, start, r1, r2, l, s, c)
@@ -457,5 +442,17 @@ end
 function draw_tentacles(tentacles)
 	for t in all(tentacles) do
 		draw_tentacle(t)
+	end
+end
+
+function anim_tentacles(o)
+	for t in all(o.tentacles) do
+		local cx, cy = o.midx, o.midy
+		t.spos = vector(cx, cy)
+		sync_pos(t.epos)
+		if (t.epos.x < cx - t.length) or (t.epos.x > cx + t.length)
+				or (t.epos.y < cy - t.length) or (t.epos.y > cy + t.length) then
+			t.epos = rand_in_circle(cx, cy, t.length)
+		end
 	end
 end

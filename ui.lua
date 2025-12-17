@@ -2,8 +2,9 @@
 
 --TODO:
 --use quickset to save tokens
---fix xp/hp bars
+--fix xp/hp bars -DONE
 --level up menu art
+--level up bg scales with text length
 --heal numbers using sprites or p8scii
 
 function init_ui()
@@ -19,15 +20,20 @@ function init_ui()
 	sel = 1
 	--lvl anim frame counter
 	lvlanim = 0
-	--anim tgl var
+	--lvl anim tgl var
 	lvlanim_tgl = true
-	--anim clr
+	--lvl anim clr
 	lvlup_clr = 7
 	--heal and dmg numbers
 	nums = {}
+	--ui frame for anims
+	ui_f = 1
 end
 
 function update_ui()
+	--for ui anim
+	ui_f += 1
+	if (ui_f > 30) ui_f = 1
 	ui.x, ui.y = cam.x, cam.y
 	ui.xp = min((p.curxp / game.xpmax) * ui.w, ui.w)
 	-- animate numbers
@@ -100,8 +106,6 @@ function draw_hud()
 		d_hp_bar(h)
 	end
 	line()
-	-- border
-	-- rect(ui.x, ui.y, ui.x + 127, ui.y + 127, 1)
 end
 
 function draw_lvlup()
@@ -117,13 +121,15 @@ function draw_lvlup()
 	end
 	--bg
 	local bgc = 1
+	local bgx, bgy = ui.x + 2, ui.y + 42
+	local bgw, bgh = ui.x + 42, ui.y + 78
 	-- fillp(0x7ada)
-	rectfill(ui.x + 3, ui.y + 43, ui.x + 43, ui.y + 79, bgc)
+	rectfill(bgx + 1, bgy + 1, bgw + 1, bgh + 1, bgc)
 	-- fillp()
-	rectfill(ui.x + 2, ui.y + 42, ui.x + 42, ui.y + 78, 0)
-	rect(ui.x + 2, ui.y + 42, ui.x + 42, ui.y + 78, bgc)
+	rectfill(bgx, bgy, bgw, bgh, 0)
+	rect(bgx, bgy, bgw, bgh, bgc)
 	--text
-	print("select:", ui.x + 6, ui.y + 46, 7)
+	print("select:", bgx + 4, bgy + 4, 7)
 	for i = 1, #lvlup_options do
 		local l = 1
 		local c = 7
@@ -136,15 +142,14 @@ function draw_lvlup()
 			c = 11
 			print(
 				lvlup_options[i].name .. " " .. tostr(l),
-				ui.x + 7, ui.y + 47 + (i * 8), bgc
+				bgx + 5, bgy + 5 + (i * 8), bgc
 			)
 		end
 		print(
 			lvlup_options[i].name .. " " .. tostr(l),
-			ui.x + 6, ui.y + 46 + (i * 8), c
+			bgx + 4, bgy + 4 + (i * 8), c
 		)
 	end
-	-- print(tostr(sel))
 end
 
 function d_xp_bar()
@@ -156,7 +161,10 @@ function d_hp_bar(a)
 	if (a == p and a.hp >= a.hpmax) return
 	local hp = min((a.hp / a.hpmax) * a.w, a.w)
 	line(a.x, a.y - 4, a.x + a.w, a.y - 4, 1)
-	line(a.x, a.y - 4, a.x + hp, a.y - 4, 8)
+	local c = 8
+	--flash bar if hp < 10%
+	if (a.hp <= ceil(a.hpmax / 10) and ui_f % 7 < 3.5) c = 7
+	line(a.x, a.y - 4, a.x + hp, a.y - 4, c)
 end
 
 function add_h_num(h)

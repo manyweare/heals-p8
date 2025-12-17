@@ -1,9 +1,9 @@
 --enemies
 
 --TODO:
---OOP system
+--OOP system -INPROGRESS
 --use quickset to save tokens
---add different types
+--add different types -INPROGRESS
 --anim taking damage
 --spawn scheduler
 --don't spawn on invalid tiles
@@ -50,7 +50,7 @@ en_small = enemy:new({
 	dmg = .5,
 	spd = .25,
 	xp = 3,
-	ss = { 64, 65, 66, 67, 68 },
+	ss = split("64, 65, 66, 67, 68"),
 	spr = 64,
 	attspd = 15,
 	animspd = 30
@@ -60,7 +60,7 @@ en_medium = enemy:new({
 	dmg = 1,
 	spd = .25,
 	xp = 5,
-	ss = { 80, 81, 82, 83, 68 },
+	ss = split("80, 81, 82, 83, 68"),
 	spr = 80,
 	attspd = 20,
 	animspd = 30
@@ -72,19 +72,14 @@ en_medium = enemy:new({
 -- en_type_n = enemy:new()
 
 function enemy:update()
-	--update colision position
 	self:update_col()
-	--update coords for mid of sprite
 	self:update_mid()
 	--default tgt is player
 	local tgt = p
-	--if there are entities ready
-	--find closest, make it the target
 	if not is_empty(heroes) then
 		local c = find_closest(self, heroes, en_s_range)
 		if (not is_empty(c)) tgt = c
 	end
-	--check for collision and attack or just anim
 	if rect_rect_collision(self.col, tgt.col) then
 		self.frame = 0
 		self:attack(tgt)
@@ -100,7 +95,7 @@ function enemy:draw()
 end
 
 function init_enemies()
-	-- spawn_enemies(6)
+	spawn_enemies(3)
 end
 
 function spawn_enemies(num)
@@ -108,12 +103,12 @@ function spawn_enemies(num)
 		local e = {}
 		local pos = rand_in_circle(p.midx, p.midy, 64)
 		--for every 3, spawn 1 medium
-		if num % 3 == 0 then
-			e = en_medium:new({ x = pos.x, y = pos.y })
+		if i % 3 < 1 then
+			e = en_medium:new(vector(pos.x, pos.y))
 		else
-			e = en_small:new({ x = pos.x, y = pos.y })
+			e = en_small:new(vector(pos.x, pos.y))
 		end
-		e:setup_col({ 0, 0, 0, 0 })
+		e:setup_col(split("0, 0, 0, 0"))
 		add(enemies, e)
 		game.live_ens += 1
 	end
@@ -160,14 +155,6 @@ function enemy:anim()
 	end
 	self.frame += 1
 	--TODO: only anim if moving
-	-- if is_moving(e) then
-	-- 	if e.frame > e.animspd then
-	-- 		e.spr = e.ss[2]
-	-- 		if (e.frame == e.animspd) e.frame = 0
-	-- 	else
-	-- 		e.spr = e.ss[1]
-	-- 	end
-	-- end
 end
 
 function enemy:anim_dead()
@@ -195,12 +182,6 @@ function enemy:attack(tgt)
 	end
 	self.attframe += 1
 end
-
--- function enemy:take_dmg(dmg)
--- 	self.hit = true
--- 	self.hp -= dmg
--- 	if (self.hp <= 0) self:die()
--- end
 
 function enemy:die()
 	sfx(sfxt.en_die)

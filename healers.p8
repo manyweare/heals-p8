@@ -1,17 +1,16 @@
 pico-8 cartridge // http://www.pico-8.com
 version 43
 __lua__
---healers v0.1
+--healers v0.2
 --by mdvn
 #include tools.lua
 #include main.lua
 #include gamestates.lua
---#include coll.lua
 #include manager.lua
 #include map.lua
 #include player.lua
 #include heals.lua
-#include entities.lua
+#include heroes.lua
 #include enemies.lua
 #include items.lua
 #include ui.lua

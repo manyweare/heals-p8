@@ -1,14 +1,8 @@
 --player
 
---bitmask values
---l, r, u, d, lu, ru, rd, ld
---dir_bit = { 1, 2, 4, 8, 5, 6, 10, 9 }
---dirx = { -1, 1, 0, 0, -1, 1, 1, -1 }
---diry = { 0, 0, -1, 1, -1, -1, 1, 1 }
-
 --TODO:
 --use quickset to save tokens
---tentacles
+--tentacles -DONE
 
 -- player class
 player = object:new()
@@ -34,7 +28,7 @@ p = player:new({
 	spd = 1,
 	maxspd = 1,
 	spr = 16,
-	ss = { 16, 17, 18, 19 },
+	ss = split("16, 17, 18, 19"),
 	f = 0,
 	animspd = 5,
 	flipx = false,
@@ -47,7 +41,7 @@ function init_player()
 	p.midx = p.x + p.w / 2
 	p.midy = p.y + p.h / 2
 	--player collision rect offsets
-	p.col_offset = { 1, 2, -3, -2 }
+	p.col_offset = split("1, 2, -3, -2")
 	--collision rect
 	p.col = {
 		x = p.x + p.col_offset[1],
@@ -62,7 +56,7 @@ function init_player()
 		12,
 		vector(63, 63),
 		2, 1, 16, 12,
-		{ 7, 7, 7, 9 }
+		split("7, 7, 7, 9")
 	)
 end
 
@@ -90,13 +84,9 @@ function update_player()
 	end
 	--tentacles
 	for t in all(p.tentacles) do
-		-- TODO: each tentacle updates epos as p moves
 		local r = 12
 		sync_pos(t.epos)
 		if approx_dist(t.epos.x, t.epos.y, 63, 63) > r + 1 then
-			-- if (t.epos.x < 63 - r) or (t.epos.x > 63 + r)
-			-- 		or (t.epos.y < 63 - r) or (t.epos.y > 63 + r) then
-			-- t.npos = rand_in_circle(63, 63, r)
 			t.epos = rand_in_circle(63, 63, r)
 		end
 	end
@@ -137,7 +127,6 @@ function anim_player()
 	--flip trail if player is flipped
 	local xo = p.midx
 	if (p.flipx) xo -= 1
-	--fire fx
 	trail_fx(xo, p.midy, tclrs, 1)
 end
 
