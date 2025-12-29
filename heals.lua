@@ -17,13 +17,14 @@ function init_heals()
 	--lt = heals anim lifetime
 
 	--base range for non aura heals
-	hrange = 32
+	hrange = 36
 	--heals color palette
-	hclrs = { 9, 11, 10, 3 }
+	hclrs = split("9, 11, 10, 3")
 	--staff orb glow lt
 	orb_lt = 12
 
-	-- sub-classes
+	--sub-classes
+	--TODO: better names
 	beam = heal:new({
 		name = "beam",
 		lvl = 1,
@@ -33,19 +34,31 @@ function init_heals()
 		range = hrange,
 		tmr = 0,
 		clrs = hclrs,
-		chain = false,
 		func = new_beam_heal
+	})
+
+	chain = heal:new({
+		name = "chain",
+		lvl = 1,
+		pwr = .5,
+		freq = 30,
+		spd = 1,
+		range = round(hrange * 1.5),
+		tmr = 0,
+		clrs = split("15, 10, 9"),
+		func = new_chain_heal,
+		num_chains = 3
 	})
 
 	aoe = heal:new({
 		name = "aura",
 		lvl = 1,
 		pwr = .1,
-		freq = 20,
+		freq = 30,
 		spd = 1,
-		range = flr(hrange * .66),
+		range = round(hrange * .75),
 		tmr = 0,
-		clrs = { 10, 3, 15 },
+		clrs = split("10, 3, 15"),
 		func = new_aoe_heal
 	})
 
@@ -53,7 +66,7 @@ function init_heals()
 		name = "bomb",
 		lvl = 1,
 		pwr = 1,
-		freq = 30,
+		freq = 45,
 		spd = 2,
 		range = min(hrange * 2, 128),
 		tmr = 0,
@@ -61,23 +74,9 @@ function init_heals()
 		func = new_proj_heal
 	})
 
-	chain = beam:new({
-		name = "chain",
-		lvl = 1,
-		pwr = beam.pwr / 2,
-		freq = beam.freq,
-		spd = beam.spd,
-		range = flr(hrange / 2),
-		tmr = 0,
-		clrs = beam.clrs
-	})
-
-	-- lvl curve:
-	-- stat = stat + flr(10 * log10(lvl + 1))
-
 	-- player abilities
-	all_heals = { beam, aoe, proj }
-	curr_heals = { beam }
+	all_heals = { beam, aoe, proj, chain }
+	curr_heals = { chain }
 end
 
 function update_heals()
@@ -87,7 +86,6 @@ end
 
 -- updates timer and check ellapsed
 -- if ellapsed, fire off a heal
--- current heals only
 function update_h_timers()
 	for h in all(curr_heals) do
 		h.tmr += 1
@@ -98,27 +96,65 @@ function update_h_timers()
 	end
 end
 
+-- lvl curve:
+-- stat = stat + flr(10 * log10(lvl + 1))
 function heal_upgrade(h)
 	h.lvl += 1
-	h.pwr += flr(10 * log10(h.lvl + 1))
+	h.pwr += round(10 * log10(h.lvl + 1))
 	h.freq = max(h.freq - 1, 5)
 	if (h == aoe) h.range = min(h.range + 2, 48)
 end
 
 function new_beam_heal()
 	-- must find a closest hurt entity
-	local c = closest_hurt(p, heroes)
-	if not is_empty(c) and is_in_range(c, beam.range) then
-		local h = {
+	local c = closest_hurt(p, entities)
+	if not is_empty(c) and is_in_range(p, c, beam.range) then
+		local h = beam:new({
 			tgt = c,
 			type = "beam",
 			x = p.midx,
 			y = p.midy,
-			tx = c.x + c.w / 2,
-			ty = c.y + c.h / 2,
+			tx = c.midx,
+			ty = c.midy,
 			pwr = beam.pwr,
 			lt = 12
-		}
+		})
+		add(heals, h)
+		fire_heal(h)
+		orb_glow()
+	end
+end
+
+function new_chain_heal()
+	local chains = {}
+	--range is halved with every chain
+	--so we start with it doubled
+	local range = chain.range * 2
+	--source starts with player and
+	--changes from chain to chain
+	local src = p
+	local c = {}
+	--create all heals in the chain
+	for i = 1, chain.num_chains do
+		c = closest_hurt(src, entities)
+		if not is_empty(c) and is_in_range(src, c, max(24, range / 2)) then
+			local h = chain:new({
+				tgt = c,
+				type = "chain",
+				x = src.midx,
+				y = src.midy,
+				tx = c.midx,
+				ty = c.midy,
+				pwr = beam.pwr,
+				lt = 12
+			})
+			add(chains, h)
+			src = c
+		end
+	end
+	--fire off heals added to chain
+	--TODO: add delay between each jump?
+	for h in all(chains) do
 		add(heals, h)
 		fire_heal(h)
 		orb_glow()
@@ -126,19 +162,19 @@ function new_beam_heal()
 end
 
 function new_aoe_heal()
-	local t = all_hurt(heroes)
+	local t = all_hurt(entities)
 	for e in all(t) do
-		if is_in_range(e, aoe.range) then
-			local h = {
+		if is_in_range(p, e, aoe.range) then
+			local h = aoe:new({
 				tgt = e,
 				type = "aoe",
 				x = p.midx,
 				y = p.midy,
-				tx = e.x + e.w / 2,
-				ty = e.y + e.h / 2,
+				tx = e.midx,
+				ty = e.midy,
 				pwr = aoe.pwr,
 				lt = 12
-			}
+			})
 			add(heals, h)
 			fire_heal(h)
 		end
@@ -147,51 +183,29 @@ end
 
 function new_proj_heal()
 	-- must find hurt entity
-	local t = all_hurt(heroes)
+	local t = all_hurt(entities)
 	local r = rnd(t)
-	if not is_empty(r) and is_in_range(r, proj.range) then
-		local h = {
+	if not is_empty(r) and is_in_range(p, r, proj.range) then
+		local h = proj:new({
 			tgt = r,
 			type = "projectile",
 			x = p.midx,
 			y = p.midy,
-			tx = r.x + r.w / 2,
-			ty = r.y + r.h / 2,
+			tx = r.midx,
+			ty = r.midy,
 			pwr = proj.pwr,
 			spd = proj.spd,
 			lt = 60
-		}
+		})
 		add(heals, h)
 		orb_glow()
 	end
 end
 
--- TODO: chain heal
--- going from player to all closest instead of chain
--- function chain_heals(c)
--- 	-- find all chainable entities
--- 	local cts = {}
--- 	for i = 1, hchains do
--- 		-- find closest to last target
--- 		local nc = closest_hurt(c, entities)
--- 		if not is_empty(nc) then
--- 			-- nc.dist = approx_dist(c, nc)
--- 			if (nc.dist < hrange) then
--- 				add(cts, nc)
--- 				c = nc
--- 			end
--- 		end
--- 	end
--- 	for i = 1, #cts - 1 do
--- 		fire_heals(cts[i], cts[i + 1])
--- 	end
--- end
-
 function fire_heal(h)
 	h.tgt:heal(h.pwr)
 	heal_fx(h.tx, h.ty)
 	add_h_num(h)
-	--play heal sfx unless aoe
 	if (h.type != "aoe") then
 		sfx(sfxt.heal)
 	end
@@ -203,6 +217,8 @@ function draw_heals()
 		if (h.type != "aoe") then d_orb_fx() end
 		if (h.type == "beam") then
 			d_beam_heal(h)
+		elseif (h.type == "chain") then
+			d_chain_heal(h)
 		elseif (h.type == "projectile") then
 			d_proj_heal(h)
 		end
@@ -213,33 +229,29 @@ function draw_heals()
 end
 
 function animate_heals()
-	--for the easing functions
-	-- dt = t - lt
-	-- lt = t
-	-- te += dt
 	for h in all(heals) do
 		if h.type == "projectile" then
-			-- sync to player pos
-			sync_pos(h)
-			h.tx += p.sx
-			h.ty += p.sy
 			--TODO: better projectile movement
 			local pos = angle_move(h.x, h.y, h.tx, h.ty, h.spd)
 			h.x += pos.x
 			h.y += pos.y
+			sync_pos(h)
 			--replace with colision?
 			local d = approx_dist(h.x, h.y, h.tx, h.ty)
 			if d < 1 then
 				fire_heal(h)
-				explode(h.x, h.y, 3, { 7, 11, 15 }, 7)
+				explode(h.x, h.y, 3, split("7, 11, 15"), 7)
 				sfx(sfxt.explode)
 				del(heals, h)
 			end
 		else
-			-- updates h pos in relation to player
-			h.x, h.y = p.midx, p.midy
-			-- places heal on tip of staff
-			if (p.flipx) h.x -= 1
+			--updates h pos in relation to player
+			-- h.x, h.y = p.midx, p.midy
+			sync_pos(h)
+			h.tx += p.sx
+			h.ty += p.sy
+			--adjusts source position if flipped
+			-- if (p.flipx) h.x -= 1
 		end
 		h.lt -= 1
 		--clear heal once lt over
@@ -265,24 +277,27 @@ function d_orb_fx()
 end
 
 function d_beam_heal(h)
-	-- sync to player pos
-	sync_pos(h)
-	h.tx += p.sx
-	h.ty += p.sy
+	-- sync_pos(h)
+	-- h.tx += p.sx
+	-- h.ty += p.sy
 	if (h.lt > 10) then
-		line(h.x, h.y, h.tx, h.ty, beam.clrs[1])
+		line(h.x, h.y, h.tx, h.ty, h.clrs[1])
 	elseif (h.lt > 3) then
-		line(h.x, h.y, h.tx, h.ty, beam.clrs[2])
+		line(h.x, h.y, h.tx, h.ty, h.clrs[2])
 	else
-		line(h.x, h.y, h.tx, h.ty, beam.clrs[3])
+		line(h.x, h.y, h.tx, h.ty, h.clrs[3])
 	end
+end
+
+function d_chain_heal(h)
+	d_beam_heal(h)
 end
 
 function d_aoe_heal()
 	local d = aoe.freq / 10
-	local c = -3
 	local x = p.midx
 	local y = p.midy
+	-- local c = -3
 	-- local r = ease_out_quad(te, aoe.range + c, -c, d)
 	local r = aoe.range
 	-- fillp(0x8124)
@@ -296,14 +311,15 @@ function d_aoe_heal()
 end
 
 function d_proj_heal(h)
-	-- sync to player pos
 	sync_pos(h)
+	h.tx += p.sx
+	h.ty += p.sy
 	circfill(h.x, h.y, 2, 10)
 	proj_fx(h.x, h.y)
 end
 
-function is_in_range(e, r)
-	return approx_dist(p.x, p.y, e.x, e.y) < r
+function is_in_range(a, b, r)
+	return approx_dist(a.x, a.y, b.x, b.y) < r
 end
 
 function is_hurt(e)

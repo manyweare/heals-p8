@@ -93,7 +93,7 @@ function draw_hud()
 	-- rectfill(ui.x, ui.y, ui.x + ui.w, ui.y + ui.h, 2)
 	--current live entities
 	spr(ui.spr[2], ui.x + 10, ui.y + 1)
-	print(":" .. tostr(game.live_es), ui.x + 17, ui.y + 3, 7)
+	print(":" .. tostr(game.live_es), ui.x + 18, ui.y + 3, 7)
 	--current live enemies
 	-- spr(ui.spr[1], ui.x + 33, ui.y + 1)
 	-- print(":" .. tostr(game.live_ens), ui.x + 41, ui.y + 3, 7)
@@ -102,7 +102,7 @@ function draw_hud()
 	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(game.xpmax), ui.x + 90, ui.y + 3, 7)
 	d_xp_bar()
 	d_hp_bar(p)
-	for h in all(heroes) do
+	for h in all(entities) do
 		d_hp_bar(h)
 	end
 	line()

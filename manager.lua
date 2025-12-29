@@ -6,7 +6,7 @@
 
 game = {
     --current xp max
-    xpmax = 3,
+    xpmax = 5,
     --current xp modifier
     xpmod = 1,
     --current live enemies
@@ -67,7 +67,7 @@ function lvlup()
     --log scaling
     --value = steepness * log_b(level + 1) + offset
     --TODO: adjust xp max increase curve
-    game.xpmax = flr(game.xpmax * 1.5)
+    game.xpmax += round(10 * log10(p.lvl + 1))
     --create list of random lvl up uptions
     lvlup_options = {}
     while #lvlup_options < 3 do

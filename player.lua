@@ -19,7 +19,7 @@ p = player:new({
 	regen_spd = 1,
 	x = 59, --63 - p.w / 2
 	y = 59, --63 - p.h / 2
-	sx = 0,
+	sx = 0, --screen-based coords
 	sy = 0,
 	dx = 0,
 	dy = 0,
@@ -51,12 +51,9 @@ function init_player()
 	}
 	--trail fx colors
 	tclrs = { 7, 11, -13 }
-	-- function create_tentacles(n, start, r1, r2, l, s, c)
+	--create_tentacles(n, sx, sy, r1, r2, l, c)
 	p.tentacles = create_tentacles(
-		12,
-		vector(63, 63),
-		2, 1, 16, 12,
-		split("7, 7, 7, 9")
+		12, 59, 59, 2, 1, 10, split("7, 7, 7, 9")
 	)
 end
 
@@ -70,25 +67,17 @@ function draw_player()
 end
 
 function update_player()
-	-- move_player()
 	get_direction()
 	set_direction()
+	-- p:update_col()
+	-- p:update_mid()
+	update_tentacles(p)
 	anim_player()
-	--update player's collision rect coords
-	p:update_col()
-	--invulnerability counters
+	--invulnerability counter
 	p.inv_c = max(p.inv_c - 1, 0)
 	--regen
 	if time() % p.regen_spd <= .02 then
 		p.hp = min(p.hp + p.regen, p.hpmax)
-	end
-	--tentacles
-	for t in all(p.tentacles) do
-		local r = 12
-		sync_pos(t.epos)
-		if approx_dist(t.epos.x, t.epos.y, 63, 63) > r + 1 then
-			t.epos = rand_in_circle(63, 63, r)
-		end
 	end
 end
 
@@ -121,7 +110,6 @@ function anim_player()
 			if (p.spr > p.ss[#p.ss]) p.spr = p.ss[1]
 		end
 	else
-		--idle spr
 		p.spr = 17
 	end
 	--flip trail if player is flipped

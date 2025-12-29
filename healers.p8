@@ -10,7 +10,7 @@ __lua__
 #include map.lua
 #include player.lua
 #include heals.lua
-#include heroes.lua
+#include entities.lua
 #include enemies.lua
 #include items.lua
 #include ui.lua

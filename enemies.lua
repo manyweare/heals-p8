@@ -2,18 +2,19 @@
 
 --TODO:
 --OOP system -INPROGRESS
---use quickset to save tokens
+--use quickset to save tokens -DONE
 --add different types -INPROGRESS
 --anim taking damage
 --spawn scheduler
 --don't spawn on invalid tiles
 --[[
-enemy state machine: -DONE???
+enemy state machine: -INPROGRESS
 	enemies look for healthy entity in range -DONE
 	enemies move to and attack it -DONE
 	when entity dies, resume looking -DONE
 	if none, attack player -DONE
 	if dead, anim dead -DONE
+	if nothing in range, wander
 ]]
 
 en_spw_tmr = 0
@@ -24,47 +25,34 @@ en_s_range = 86
 
 --enemy class
 enemy = object:new({
-	name = "enemy",
-	x = 0,
-	y = 0,
-	h = 8,
-	w = 8,
-	dx = 0,
-	dy = 0,
-	tgt = {},
-	attframe = 1,
-	hit = false,
-	frame = 1, --current frame
-	flip = false, --flip sprite
 	col = {},
+	tgt = {},
 	state = "alive",
 	alive_table = enemies,
 	dead_table = dead_enemies,
 	alive_counter = game.live_ens,
 	dead_counter = game.dead_ens
 })
+quickset(
+	enemy,
+	"name,x,y,w,h,midx,midy,dx,dy,frame,attframe,hit,flip",
+	"enemy,0,0,8,8,0,0,0,0,1,1,false,false"
+)
 
 --enemy types
-en_small = enemy:new({
-	hp = 5,
-	dmg = .5,
-	spd = .25,
-	xp = 3,
-	ss = split("64, 65, 66, 67, 68"),
-	spr = 64,
-	attspd = 15,
-	animspd = 30
-})
-en_medium = enemy:new({
-	hp = 10,
-	dmg = 1,
-	spd = .25,
-	xp = 5,
-	ss = split("80, 81, 82, 83, 68"),
-	spr = 80,
-	attspd = 20,
-	animspd = 30
-})
+en_small = enemy:new({ ss = split("64, 65, 66, 67, 68") })
+quickset(
+	en_small,
+	"hp,dmg,spd,xp,spr,attspd,animspd",
+	"5,.5,.25,3,64,15,30"
+)
+
+en_medium = enemy:new({ ss = split("80, 81, 82, 83, 68") })
+quickset(
+	en_medium,
+	"hp,dmg,spd,xp,spr,attspd,animspd",
+	"10,1,.25,5,80,20,30"
+)
 
 -- TODO: subclasses
 -- en_type_1 = enemy:new()
@@ -74,20 +62,7 @@ en_medium = enemy:new({
 function enemy:update()
 	self:update_col()
 	self:update_mid()
-	--default tgt is player
-	local tgt = p
-	if not is_empty(heroes) then
-		local c = find_closest(self, heroes, en_s_range)
-		if (not is_empty(c)) tgt = c
-	end
-	if rect_rect_collision(self.col, tgt.col) then
-		self.frame = 0
-		self:attack(tgt)
-	else
-		self.attframe = 0
-		self:anim()
-	end
-	self:move_to(tgt)
+	sync_pos(self)
 end
 
 function enemy:draw()
@@ -95,7 +70,7 @@ function enemy:draw()
 end
 
 function init_enemies()
-	spawn_enemies(3)
+	-- spawn_enemies(1)
 end
 
 function spawn_enemies(num)
@@ -109,43 +84,41 @@ function spawn_enemies(num)
 			e = en_small:new(vector(pos.x, pos.y))
 		end
 		e:setup_col(split("0, 0, 0, 0"))
-		add(enemies, e)
+		add(e.alive_table, e)
 		game.live_ens += 1
 	end
 end
 
 function update_enemies()
 	en_spw_tmr += 1
-	if (en_spw_tmr % 90 == 0) then
+	if (en_spw_tmr % 120 == 0) then
 		en_spw_tmr = 0
+		--TODO: better spawn curve
 		spawn_enemies(2 + flr(rnd(p.lvl / 3)))
 	end
 	for e in all(enemies) do
 		e:update()
+		e:anim_alive()
 	end
 	for e in all(dead_enemies) do
+		e:update()
 		e:anim_dead()
-	end
-	if not is_empty(enemies) then
-		move_apart(enemies, 8)
 	end
 end
 
 function draw_enemies()
 	for e in all(enemies) do
-		sync_pos(e)
 		e:draw()
 	end
 end
 
 function draw_dead_ens()
 	for e in all(dead_enemies) do
-		sync_pos(e)
 		spr(e.spr, e.x, e.y, 1, 1, e.flip)
 	end
 end
 
-function enemy:anim()
+function enemy:move_anim()
 	if self.frame < self.animspd / 2 then
 		self.spr = self.ss[2]
 	elseif self.frame == self.animspd then
@@ -155,6 +128,23 @@ function enemy:anim()
 	end
 	self.frame += 1
 	--TODO: only anim if moving
+end
+
+function enemy:anim_alive()
+	--default tgt is player
+	local tgt = p
+	if not is_empty(entities) then
+		local c = find_closest(self, entities, en_s_range)
+		if (not is_empty(c)) tgt = c
+	end
+	if rect_rect_collision(self.col, tgt.col) then
+		self.frame = 0
+		self:attack(tgt)
+	else
+		self.attframe = 0
+		self:move_anim()
+	end
+	self:move_to(tgt)
 end
 
 function enemy:anim_dead()
@@ -185,9 +175,7 @@ end
 
 function enemy:die()
 	sfx(sfxt.en_die)
-	local mid = vector(self.midx, self.midy)
-	sync_pos(mid)
-	bloodfx(mid.x, mid.y)
-	drop_xp(mid, self.xp)
+	bloodfx(self.midx, self.midy)
+	drop_xp(vector(self.midx, self.midy), self.xp)
 	die(self)
 end

@@ -1,5 +1,10 @@
 --tools
 
+function print_align(t, x, y, c, u, v)
+	local ox, oy = print(t, 0, 128)
+	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
+end
+
 -- vector library by @thacuber2a03
 function vector(x, y) return { x = x or 0, y = y or 0 } end
 
@@ -93,16 +98,33 @@ function object:take_dmg(dmg)
 	if (self.hp <= 0) self:die()
 end
 
-function object:move_to(t)
-	local a = get_dir(t.x, t.y, self.x, self.y)
-	local dx, dy = cos(a), sin(a)
-	if not rect_rect_collision(self.col, t.col) then
-		--update the direction vars to allow is_moving check
-		self.dx, self.dy = dx, dy
+function object:move_to(tgt)
+	--update dx, dy for is_moving check
+	local dir = get_dir(tgt.midx, tgt.midy, self.midx, self.midy)
+	self.dx, self.dy = cos(dir), sin(dir)
+	--but only move if not coliding
+	if not rect_rect_collision(self.col, tgt.col) then
 		self.x -= self.dx * self.spd
 		self.y -= self.dy * self.spd
+		self.flip = self.x > tgt.x
 	end
-	self.flip = self:flip_spr(t)
+	self:move_apart(self.alive_table, max(self.h, self.w) + 2)
+end
+
+--TODO: FIX
+function object:move_apart(t, r)
+	if (#t < 2) return
+	for i = 1, #t do
+		if t[i] != self then
+			if rect_rect_collision(self, t[i]) then
+				local dist = approx_dist(self.midx, self.midy, t[i].midx, t[i].midy)
+				local dir = get_dir(self.midx, self.midy, t[i].midx, t[i].midy)
+				local dif = r - dist
+				t[i].x += cos(dir) * dif
+				t[i].y += sin(dir) * dif
+			end
+		end
+	end
 end
 
 function object:flip_spr(t)
@@ -116,17 +138,16 @@ agent = object:new({
 	pos = vector(),
 	vel = vector(),
 	accel = vector(),
+	maxspd = 1,
+	maxfrc = .1,
 	tgt = vector(63, 63)
 })
 
 function agent:update_pos()
 	if self.behavior == "seek" then
 		self:seek(self.tgt)
-		--not implemented
-		-- elseif self.behavior == "arrive" then
-		-- 	self:arrive(self.tgt, 12)
-		-- elseif self.behavior == "flock" then
-		-- 	self:flock(nearby)
+	elseif self.behavior == "arrive" then
+		self:arrive(self.tgt, 12)
 	end
 	-- self:separate(nearby)
 	self:move()
@@ -153,6 +174,19 @@ function agent:seek(tgt)
 	return s
 end
 
+function agent:arrive(tgt, r)
+	local d = v_sub(tgt, self.pos)
+	local dist = v_mag(d)
+	if dist < r then
+		local mag = map_value(dist, 0, r, 0, self.maxspd)
+		d = v_setmag(d, mag)
+	else
+		d = v_setmag(d, self.maxspd)
+	end
+	local s = v_sub(d, self.vel)
+	self:apply_force(s)
+end
+
 function die(o)
 	o.frame = 0
 	o.state = "dead"
@@ -163,7 +197,7 @@ function die(o)
 end
 
 -- update position relative to player
--- used for scrolling map
+-- needed for scrolling map with player in center
 function sync_pos(a)
 	a.x += p.sx
 	a.y += p.sy
@@ -253,19 +287,43 @@ end
 -- b = begin
 -- c = change == ending - beginning
 -- d = duration (total time)
-function ease_out_quad(t, b, c, d)
-	t = t / d
-	return -c * t * (t - 2) + b
+-- function ease_out_quad(t, b, c, d)
+-- 	t = t / d
+-- 	return -c * t * (t - 2) + b
+-- end
+
+-- function ease_in_quad(t, b, c, d)
+-- 	return c * ((t / d) ^ 2) + b
+-- end
+
+--ease library by:
+--https://www.lexaloffle.com/bbs/?tid=40577
+function easeinquart(t)
+	return t * t * t * t
 end
 
-function ease_in_quad(t, b, c, d)
-	return c * ((t / d) ^ 2) + b
+function easeoutquart(t)
+	t -= 1
+	return 1 - t * t * t * t
+end
+
+function easeinoutquart(t)
+	if t < .5 then
+		return 8 * t * t * t * t
+	else
+		t -= 1
+		return (1 - 8 * t * t * t * t)
+	end
+end
+
+function lerp(a, b, t)
+	return a + (b - a) * t
 end
 
 --by magic_chopstick on bbs
 function quickset(obj, keys, vals)
 	local v, k = split(vals), split(keys)
-	-- remove/comment out the assert below before publication
+	-- remove/comment out below before publication
 	assert(#v == #k, "quickset() error: k/v count mismatch (" .. #k .. " keys, " .. #v .. " values)")
 	for i = 1, #k do
 		local p, o = v[i]
@@ -301,22 +359,6 @@ function is_moving(e)
 	return false
 end
 
--- move entities in a table apart from each other up to an r radius
--- adapted from Beckon the Hellspawn
-function move_apart(t, r)
-	for i = 1, #t - 1 do
-		for j = i + 1, #t do
-			if rect_rect_collision(t[i], t[j]) then
-				local dist = approx_dist(t[i].x, t[i].y, t[j].x, t[j].y)
-				local dir = get_dir(t[i].x, t[i].y, t[j].x, t[j].y)
-				local dif = r - dist
-				t[j].x += cos(dir) * dif
-				t[j].y += sin(dir) * dif
-			end
-		end
-	end
-end
-
 function col(a, b, r)
 	local x = abs(a.x - b.x)
 	if x > r then return false end
@@ -350,7 +392,8 @@ function get_dir(x1, y1, x2, y2)
 	return atan2(x2 - x1, y2 - y1)
 end
 
---from bbs (TODO: find op and credit)
+--adapted from musurca
+--https://www.lexaloffle.com/bbs/?tid=36059
 function approx_dist(x1, y1, x2, y2)
 	local dx = abs(x2 - x1)
 	local dy = abs(y2 - y1)
@@ -377,16 +420,18 @@ function find_closest(o, t, r)
 	if (r == nil) r = c
 	local ce = {}
 	for e in all(t) do
-		d = approx_dist(o.x, o.y, e.x, e.y)
-		if (d < c) and (d < r) then
-			c = d
-			ce = e
+		if e != o then
+			d = approx_dist(o.x, o.y, e.x, e.y)
+			if (d < c) and (d < r) then
+				c = d
+				ce = e
+			end
 		end
 	end
 	return ce
 end
 
---adapted from aioobe via stackoverflow
+--adapted from @aioobe via stackoverflow
 function rand_in_circle(x, y, r)
 	local n = r * sqrt(rnd())
 	local theta = rnd() * 2 * pi
@@ -404,33 +449,44 @@ function rand_in_circlefill(x, y, r)
 end
 
 --tentacle functions
-function create_tentacles(n, start, r1, r2, l, s, c)
+function create_tentacles(n, sx, sy, r1, r2, l, c)
 	local t = {}
 	for i = 0, n - 1 do
+		--random length
+		local rnd_l = l + rnd(l / 2)
+		--random max length
+		local rnd_lmax = rnd_l + rnd(l / 2)
+		--end point of tentacles on random points
+		--in a circle around start coords
+		local ex = sx + l * cos(rnd())
+		local ey = sy + l * sin(rnd())
 		add(
 			t, {
-				spos = start,
-				epos = rand_in_circle(start.x, start.y, l + rnd(4) - 2),
-				npos = vector(63, 63),
+				sx = sx,
+				sy = sy,
+				ex = ex,
+				ey = ey,
+				tx = ex,
+				ty = ey,
 				r1 = r1,
 				r2 = r2,
-				length = l,
-				samples = s,
-				colors = c
+				length = rnd_l,
+				max_length = rnd_lmax,
+				colors = c,
+				start_time = time()
 			}
 		)
 	end
 	return t
 end
 
---spos, epos, r1, r2, samples, colors
 function draw_tentacle(t)
-	-- t.epos = v_lerp(t.epos, t.npos, dt)
-	for i = 0, t.samples do
-		local x = t.spos.x + ((t.epos.x - t.spos.x) * i / t.samples)
-		local y = t.spos.y + ((t.epos.y - t.spos.y) * i / t.samples)
-		local r = t.r1 + ((t.r2 - t.r1) * i / t.samples)
-		local c = 1 + round((count(t.colors) - 1) * i / t.samples)
+	local s = t.length
+	for i = 0, s do
+		local x = t.sx + ((t.ex - t.sx) * i / s)
+		local y = t.sy + ((t.ey - t.sy) * i / s)
+		local r = t.r1 + ((t.r2 - t.r1) * i / s)
+		local c = 1 + round((count(t.colors) - 1) * i / s)
 		if r > 1.5 then
 			circfill(x, y, r, t.colors[c])
 		else
@@ -445,14 +501,24 @@ function draw_tentacles(tentacles)
 	end
 end
 
-function anim_tentacles(o)
+function update_tentacles(o)
 	for t in all(o.tentacles) do
-		local cx, cy = o.midx, o.midy
-		t.spos = vector(cx, cy)
-		sync_pos(t.epos)
-		if (t.epos.x < cx - t.length) or (t.epos.x > cx + t.length)
-				or (t.epos.y < cy - t.length) or (t.epos.y > cy + t.length) then
-			t.epos = rand_in_circle(cx, cy, t.length)
+		t.sx, t.sy = o.midx, o.midy
+		t.tx += p.sx
+		t.ty += p.sy
+		local d_center = approx_dist(t.ex, t.ey, t.sx, t.sy)
+		local d_move = approx_dist(t.ex, t.ey, t.tx, t.ty)
+		if d_center > t.max_length and d_move < 0.01 then
+			local r = rand_in_circle(t.sx, t.sy, t.length)
+			t.tx = r.x - (o.dx * t.length / 2)
+			t.ty = r.y - (o.dy * t.length / 2)
+			--restart timer for lerp anim
+			t.start_time = time()
 		end
+		local timer = mid(0, ((time() - t.start_time) % 1) * 2, 1)
+		t.ex = lerp(t.ex, t.tx, easeoutquart(timer))
+		t.ey = lerp(t.ey, t.ty, easeoutquart(timer))
+		t.ex += p.sx
+		t.ey += p.sy
 	end
 end

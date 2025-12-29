@@ -9,6 +9,6 @@ sfxt = {
     ixp = 8,
     en_atk = 5,
     en_die = 1,
-    hero_atk = 6,
-    hero_die = 7
+    entity_atk = 6,
+    entity_die = 7
 }
