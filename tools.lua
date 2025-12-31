@@ -63,6 +63,13 @@ function object:new(o)
 	return a
 end
 
+function object:update()
+	self:update_col()
+	self:update_mid()
+	sync_pos(self)
+	self:reset_pos()
+end
+
 function object:update_mid()
 	self.midx = self.x + self.w / 2
 	self.midy = self.y + self.h / 2
@@ -98,28 +105,22 @@ function object:take_dmg(dmg)
 	if (self.hp <= 0) self:die()
 end
 
-function object:move_to(tgt)
-	--update dx, dy for is_moving check
-	local dir = get_dir(tgt.midx, tgt.midy, self.midx, self.midy)
+function object:move_to(x, y)
+	local dir = get_dir(x, y, self.midx, self.midy)
 	self.dx, self.dy = cos(dir), sin(dir)
-	--but only move if not coliding
-	if not rect_rect_collision(self.col, tgt.col) then
-		self.x -= self.dx * self.spd
-		self.y -= self.dy * self.spd
-		self.flip = self.x > tgt.x
-	end
-	self:move_apart(self.alive_table, max(self.h, self.w) + 2)
+	self.x -= self.dx * self.spd
+	self.y -= self.dy * self.spd
 end
 
---TODO: FIX
 function object:move_apart(t, r)
 	if (#t < 2) return
+	local dist, dir, dif
 	for i = 1, #t do
 		if t[i] != self then
 			if rect_rect_collision(self, t[i]) then
-				local dist = approx_dist(self.midx, self.midy, t[i].midx, t[i].midy)
-				local dir = get_dir(self.midx, self.midy, t[i].midx, t[i].midy)
-				local dif = r - dist
+				dist = approx_dist(self.midx, self.midy, t[i].midx, t[i].midy)
+				dir = get_dir(self.midx, self.midy, t[i].midx, t[i].midy)
+				dif = r - dist
 				t[i].x += cos(dir) * dif
 				t[i].y += sin(dir) * dif
 			end
@@ -127,20 +128,27 @@ function object:move_apart(t, r)
 	end
 end
 
-function object:flip_spr(t)
-	return self.x > t.x
+function object:flip_spr(tx)
+	self.flip = self.x > tx
+end
+
+--reset pos when out of map bounds
+function object:reset_pos()
+	if self.x > 128 or self.y > 128 then
+		local pos = rand_in_circle(p.midx, p.midy, 32)
+		self.x, self.y = pos.x, pos.y
+	end
 end
 
 --agent functions
 --adapted from Daniel Shiffman's Nature of Code
-
 agent = object:new({
 	pos = vector(),
 	vel = vector(),
 	accel = vector(),
 	maxspd = 1,
 	maxfrc = .1,
-	tgt = vector(63, 63)
+	tgt = vector()
 })
 
 function agent:update_pos()
@@ -163,7 +171,7 @@ function agent:move()
 	self.vel = v_limit(self.vel, self.maxspd)
 	self.pos = v_add(self.pos, self.vel)
 	--update pos relative to player
-	self.pos = v_add(self.pos, vector(p.sx, p.sy))
+	self.pos = v_add(self.pos, vector(psx, psy))
 end
 
 function agent:seek(tgt)
@@ -199,8 +207,8 @@ end
 -- update position relative to player
 -- needed for scrolling map with player in center
 function sync_pos(a)
-	a.x += p.sx
-	a.y += p.sy
+	a.x += psx
+	a.y += psy
 end
 
 -- from Beckon the Hellspawn
@@ -282,20 +290,6 @@ end
 -- 	return ret
 -- end
 
--- easing functions --
--- t = elapsed time
--- b = begin
--- c = change == ending - beginning
--- d = duration (total time)
--- function ease_out_quad(t, b, c, d)
--- 	t = t / d
--- 	return -c * t * (t - 2) + b
--- end
-
--- function ease_in_quad(t, b, c, d)
--- 	return c * ((t / d) ^ 2) + b
--- end
-
 --ease library by:
 --https://www.lexaloffle.com/bbs/?tid=40577
 function easeinquart(t)
@@ -348,10 +342,14 @@ function is_empty(t)
 	return true
 end
 
+function get_dir(x1, y1, x2, y2)
+	return atan2(x2 - x1, y2 - y1)
+end
+
 --used by projectiles
 function angle_move(x, y, tx, ty, spd)
-	local a = atan2(x - tx, y - ty)
-	return { x = -spd * cos(a), y = -spd * sin(a) }
+	local dir = get_dir(x, y, tx, ty)
+	return { x = cos(dir) * spd, y = sin(dir) * spd }
 end
 
 function is_moving(e)
@@ -373,23 +371,6 @@ function rect_rect_collision(r1, r2)
 			and r1.x + r1.w > r2.x
 			and r1.y < r2.y + r2.h
 			and r1.y + r1.h > r2.y
-end
-
---reset pos when out of map bounds
-function reset_pos(e)
-	e.x, e.y = rpd(128, 32)
-end
-
-function rpd(d, rd)
-	local _dir = rnd(1)
-	local _rad = d + flr(rnd(rd))
-	local x = 64 + cos(_dir) * _rad
-	local y = 64 + sin(_dir) * _rad
-	return unpack({ x, y })
-end
-
-function get_dir(x1, y1, x2, y2)
-	return atan2(x2 - x1, y2 - y1)
 end
 
 --adapted from musurca
@@ -451,15 +432,16 @@ end
 --tentacle functions
 function create_tentacles(n, sx, sy, r1, r2, l, c)
 	local t = {}
+	local rnd_l, rnd_lmax, ex, ey
 	for i = 0, n - 1 do
 		--random length
-		local rnd_l = l + rnd(l / 2)
+		rnd_l = l + rnd(l / 2)
 		--random max length
-		local rnd_lmax = rnd_l + rnd(l / 2)
+		rnd_lmax = rnd_l + rnd(l / 2)
 		--end point of tentacles on random points
 		--in a circle around start coords
-		local ex = sx + l * cos(rnd())
-		local ey = sy + l * sin(rnd())
+		ex = sx + l * cos(rnd())
+		ey = sy + l * sin(rnd())
 		add(
 			t, {
 				sx = sx,
@@ -481,12 +463,13 @@ function create_tentacles(n, sx, sy, r1, r2, l, c)
 end
 
 function draw_tentacle(t)
-	local s = t.length
+	local s = round(t.length * 1.5)
+	local x, y, r, c
 	for i = 0, s do
-		local x = t.sx + ((t.ex - t.sx) * i / s)
-		local y = t.sy + ((t.ey - t.sy) * i / s)
-		local r = t.r1 + ((t.r2 - t.r1) * i / s)
-		local c = 1 + round((count(t.colors) - 1) * i / s)
+		x = t.sx + ((t.ex - t.sx) * i / s)
+		y = t.sy + ((t.ey - t.sy) * i / s)
+		r = t.r1 + ((t.r2 - t.r1) * i / s)
+		c = 1 + round((count(t.colors) - 1) * i / s)
 		if r > 1.5 then
 			circfill(x, y, r, t.colors[c])
 		else
@@ -502,23 +485,24 @@ function draw_tentacles(tentacles)
 end
 
 function update_tentacles(o)
+	local timer, d_center, d_move
 	for t in all(o.tentacles) do
 		t.sx, t.sy = o.midx, o.midy
-		t.tx += p.sx
-		t.ty += p.sy
-		local d_center = approx_dist(t.ex, t.ey, t.sx, t.sy)
-		local d_move = approx_dist(t.ex, t.ey, t.tx, t.ty)
+		t.tx += psx
+		t.ty += psy
+		d_center = approx_dist(t.ex, t.ey, t.sx, t.sy)
+		d_move = approx_dist(t.ex, t.ey, t.tx, t.ty)
 		if d_center > t.max_length and d_move < 0.01 then
-			local r = rand_in_circle(t.sx, t.sy, t.length)
-			t.tx = r.x - (o.dx * t.length / 2)
-			t.ty = r.y - (o.dy * t.length / 2)
+			--(o.dx * t.length / 2) = moves the target pos (tx,ty)
+			--to direction obj is headed (dx,dy)
+			t.tx = t.sx + t.length * cos(rnd()) - o.dx * t.length / 2
+			t.ty = t.sy + t.length * sin(rnd()) - o.dy * t.length / 2
 			--restart timer for lerp anim
 			t.start_time = time()
 		end
-		local timer = mid(0, ((time() - t.start_time) % 1) * 2, 1)
-		t.ex = lerp(t.ex, t.tx, easeoutquart(timer))
-		t.ey = lerp(t.ey, t.ty, easeoutquart(timer))
-		t.ex += p.sx
-		t.ey += p.sy
+		--animation speed = ((time() - t.start_time) % 1) * 2
+		timer = mid(0, ((time() - t.start_time) % 1) * 2.25, 1)
+		t.ex = lerp(t.ex, t.tx, easeoutquart(timer)) + psx
+		t.ey = lerp(t.ey, t.ty, easeoutquart(timer)) + psy
 	end
 end

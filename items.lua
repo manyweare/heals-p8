@@ -32,7 +32,7 @@ end
 
 function ixp:update()
     self.frame += 1
-    if (self.frame == 15) self.tgt = vector(63, 63)
+    if (self.frame == 15) self.tgt = vector(p.midx, p.midy)
     self:update_pos()
     if col(self.pos, vector(p.midx, p.midy), 6) then
         addxp(1)

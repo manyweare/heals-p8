@@ -10,35 +10,38 @@ end
 
 function update_fx()
 	for f in all(fx) do
-		f.t += 1
-		if f.t > f.lt then
+		local c, r, ft, flt = f.c, f.r, f.t, f.lt
+		local fclrs = f.clrs
+		ft += 1
+		if ft > flt then
 			del(fx, f)
 		end
 		if f.is_sw then
-			f.r += f.maxr / f.lt
-			if f.t / f.lt < 1 / #f.clrs then
-				f.c = f.clrs[1]
-			elseif f.t / f.lt < 2 / #f.clrs then
-				f.c = f.clrs[2]
-			elseif f.t / f.lt < 3 / #f.clrs then
-				f.c = f.clrs[3]
+			r += f.maxr / flt
+			if ft / flt < 1 / #fclrs then
+				c = fclrs[1]
+			elseif ft / flt < 2 / #fclrs then
+				c = fclrs[2]
+			elseif ft / flt < 3 / #fclrs then
+				c = fclrs[3]
 			else
-				f.c = f.clrs[4]
+				c = fclrs[4]
 			end
 		else
-			if f.t / f.lt < 1 / #f.clrs then
-				f.c = f.clrs[1]
-			elseif f.t / f.lt < 2 / #f.clrs then
-				f.c = f.clrs[2]
-				f.r = 3 * (f.r / 4)
-			elseif f.t / f.lt < 3 / #f.clrs then
-				f.c = f.clrs[3]
-				f.r = f.r / 2
+			if ft / flt < 1 / #fclrs then
+				c = fclrs[1]
+			elseif ft / flt < 2 / #fclrs then
+				c = fclrs[2]
+				r = 3 * (r / 4)
+			elseif ft / flt < 3 / #fclrs then
+				c = fclrs[3]
+				r = r / 2
 			else
-				f.c = f.clrs[4]
-				f.r = f.r / 4
+				c = fclrs[4]
+				r = r / 4
 			end
 		end
+		f.r, f.c, f.t = r, c, ft
 		f.x += f.dx
 		f.y += f.dy
 	end
@@ -46,7 +49,6 @@ end
 
 function draw_fx()
 	for f in all(fx) do
-		--draw pixel for size 1, draw circle for larger
 		if f.r <= 1 then
 			pset(f.x, f.y, f.c)
 		else
@@ -85,7 +87,7 @@ function lvlup_fx()
 			1 - rnd(2),
 			1 - rnd(2),
 			rnd(1) + 2,
-			{ 7, 10, 9, 2 }
+			split("7, 10, 9, 2")
 		)
 	end
 end
@@ -93,29 +95,29 @@ end
 function heal_fx(x, y)
 	for i = 0, 5 do
 		add_fx(
-			x + rnd(7) - 2,
+			x + rnd(7) - 4,
 			y,
 			8 + rnd(5),
 			0,
 			rnd(1) - 1.2,
 			rnd(1) + 2,
-			{ 11, 10, 15 }
+			split("11, 10, 15")
 		)
 	end
 end
 
 function trail_fx(x, y, clrs)
-	-- emit only 50% of the time
-	local emit = rnd() < .5
+	-- emit only 25% of the time
+	local emit = rnd() < .25
 	if emit then
 		add_fx(
 			x,
 			y,
-			6 + rnd(6),
+			8 + rnd(6),
 			0,
 			rnd(1) - 1.1,
 			1,
-			clrs
+			split("9, 11, 10")
 		)
 	end
 end
@@ -201,7 +203,7 @@ function bloodfx(x, y)
 			7 + rnd(8),
 			rnd(2) - 1,
 			rnd(2) - 1,
-			1,
+			2,
 			{ 8, 8, 12, 14 }
 		)
 	end

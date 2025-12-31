@@ -8,14 +8,9 @@
 --heal numbers using sprites or p8scii
 
 function init_ui()
-	ui = {
-		xp = 0,
-		spr = { 5, 6 },
-		x = 0,
-		y = 0,
-		h = 8,
-		w = 127
-	}
+	uix, uiy, uih, uiw = 0, 0, 8, 127
+	uixp = 0
+	uispr = { 5, 6 }
 	--current ui selection
 	sel = 1
 	--lvl anim frame counter
@@ -27,15 +22,15 @@ function init_ui()
 	--heal and dmg numbers
 	nums = {}
 	--ui frame for anims
-	ui_f = 1
+	uif = 1
 end
 
 function update_ui()
 	--for ui anim
-	ui_f += 1
-	if (ui_f > 30) ui_f = 1
-	ui.x, ui.y = cam.x, cam.y
-	ui.xp = min((p.curxp / game.xpmax) * ui.w, ui.w)
+	uif += 1
+	if (uif > 30) uif = 1
+	uix, uiy = cam.x, cam.y
+	uixp = min((p.curxp / xpmax) * uiw, uiw)
 	-- animate numbers
 	for n in all(nums) do
 		n.f += 1
@@ -63,14 +58,13 @@ function update_lvlup()
 				add(curr_heals, lvlup_options[sel])
 			end
 		end
-		_update = update_game
-		_draw = draw_game
+		resume_game()
 	end
 end
 
 function draw_ui()
-	print(version, ui.x + 117, ui.y + 122, 0)
-	print(version, ui.x + 116, ui.y + 121, 2)
+	print(version, uix + 117, uiy + 122, 0)
+	print(version, uix + 116, uiy + 121, 2)
 	-- numbers animation
 	for n in all(nums) do
 		--shadow
@@ -90,21 +84,22 @@ end
 
 function draw_hud()
 	--bg
-	-- rectfill(ui.x, ui.y, ui.x + ui.w, ui.y + ui.h, 2)
+	-- rectfill(uix, uiy, uix + uiw, uiy + uih, 2)
 	--current live entities
-	spr(ui.spr[2], ui.x + 10, ui.y + 1)
-	print(":" .. tostr(game.live_es), ui.x + 18, ui.y + 3, 7)
+	spr(uispr[2], uix + 10, uiy + 1)
+	print(":" .. tostr(live_es), uix + 18, uiy + 3, 7)
 	--current live enemies
-	-- spr(ui.spr[1], ui.x + 33, ui.y + 1)
-	-- print(":" .. tostr(game.live_ens), ui.x + 41, ui.y + 3, 7)
+	-- spr(uispr[1], uix + 33, uiy + 1)
+	-- print(":" .. tostr(live_ens), uix + 41, uiy + 3, 7)
 	--text
-	print("lvl:" .. tostr(p.lvl), ui.x + 92, ui.y + 3, 7)
-	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(game.xpmax), ui.x + 90, ui.y + 3, 7)
+	print("lvl:" .. tostr(p.lvl), uix + 92, uiy + 3, 7)
+	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(xpmax), uix + 90, uiy + 3, 7)
 	d_xp_bar()
 	d_hp_bar(p)
 	for h in all(entities) do
 		d_hp_bar(h)
 	end
+	print(round(playtime), uix + 1, uiy + 121, 7)
 	line()
 end
 
@@ -121,8 +116,8 @@ function draw_lvlup()
 	end
 	--bg
 	local bgc = 1
-	local bgx, bgy = ui.x + 2, ui.y + 42
-	local bgw, bgh = ui.x + 42, ui.y + 78
+	local bgx, bgy = uix + 2, uiy + 42
+	local bgw, bgh = uix + 42, uiy + 78
 	-- fillp(0x7ada)
 	rectfill(bgx + 1, bgy + 1, bgw + 1, bgh + 1, bgc)
 	-- fillp()
@@ -153,8 +148,8 @@ function draw_lvlup()
 end
 
 function d_xp_bar()
-	line(ui.x, ui.y, ui.x + ui.w, ui.y, 2)
-	line(ui.x, ui.y, ui.x + ui.xp, ui.y, 11)
+	line(uix, uiy, uix + uiw, uiy, 2)
+	line(uix, uiy, uix + uixp, uiy, 11)
 end
 
 function d_hp_bar(a)
@@ -163,7 +158,7 @@ function d_hp_bar(a)
 	line(a.x, a.y - 4, a.x + a.w, a.y - 4, 1)
 	local c = 8
 	--flash bar if hp < 10%
-	if (a.hp <= ceil(a.hpmax / 10) and ui_f % 7 < 3.5) c = 7
+	if (a.hp <= ceil(a.hpmax / 10) and uif % 7 < 3.5) c = 7
 	line(a.x, a.y - 4, a.x + hp, a.y - 4, c)
 end
 
@@ -182,15 +177,7 @@ function draw_log()
 	-- for i = 1, #curr_heals do
 	-- 	print(
 	-- 		curr_heals[i].name .. " " .. tostr(curr_heals[i].lvl),
-	-- 		ui.x + 10, ui.y + 8 + i * 6, 7
+	-- 		uix + 10, uiy + 8 + i * 6, 7
 	-- 	)
 	-- end
-	-- print("p.dx:" .. tostr(p.dx), ui.x, ui.y + 12, 7)
-	-- print("p.dy:" .. tostr(p.dy), ui.x, ui.y + 18, 7)
-	-- print("p.x:" .. tostr(p.x), ui.x, ui.y + 24, 7)
-	-- print("p.y:" .. tostr(p.y), ui.x, ui.y + 30, 7)
-	-- print("cam.x:" .. tostr(cam.x), ui.x, ui.y + 36, 7)
-	-- print("cam.y:" .. tostr(cam.y), ui.x, ui.y + 42, 7)
-	-- print("cpu:" .. tostr(stat(1)), ui.x, ui.y + 48, 7)
-	-- print("hp:" .. tostr(p.hp), ui.x, ui.y + 48, 7)
 end

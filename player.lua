@@ -1,41 +1,22 @@
 --player
 
---TODO:
---use quickset to save tokens
---tentacles -DONE
+--screen-based coords
+--used for scrolling map
+psx, psy = 0, 0
 
 -- player class
 player = object:new()
 
 p = player:new({
-	lvl = 1,
-	curxp = 0,
-	totalxp = 0,
-	inv_f = 30, --invulnerability frames
-	inv_c = 0, --inv count
-	hp = 10,
-	hpmax = 10,
-	regen = .5,
-	regen_spd = 1,
-	x = 59, --63 - p.w / 2
-	y = 59, --63 - p.h / 2
-	sx = 0, --screen-based coords
-	sy = 0,
-	dx = 0,
-	dy = 0,
-	w = 8,
-	h = 8,
-	spd = 1,
-	maxspd = 1,
-	spr = 16,
 	ss = split("16, 17, 18, 19"),
-	f = 0,
-	animspd = 5,
-	flipx = false,
-	flipy = false,
 	col = {},
 	tentacles = {}
 })
+quickset(
+	p,
+	"lvl,curxp,totalxp,inv_f,inv_c,hp,hpmax,regen,regen_spd,x,y,dx,dy,w,h,spd,maxspd,spr,f,animspd,flipx,flipy",
+	"1,0,0,30,0,10,10,.5,1,59,59,0,0,8,8,1,1,16,0,5,false,false"
+)
 
 function init_player()
 	p.midx = p.x + p.w / 2
@@ -49,12 +30,10 @@ function init_player()
 		w = p.w + p.col_offset[3],
 		h = p.h + p.col_offset[4]
 	}
+	--create_tentacles(n, sx, sy, r1, r2, l, c)
+	p.tentacles = create_tentacles(12, 59, 59, 2.2, 1, 10, split("7, 7, 7, 9"))
 	--trail fx colors
 	tclrs = { 7, 11, -13 }
-	--create_tentacles(n, sx, sy, r1, r2, l, c)
-	p.tentacles = create_tentacles(
-		12, 59, 59, 2, 1, 10, split("7, 7, 7, 9")
-	)
 end
 
 function draw_player()
@@ -89,14 +68,14 @@ end
 function set_direction()
 	--get input and determine
 	--direction
-	p.sx, p.sy = p.dx, p.dy
+	psx, psy = p.dx, p.dy
 	--set speed of each
 	if abs(p.x) == abs(p.y) then
-		p.sx *= p.spd * 0.7
-		p.sy *= p.spd * 0.7
+		psx *= p.spd * 0.7
+		psy *= p.spd * 0.7
 	else
-		p.sx *= p.spd
-		p.sy *= p.spd
+		psx *= p.spd
+		psy *= p.spd
 	end
 end
 
@@ -145,14 +124,8 @@ end
 
 --draws circle around player
 function draw_range()
-	local r = hrange + 16
-	--inverted draw
+	local r = hrange + 18
+	--inverted draw, visibility range
 	poke(0x5f34, 0x2)
-	-- fillp(0x7fdf)
-	-- circfill(p.midx, p.midy, r + rnd(2), 2 | 0x1800)
-	-- fillp(0x7ada)
-	-- circfill(p.midx, p.midy, r + 12 + rnd(2), 2 | 0x1800)
-	-- fillp()
 	circfill(p.midx, p.midy, r, 0 | 0x1800)
-	-- fillp()
 end

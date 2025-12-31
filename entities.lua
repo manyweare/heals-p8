@@ -12,11 +12,11 @@
 --spawn scheduler
 
 spw_tmr = 0
-decay_rate = 120
-e_s_range = 128
 entities = {}
 spawning = {}
 dead_entities = {}
+decay_rate = 120
+e_s_range = 128
 
 -- entity class
 entity = object:new({
@@ -38,8 +38,8 @@ entity = object:new({
 	tentacles = {},
 	alive_table = entities,
 	dead_table = dead_entities,
-	alive_counter = game.live_es,
-	dead_counter = game.dead_es
+	alive_counter = live_es,
+	dead_counter = dead_es
 })
 
 --entity types
@@ -69,7 +69,11 @@ h_ranged = entity:new({
 })
 
 function init_entities()
-	spawn_entities(3)
+	spw_tmr = 0
+	entities = {}
+	spawning = {}
+	dead_entities = {}
+	-- spawn_entities(3)
 end
 
 function spawn_entities(num)
@@ -77,8 +81,8 @@ function spawn_entities(num)
 		local h = h_melee:new({
 			hp = 1 + flr(rnd(3)),
 			attframe = 1,
-			x = max(33, rnd(93)) + p.sx,
-			y = max(33, rnd(93)) + p.sy,
+			x = max(33, rnd(93)) + psx,
+			y = max(33, rnd(93)) + psy,
 			ss = split("32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42"),
 			spr = 33,
 			flip = rnd() < .5,
@@ -89,14 +93,11 @@ function spawn_entities(num)
 		h.midy = h.y + h.h / 2
 		h.dx, h.dy = h.midx, h.midy
 		h.dist = approx_dist(p.x, p.y, h.midx, h.midy)
-		-- create_tentacles(n, sx, sy, r1, r2, l, c)
-		h.tentacles = create_tentacles(
-			8, h.midx, h.midy, 2, 1, 6, split("7, 7, 7, 9")
-		)
+		h.tentacles = create_tentacles(8, h.midx, h.midy, 2, 1, 6, split("7, 7, 7, 9"))
 		h:setup_col(split("-2, -2, 2, 2"))
 		-- entities begin in spawning state
 		add(spawning, h)
-		game.live_es += 1
+		live_es += 1
 	end
 end
 
@@ -176,7 +177,7 @@ end
 
 function entity:anim_healed()
 	sfx(sfxt.healed)
-	game.healed_es += 1
+	healed_es += 1
 	self.state = "ready"
 end
 
@@ -197,7 +198,7 @@ function update_entities()
 	spw_tmr += 1
 	if (spw_tmr % 300 == 0) then
 		spw_tmr = 0
-		if (game.live_es == 0) spawn_entities(round(rnd(p.lvl / 3)))
+		if (live_es == 0) spawn_entities(round(rnd(p.lvl / 3)))
 	end
 	for e in all(spawning) do
 		e:update()
@@ -221,15 +222,16 @@ function update_entities()
 			if not is_empty(enemies) then
 				tgt = find_closest(e, enemies, e_s_range)
 			end
-			e.flip = e:flip_spr(tgt)
 			if rect_rect_collision(e.col, tgt.col) then
 				e.frame = 0
 				if (tgt != p) e:attack(tgt)
 			else
 				e.attframe = 0
-				e:move_to(tgt)
+				e:move_to(tgt.midx, tgt.midy)
 				e:anim_ready()
 			end
+			e:move_apart(e.alive_table, max(e.h, e.w) + 2)
+			e:flip_spr(tgt.x)
 		end
 		update_tentacles(e)
 	end

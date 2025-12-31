@@ -20,8 +20,9 @@ enemy state machine: -INPROGRESS
 en_spw_tmr = 0
 enemies = {}
 dead_enemies = {}
+en_wave_count = 0
 --enemy search range
-en_s_range = 86
+en_s_range = 86 --2/3 of screen
 
 --enemy class
 enemy = object:new({
@@ -30,8 +31,8 @@ enemy = object:new({
 	state = "alive",
 	alive_table = enemies,
 	dead_table = dead_enemies,
-	alive_counter = game.live_ens,
-	dead_counter = game.dead_ens
+	alive_counter = live_ens,
+	dead_counter = dead_ens
 })
 quickset(
 	enemy,
@@ -40,29 +41,42 @@ quickset(
 )
 
 --enemy types
-en_small = enemy:new({ ss = split("64, 65, 66, 67, 68") })
+en_small = enemy:new({
+	class = "small",
+	ss = split("64, 65, 66, 67, 68")
+})
 quickset(
 	en_small,
 	"hp,dmg,spd,xp,spr,attspd,animspd",
 	"5,.5,.25,3,64,15,30"
 )
 
-en_medium = enemy:new({ ss = split("80, 81, 82, 83, 68") })
+en_medium = enemy:new({
+	class = "medium",
+	ss = split("80, 81, 82, 83, 68")
+})
 quickset(
 	en_medium,
 	"hp,dmg,spd,xp,spr,attspd,animspd",
 	"10,1,.25,5,80,20,30"
 )
 
--- TODO: subclasses
--- en_type_1 = enemy:new()
--- en_type_2 = enemy:new()
--- en_type_n = enemy:new()
+en_turret = enemy:new({
+	class = "turret",
+	ss = split("80, 81, 82, 83, 68"),
+	bullets = {}
+})
+quickset(
+	en_turret,
+	"hp,dmg,spd,xp,spr,attspd,animspd",
+	"5,.5,0,5,80,30,30"
+)
 
 function enemy:update()
 	self:update_col()
 	self:update_mid()
 	sync_pos(self)
+	self:reset_pos()
 end
 
 function enemy:draw()
@@ -70,31 +84,24 @@ function enemy:draw()
 end
 
 function init_enemies()
-	-- spawn_enemies(1)
-end
-
-function spawn_enemies(num)
-	for i = 1, num do
-		local e = {}
-		local pos = rand_in_circle(p.midx, p.midy, 64)
-		--for every 3, spawn 1 medium
-		if i % 3 < 1 then
-			e = en_medium:new(vector(pos.x, pos.y))
-		else
-			e = en_small:new(vector(pos.x, pos.y))
-		end
-		e:setup_col(split("0, 0, 0, 0"))
-		add(e.alive_table, e)
-		game.live_ens += 1
-	end
+	-- enemies = {}
+	-- dead_enemies = {}
+	-- en_wave_count = 0
+	-- spawn_enemies()
 end
 
 function update_enemies()
-	en_spw_tmr += 1
-	if (en_spw_tmr % 120 == 0) then
-		en_spw_tmr = 0
-		--TODO: better spawn curve
-		spawn_enemies(2 + flr(rnd(p.lvl / 3)))
+	-- en_spw_tmr += 1
+	if playtime % 3 == 0 then
+		-- en_spw_tmr = 0
+		en_wave_count += 1
+		if en_wave_count % 5 == 0 then
+			spawn_enemies("m")
+		elseif en_wave_count % 3 == 0 then
+			spawn_enemies("t")
+		else
+			spawn_enemies("s")
+		end
 	end
 	for e in all(enemies) do
 		e:update()
@@ -118,6 +125,25 @@ function draw_dead_ens()
 	end
 end
 
+function spawn_enemies(type)
+	-- 	value = steepness * log_b(level + 1) + offset
+	local num = 10 * round(log10(p.lvl + 1)) + 1
+	for i = 1, num do
+		local e = {}
+		local pos = rand_in_circle(p.midx, p.midy, 64)
+		if type == "s" then
+			e = en_small:new(vector(pos.x, pos.y))
+		elseif type == "m" then
+			e = en_medium:new(vector(pos.x, pos.y))
+		elseif type == "t" then
+			e = en_turret:new(vector(pos.x, pos.y))
+		end
+		e:setup_col(split("0, 0, 0, 0"))
+		add(e.alive_table, e)
+		live_ens += 1
+	end
+end
+
 function enemy:move_anim()
 	if self.frame < self.animspd / 2 then
 		self.spr = self.ss[2]
@@ -133,6 +159,17 @@ end
 function enemy:anim_alive()
 	--default tgt is player
 	local tgt = p
+	if self.class == "turret" then
+		if col(self, tgt, 64) then
+			self.frame = 0
+			self:attack(tgt)
+		else
+			self.attframe = 0
+			self:move_anim()
+		end
+		self:flip_spr(tgt.x)
+		return
+	end
 	if not is_empty(entities) then
 		local c = find_closest(self, entities, en_s_range)
 		if (not is_empty(c)) tgt = c
@@ -142,9 +179,11 @@ function enemy:anim_alive()
 		self:attack(tgt)
 	else
 		self.attframe = 0
+		self:move_to(tgt.midx, tgt.midy)
 		self:move_anim()
 	end
-	self:move_to(tgt)
+	self:move_apart(self.alive_table, max(self.h, self.w) + 2)
+	self:flip_spr(tgt.x)
 end
 
 function enemy:anim_dead()
@@ -158,10 +197,23 @@ function enemy:attack(tgt)
 	if self.attframe < self.attspd / 2 then
 		if (self.attframe == 1) then
 			sfx(sfxt.en_atk)
-			if tgt == p then
-				p:take_dmg(self.dmg, true)
+			if self.class == "turret" then
+				local b = bullet:new({
+					x = self.midx,
+					y = self.midy,
+					dmg = self.dmg,
+					tgt = tgt
+				})
+				b.ix, b.iy = b.x, b.y
+				b:setup_col(split("0, 0, 0, 0"))
+				add(bullets, b)
+				-- printh("shot", log, true)
 			else
-				tgt:take_dmg(self.dmg)
+				if tgt == p then
+					p:take_dmg(self.dmg, true)
+				else
+					tgt:take_dmg(self.dmg)
+				end
 			end
 		end
 		self.spr = self.ss[3]

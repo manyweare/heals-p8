@@ -27,7 +27,7 @@
 -- boss spawns after X time or X kills or...?
 -- difficulty curve -INPROGRESS
 -- ui icon toward offscreen hurt entity
--- optimize token count
+-- optimize token count -INPROGRESS
 
 -- MAYBES:
 -- enemies spawn from bosses, move downward
@@ -37,28 +37,25 @@
 -- active abilities? rez, tranq, ?
 
 function _init()
-	version = "0.2"
+	version = "0.3"
 	pi = 3.14
 	--init input lists
 	p_i_last, p_inputs, p_i_data = {}, {}, {}
 	-- map coords
 	map_x, map_y = 0, 0
+	--total playtime
+	playtime = 0
+	--for time paused in upgrade
+	spt, ept, pt = 0, 0, 0
 	--color palette--
 	poke(0x5f2e, 1)
 	pal({ [0] = 0, 1, 129, 3, 133, 5, 6, 7, 8, 138, 139, 11, 141, 13, 130, 131 }, 1)
 	-- pal({ [0] = 0, 1, 129, 3, 133, 5, 6, 7, 8, 9, 135, 141, 12, 142, 11, 138 }, 1)
-	--easing vars--
-	lt = time()
-	_t, te, dt = 0, 0, 0
 	--setup--
 	init_game()
 end
 
 function _update()
-	_t = time()
-	dt = _t - lt
-	lt = _t
-	te += dt
 	update_game()
 	-- update_upgrade()
 	-- update_debug()

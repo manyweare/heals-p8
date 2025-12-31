@@ -23,8 +23,8 @@ function init_map()
 end
 
 function update_map()
-    s_map.x += p.sx
-    s_map.y += p.sy
+    s_map.x += psx
+    s_map.y += psy
 end
 
 function draw_map()
@@ -52,10 +52,4 @@ function draw_map_f()
     if (s == #seg_sy - 1) segs[2] = 3
     map((segs[1] - 1) * seg_h, 0, cam.x, seg_sy[s])
     map((segs[2] - 1) * seg_h, 0, cam.x, seg_sy[s + 1])
-    --debug
-    -- print(tostr(seg), ui.x + 2, ui.y + 116, 7)
-    -- print(tostr(i) .. "," .. tostr(j), ui.x + 2, ui.y + 122, 7)
-    -- for i = 0, #seg_sy - 1 do
-    --     print(seg_sy[i + 1], ui.x + 2 + i * 18, ui.y + 110, 7)
-    -- end
 end

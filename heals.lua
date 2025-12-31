@@ -20,7 +20,7 @@ function init_heals()
 	hrange = 36
 	--heals color palette
 	hclrs = split("9, 11, 10, 3")
-	--staff orb glow lt
+	--eye orb glow lt
 	orb_lt = 12
 
 	--sub-classes
@@ -213,7 +213,7 @@ end
 
 function draw_heals()
 	for i, h in pairs(heals) do
-		-- staff orb glow for all but aoe
+		-- eye orb glow for all but aoe
 		if (h.type != "aoe") then d_orb_fx() end
 		if (h.type == "beam") then
 			d_beam_heal(h)
@@ -232,9 +232,9 @@ function animate_heals()
 	for h in all(heals) do
 		if h.type == "projectile" then
 			--TODO: better projectile movement
-			local pos = angle_move(h.x, h.y, h.tx, h.ty, h.spd)
-			h.x += pos.x
-			h.y += pos.y
+			local dir = angle_move(h.x, h.y, h.tx, h.ty, h.spd)
+			h.x += dir.x
+			h.y += dir.y
 			sync_pos(h)
 			--replace with colision?
 			local d = approx_dist(h.x, h.y, h.tx, h.ty)
@@ -248,8 +248,8 @@ function animate_heals()
 			--updates h pos in relation to player
 			-- h.x, h.y = p.midx, p.midy
 			sync_pos(h)
-			h.tx += p.sx
-			h.ty += p.sy
+			h.tx += psx
+			h.ty += psy
 			--adjusts source position if flipped
 			-- if (p.flipx) h.x -= 1
 		end
@@ -259,34 +259,33 @@ function animate_heals()
 	end
 end
 
---orb glow on tip of staff
+--eye glow
 function orb_glow()
 	orb_lt = 12
 end
 
 function d_orb_fx()
-	local staffx = p.midx
-	if (p.flipx) staffx -= 1
+	local eyex = p.midx
+	if (p.flipx) eyex -= 1
 	if (orb_lt > 10) then
-		circfill(staffx, p.midy, 2, hclrs[2])
-		circ(staffx, p.midy, 2, hclrs[1])
+		circfill(eyex, p.midy, 2, hclrs[2])
+		circ(eyex, p.midy, 2, hclrs[1])
 	elseif (orb_lt > 6) then
-		circfill(staffx, p.midy, 1, hclrs[2])
+		circfill(eyex, p.midy, 1, hclrs[2])
 	end
 	orb_lt -= 1
 end
 
 function d_beam_heal(h)
-	-- sync_pos(h)
-	-- h.tx += p.sx
-	-- h.ty += p.sy
+	local c
 	if (h.lt > 10) then
-		line(h.x, h.y, h.tx, h.ty, h.clrs[1])
+		c = h.clrs[1]
 	elseif (h.lt > 3) then
-		line(h.x, h.y, h.tx, h.ty, h.clrs[2])
+		c = h.clrs[2]
 	else
-		line(h.x, h.y, h.tx, h.ty, h.clrs[3])
+		c = h.clrs[3]
 	end
+	line(h.x, h.y, h.tx, h.ty, c)
 end
 
 function d_chain_heal(h)
@@ -294,26 +293,13 @@ function d_chain_heal(h)
 end
 
 function d_aoe_heal()
-	local d = aoe.freq / 10
-	local x = p.midx
-	local y = p.midy
-	-- local c = -3
-	-- local r = ease_out_quad(te, aoe.range + c, -c, d)
-	local r = aoe.range
-	-- fillp(0x8124)
-	-- circ(x, y, r, 15)
-	-- fillp()
-	if (te > d) then
-		te = 0
-		-- circ(x, y, hrange, 15)
-	end
-	aoe_fx(x, y, r, aoe.clrs)
+	aoe_fx(p.midx, p.midy, aoe.range, aoe.clrs)
 end
 
 function d_proj_heal(h)
 	sync_pos(h)
-	h.tx += p.sx
-	h.ty += p.sy
+	h.tx += psx
+	h.ty += psy
 	circfill(h.x, h.y, 2, 10)
 	proj_fx(h.x, h.y)
 end

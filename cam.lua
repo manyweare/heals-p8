@@ -1,8 +1,8 @@
 --cam
 
 function init_cam()
-    cam = { x = 0, y = 0 }
-    shk = { x = 0, y = 0 }
+    cam = vector()
+    shk = vector()
     shake = 0
 end
 
