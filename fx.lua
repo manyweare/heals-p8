@@ -173,7 +173,7 @@ function explode(x, y, r, t, num)
 		add_fx(
 			x,
 			y,
-			5 + rnd(10),
+			7,
 			rnd(2) - 1,
 			rnd(2) - 1,
 			r,
@@ -184,11 +184,11 @@ function explode(x, y, r, t, num)
 	add_fx(
 		x,
 		y,
-		7,
+		10,
 		0,
 		0,
-		16,
-		{ 7, 9, 3, 2 },
+		r,
+		{ 9, 10, 3, 2 },
 		true
 	)
 end
@@ -207,4 +207,29 @@ function bloodfx(x, y)
 			{ 8, 8, 12, 14 }
 		)
 	end
+end
+
+function bulletfx(x, y)
+	for i = 0, 16 do
+		add_fx(
+			x,
+			y,
+			7 + rnd(8),
+			rnd(2) - 1,
+			rnd(2) - 1,
+			2,
+			{ 7, 8, 12, 14 }
+		)
+	end
+	--shockwave
+	add_fx(
+		x,
+		y,
+		10,
+		0,
+		0,
+		4,
+		{ 7, 8, 12, 14 },
+		true
+	)
 end

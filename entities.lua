@@ -1,111 +1,74 @@
 --entities
 
---TODO:
---OOP system -INPROGRESS
---use quickset to save tokens
---entity types -INPROGRESS
---fix being hit anim: use a color change instead of spr change
---create more complex movement
---return to player side if no enemies
---don't overlap player
---don't spawn on invalid tiles
---spawn scheduler
+entities, turrets, spawning_es, dead_es = {}, {}, {}, {}
+decay_rate = 150
 
-spw_tmr = 0
-entities = {}
-spawning = {}
-dead_entities = {}
-decay_rate = 120
-e_s_range = 128
-
--- entity class
+--entity class--
 entity = object:new({
-	hp = 0,
-	decay_state = 0,
-	x = 0,
-	y = 0,
-	w = 8,
-	h = 8,
-	spr = 0,
-	att_frame = 1,
-	frame = 0,
-	col = {},
-	flip = false, --sprite flip x
-	tgl = true, --for toggle-based animations
-	hit = false, --for being hit animation
-	dist = 0,
-	state = "",
-	tentacles = {},
-	alive_table = entities,
-	dead_table = dead_entities,
-	alive_counter = live_es,
-	dead_counter = dead_es
+	state = "spawning",
+	tentacles = {}
 })
+quickset(
+	entity,
+	"hp,hpmax,decay_state,x,y,dx,dy,w,h,attframe,frame,dist,flip,tgl,hit",
+	"0,4,0,0,0,0,0,8,8,1,0,0,false,true,false"
+)
 
---entity types
-h_melee = entity:new({
-	type = "melee",
-	hpmax = 4,
-	dmg = 1.5,
-	spd = .5,
-	attspd = 15,
-	ss = split("54, 55, 56, 57, 58")
+--entity types--
+e_melee = entity:new({
+	class = "melee",
+	ss = split("32,33,34,35,36,37,38,39,40,41,42")
 })
-h_tank = entity:new({
-	type = "tank",
-	hpmax = 250,
-	dmg = .5,
-	spd = .25,
-	attspd = 10,
-	ss = split("38, 39, 40, 41, 42")
+quickset(
+	e_melee,
+	"dmg,base_dmg,spd,attspd,search_range,spr",
+	"1,1,.5,15,86,33"
+)
+
+e_turret = entity:new({
+	class = "turret",
+	ss = split("32,33,34,35,36,37,38,39,40,41,42"),
+	orbit_pos = vector()
 })
-h_ranged = entity:new({
-	type = "ranged",
-	hpmax = 50,
-	dmg = .25,
-	spd = .75,
-	attspd = 15,
-	ss = split("22, 23, 24, 25, 26")
-})
+quickset(
+	e_turret,
+	"dmg,base_dmg,spd,attspd,search_range,spr",
+	"1,1,.75,30,86,33"
+)
 
 function init_entities()
-	spw_tmr = 0
-	entities = {}
-	spawning = {}
-	dead_entities = {}
 	-- spawn_entities(3)
 end
 
-function spawn_entities(num)
-	for i = 1, num do
-		local h = h_melee:new({
-			hp = 1 + flr(rnd(3)),
-			attframe = 1,
-			x = max(33, rnd(93)) + psx,
-			y = max(33, rnd(93)) + psy,
-			ss = split("32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42"),
-			spr = 33,
-			flip = rnd() < .5,
-			state = "spawning"
-		})
-		-- sync_pos(h)
-		h.midx = h.x + h.w / 2
-		h.midy = h.y + h.h / 2
-		h.dx, h.dy = h.midx, h.midy
-		h.dist = approx_dist(p.x, p.y, h.midx, h.midy)
-		h.tentacles = create_tentacles(8, h.midx, h.midy, 2, 1, 6, split("7, 7, 7, 9"))
-		h:setup_col(split("-2, -2, 2, 2"))
-		-- entities begin in spawning state
-		add(spawning, h)
-		live_es += 1
+function update_entities()
+	for e in all(spawning_es) do
+		e:update()
+		e:anim_spawn()
+	end
+	for e in all(dead_es) do
+		e:update()
+		e:anim_dead()
+	end
+	for e in all(entities) do
+		e:update()
+		e:anim_alive()
 	end
 end
 
-function entity:update()
-	self.frame += 1
-	sync_pos(self)
-	self:update_mid()
-	self:update_col()
+function draw_entities()
+	for e in all(spawning_es) do
+		e:draw()
+	end
+	for e in all(entities) do
+		e:draw()
+	end
+end
+
+--separate function to be drawn in different z-index
+function draw_dead_es()
+	for e in all(dead_es) do
+		e:draw()
+	end
 end
 
 function entity:draw()
@@ -117,8 +80,8 @@ end
 
 function entity:decay()
 	self.decay_state += 1
-	if (self.hp > 0) and (self.decay_state >= decay_rate) then
-		self.hp -= 1
+	if (self.hp > 0) and (self.decay_state == decay_rate) then
+		self.hp -= self.hpmax / 4
 		self.decay_state = 0
 	elseif self.hp <= 0 then
 		self:die()
@@ -129,7 +92,11 @@ function entity:attack(tgt)
 	if self.attframe < self.attspd / 2 then
 		if (self.attframe == 1) then
 			sfx(sfxt.entity_atk, 2)
-			tgt:take_dmg(self.dmg)
+			if self.class == "turret" then
+				self:shoot(tgt, true)
+			else
+				tgt:take_dmg(self.dmg)
+			end
 		end
 		self.spr = 41 --hardcoded attack sprite
 	elseif self.attframe == self.attspd then
@@ -148,11 +115,13 @@ end
 
 function entity:die()
 	sfx(sfxt.entity_die)
-	die(self)
-end
-
-function entity:anim()
-	self.spr = self.ss[flr(self.hp + 1)]
+	self.state = "dead"
+	self.spr = self.ss[1]
+	dead_es_c += 1
+	live_es_c = max(0, live_es_c - 1)
+	if (self.class == "turret") del(turrets, self)
+	add(dead_es, self)
+	del(entities, self)
 end
 
 function entity:anim_spawn()
@@ -161,27 +130,79 @@ function entity:anim_spawn()
 	--otherwise blink
 	if self.frame == 30 then
 		self.frame = 0
-		-- self.tgl = true
 		self.state = "hurt"
-		self:anim()
-		add(self.alive_table, self)
-		del(spawning, self)
+		add(entities, self)
+		del(spawning_es, self)
 		return
 	end
 	if (self.frame % 5 < 2.5) then
-		self:anim()
+		self.spr = self.ss[mid(1, 4, ceil(4 * self.hp / self.hpmax) + 1)]
 	else
-		self:toggle()
+		self.spr = 1
 	end
 end
 
-function entity:anim_healed()
-	sfx(sfxt.healed)
-	healed_es += 1
-	self.state = "ready"
+function entity:anim_alive()
+	if self.state == "hurt" then
+		if self.hp < self.hpmax then
+			self:decay()
+			self.spr = self.ss[mid(1, 4, ceil(4 * self.hp / self.hpmax) + 1)]
+		else
+			sfx(sfxt.healed)
+			healed_es_c += 1
+			drop_xp(vector(self.midx, self.midy), 1)
+			self.state = "ready"
+			--index is used for orbiting behavior
+			if self.class == "turret" then
+				add(turrets, self)
+				for i = 1, #turrets do
+					turrets[i].orbit_pos = find_orbit_pos(p, i)
+				end
+			end
+		end
+	elseif self.state == "ready" then
+		local tgt = p
+		if not is_empty(enemies)
+				and approx_dist(self.midx, self.midy, tgt.midx, tgt.midy) < 64 then
+			local c = find_closest(self, enemies, self.search_range)
+			if (not is_empty(c)) tgt = c
+		end
+		if self.class == "turret" then
+			--orbit player
+			self:move_to(self.orbit_pos.x, self.orbit_pos.y)
+			printh("midx:" .. tostr(self.midx) .. " midy:" .. tostr(self.midy), "log.p8l", true)
+			printh("dx:" .. tostr(self.dx) .. " dy:" .. tostr(self.dy), "log.p8l", true)
+			if tgt == p then
+				self.attframe = 0
+				self:anim_move()
+			else
+				self.frame = 0
+				self:attack(tgt)
+			end
+		elseif self.class == "melee" then
+			if tgt == p then
+				if approx_dist(self.midx, self.midy, p.midx, p.midy) > 18 then
+					self.attframe = 0
+					self:move_to(p.midx, p.midy)
+					self:anim_move()
+				end
+			else
+				if col(self, tgt, 8) then
+					self.frame = 0
+					self:attack(tgt)
+				else
+					self.attframe = 0
+					self:move_to(tgt.midx, tgt.midy)
+					self:anim_move()
+				end
+			end
+			self:move_apart(entities, 10)
+		end
+		self:flip_spr(tgt.x)
+	end
 end
 
-function entity:anim_ready()
+function entity:anim_move()
 	if (self.frame % 5 < 2.5) then
 		self.spr = 38
 	else
@@ -190,64 +211,5 @@ function entity:anim_ready()
 end
 
 function entity:anim_dead()
-	self.spr = self.ss[1]
-	if (self.frame > 600) del(self.dead_table, self)
-end
-
-function update_entities()
-	spw_tmr += 1
-	if (spw_tmr % 300 == 0) then
-		spw_tmr = 0
-		if (live_es == 0) spawn_entities(round(rnd(p.lvl / 3)))
-	end
-	for e in all(spawning) do
-		e:update()
-		e:anim_spawn()
-	end
-	for e in all(dead_entities) do
-		e:update()
-		e:anim_dead()
-	end
-	for e in all(entities) do
-		e:update()
-		if e.state == "hurt" then
-			if e.hp < e.hpmax then
-				e:decay()
-				e:anim()
-			else
-				e:anim_healed()
-			end
-		elseif e.state == "ready" then
-			local tgt = p
-			if not is_empty(enemies) then
-				tgt = find_closest(e, enemies, e_s_range)
-			end
-			if rect_rect_collision(e.col, tgt.col) then
-				e.frame = 0
-				if (tgt != p) e:attack(tgt)
-			else
-				e.attframe = 0
-				e:move_to(tgt.midx, tgt.midy)
-				e:anim_ready()
-			end
-			e:move_apart(e.alive_table, max(e.h, e.w) + 2)
-			e:flip_spr(tgt.x)
-		end
-		update_tentacles(e)
-	end
-end
-
-function draw_entities()
-	for e in all(spawning) do
-		e:draw()
-	end
-	for e in all(entities) do
-		e:draw()
-	end
-end
-
-function draw_dead_es()
-	for e in all(dead_entities) do
-		e:draw()
-	end
+	if (self.frame > 300) del(self.dead_table, self)
 end

@@ -12,7 +12,8 @@ bullet = object:new({
     h = 4,
     spd = 1.5,
     frame = 1,
-    tgl = false
+    tgl = false,
+    friendly = false
 })
 
 function update_bullets()
@@ -35,12 +36,19 @@ function bullet:update()
     local diff_x, diff_y = self.ix - self.midx, self.iy - self.midx
     self:move_to(self.tgt.midx - diff_x, self.tgt.midy - diff_y)
     sync_pos(self)
-    if col(self, self.tgt, 6) then
+    if tgt != p and col(self, vector(self.tgt.midx, self.tgt.midy), 6) then
         self.tgt:take_dmg(self.dmg)
-        --fx
+        bulletfx(self.x, self.y)
         --sfx
         del(bullets, self)
-    elseif self.frame == 150 then
+    elseif col(self, vector(p.midx, p.midy), 8) and not self.friendly then
+        p:take_dmg(self.dmg)
+        bulletfx(self.x, self.y)
+        --sfx
+        del(bullets, self)
+    end
+    if self.frame == 150 then
+        bulletfx(self.x, self.y)
         del(bullets, self)
     end
 end

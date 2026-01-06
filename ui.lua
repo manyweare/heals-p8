@@ -19,25 +19,15 @@ function init_ui()
 	lvlanim_tgl = true
 	--lvl anim clr
 	lvlup_clr = 7
-	--heal and dmg numbers
-	nums = {}
 	--ui frame for anims
 	uif = 1
 end
 
 function update_ui()
-	--for ui anim
 	uif += 1
 	if (uif > 30) uif = 1
 	uix, uiy = cam.x, cam.y
 	uixp = min((p.curxp / xpmax) * uiw, uiw)
-	-- animate numbers
-	for n in all(nums) do
-		n.f += 1
-		n.y -= .25
-		sync_pos(n)
-		if (n.f > n.lt) del(nums, n)
-	end
 end
 
 function update_lvlup()
@@ -65,21 +55,6 @@ end
 function draw_ui()
 	print(version, uix + 117, uiy + 122, 0)
 	print(version, uix + 116, uiy + 121, 2)
-	-- numbers animation
-	for n in all(nums) do
-		--shadow
-		-- print(n.txt, n.x - 5, n.y - 7, 0)
-		local i = 1
-		local j = n.lt / 4
-		if n.f < j then
-			i = 1
-		elseif n.f >= j and n.f < j * 3 then
-			i = 3
-		elseif n.f >= j * 3 then
-			i = 4
-		end
-		print("+", n.x - 2, n.y - 8, hclrs[i])
-	end
 end
 
 function draw_hud()
@@ -87,7 +62,7 @@ function draw_hud()
 	-- rectfill(uix, uiy, uix + uiw, uiy + uih, 2)
 	--current live entities
 	spr(uispr[2], uix + 10, uiy + 1)
-	print(":" .. tostr(live_es), uix + 18, uiy + 3, 7)
+	print(":" .. tostr(#entities), uix + 18, uiy + 3, 7)
 	--current live enemies
 	-- spr(uispr[1], uix + 33, uiy + 1)
 	-- print(":" .. tostr(live_ens), uix + 41, uiy + 3, 7)
@@ -96,10 +71,23 @@ function draw_hud()
 	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(xpmax), uix + 90, uiy + 3, 7)
 	d_xp_bar()
 	d_hp_bar(p)
-	for h in all(entities) do
-		d_hp_bar(h)
+	for e in all(spawning_es) do
+		d_hp_bar(e)
 	end
-	print(round(playtime), uix + 1, uiy + 121, 7)
+	for e in all(entities) do
+		d_hp_bar(e)
+		d_offscreen_marker(e.midx, e.midy, 8)
+	end
+	print("pt:" .. tostr(round(playtime / 30)), uix + 1, uiy + 121, 7)
+	print("ls:" .. tostr(round(level_up_stat(10, p.lvl, xpmax))), uix + 25, uiy + 121, 11)
+	print("en:" .. tostr(#enemies), uix + 50, uiy + 121, 8)
+	print("hp:" .. tostr(p.hpmax), uix + 75, uiy + 121, 7)
+	-- if not is_empty(entities) then
+	-- 	printh("entity: " .. tostr(entities[1].dmg) .. " / " .. tostr(entities[1].hpmax), "log.p8l", true)
+	-- end
+	-- if not is_empty(enemies) then
+	-- 	printh("enemy: " .. tostr(enemies[1].dmg) .. " / " .. tostr(enemies[1].hpmax), "log.p8l", true)
+	-- end
 	line()
 end
 
@@ -157,20 +145,25 @@ function d_hp_bar(a)
 	local hp = min((a.hp / a.hpmax) * a.w, a.w)
 	line(a.x, a.y - 4, a.x + a.w, a.y - 4, 1)
 	local c = 8
+	--TODO: green when healed
 	--flash bar if hp < 10%
-	if (a.hp <= ceil(a.hpmax / 10) and uif % 7 < 3.5) c = 7
+	if (a.hp == 1 or a.hp <= round(a.hpmax / 10)) and uif % 7 < 3.5 then
+		c = 7
+		rect(a.x - 1, a.y - 5, a.x + a.w + 1, a.y - 3, 7)
+	end
 	line(a.x, a.y - 4, a.x + hp, a.y - 4, c)
+	-- print(a.hpmax, a.x, a.y - 15, 7)
 end
 
-function add_h_num(h)
-	n = {
-		txt = h.pwr,
-		x = h.tx,
-		y = h.ty,
-		f = 0,
-		lt = 20
-	}
-	add(nums, n)
+--p=padding
+function d_offscreen_marker(x, y, p)
+	local r = 128 - p - 4
+	local offr, offl, offt, offb = x > r, x < p, y < p, y > r
+	local x, y = mid(p, x, r), mid(p + uih, y, r)
+	if offr or offl or offt or offb then
+		circfill(x, y, 1, 7)
+		pset(x, y, 11)
+	end
 end
 
 function draw_log()

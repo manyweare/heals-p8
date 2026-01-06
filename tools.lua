@@ -5,6 +5,13 @@ function print_align(t, x, y, c, u, v)
 	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
 end
 
+function indexof(o, t)
+	for i, v in ipairs(t) do
+		if (v == o) return i
+	end
+	return nil
+end
+
 -- vector library by @thacuber2a03
 function vector(x, y) return { x = x or 0, y = y or 0 } end
 
@@ -64,43 +71,16 @@ function object:new(o)
 end
 
 function object:update()
-	self:update_col()
-	self:update_mid()
-	sync_pos(self)
+	if (self.tentacles) update_tentacles(self)
+	self.frame += 1
+	self.midx = self.x + 4
+	self.midy = self.y + 4
 	self:reset_pos()
-end
-
-function object:update_mid()
-	self.midx = self.x + self.w / 2
-	self.midy = self.y + self.h / 2
-end
-
-function object:setup_col(t)
-	--collision rect offsets relative to self
-	-- x,y,w,h
-	self.col_offset = t
-	--collision rect
-	self.col = {
-		x = self.x + self.col_offset[1],
-		y = self.y + self.col_offset[2],
-		w = self.w + self.col_offset[3],
-		h = self.h + self.col_offset[4]
-	}
-end
-
---updates col rect position
-function object:update_col()
-	self.col.x = self.x + self.col_offset[1]
-	self.col.y = self.y + self.col_offset[2]
-end
-
---used for flashing anims
-function object:toggle()
-	self.spr = 1
+	sync_pos(self)
 end
 
 function object:take_dmg(dmg)
-	self.hit = true
+	self.hitframe = 1
 	self.hp -= dmg
 	if (self.hp <= 0) self:die()
 end
@@ -112,12 +92,29 @@ function object:move_to(x, y)
 	self.y -= self.dy * self.spd
 end
 
+-- function object:orbit(o, i, r)
+-- 	r = r or 18
+-- 	-- rnd() * 2 * pi
+-- 	local d = (i / #turrets) * 2 * pi
+-- 	local x = o.midx + r * cos(d)
+-- 	local y = o.midy + r * sin(d)
+-- 	self:move_to(x, y)
+-- end
+
+function find_orbit_pos(o, i, r)
+	r = r or 18
+	local d = i / #turrets
+	local x = o.midx + r * cos(d)
+	local y = o.midy + r * sin(d)
+	return vector(x, y)
+end
+
 function object:move_apart(t, r)
 	if (#t < 2) return
 	local dist, dir, dif
 	for i = 1, #t do
 		if t[i] != self then
-			if rect_rect_collision(self, t[i]) then
+			if col(self, t[i], 8) then
 				dist = approx_dist(self.midx, self.midy, t[i].midx, t[i].midy)
 				dir = get_dir(self.midx, self.midy, t[i].midx, t[i].midy)
 				dif = r - dist
@@ -134,10 +131,23 @@ end
 
 --reset pos when out of map bounds
 function object:reset_pos()
-	if self.x > 128 or self.y > 128 then
-		local pos = rand_in_circle(p.midx, p.midy, 32)
+	if self.x > 170 or self.y > 170 then
+		local pos = rand_in_circle(p.midx, p.midy, 64)
 		self.x, self.y = pos.x, pos.y
 	end
+end
+
+function object:shoot(tgt, is_friendly)
+	is_friendly = is_friendly or false
+	local b = bullet:new({
+		x = self.midx,
+		y = self.midy,
+		dmg = self.dmg,
+		tgt = tgt,
+		friendly = is_friendly
+	})
+	b.ix, b.iy = b.x, b.y
+	add(bullets, b)
 end
 
 --agent functions
@@ -195,15 +205,6 @@ function agent:arrive(tgt, r)
 	self:apply_force(s)
 end
 
-function die(o)
-	o.frame = 0
-	o.state = "dead"
-	add(o.dead_table, o)
-	del(o.alive_table, o)
-	o.dead_counter += 1
-	o.alive_counter -= 1
-end
-
 -- update position relative to player
 -- needed for scrolling map with player in center
 function sync_pos(a)
@@ -237,8 +238,8 @@ function round(n)
 	return (n % 1 < 0.5) and flr(n) or ceil(n)
 end
 
--- from pico-8 wiki math section
-function log10(n)
+--https://pico-8.fandom.com/wiki/Math
+function log2(n)
 	if (n <= 0) return nil
 	local f, t = 0, 0
 	while n < 0.5 do
@@ -256,11 +257,11 @@ function log10(n)
 	t += f
 	-- to change base, change the
 	-- divisor below to ln(base)
-	return t / 2.30259
+	return t / 0.69314
 end
 
--- map a value from one range to another
--- similar to p5.js map
+--map a value from one range to another
+--similar to p5.js map
 function map_value(n, min1, max1, min2, max2)
 	return (((n - min1) * (max2 - min2)) / (max1 - min1)) + min2
 end
@@ -365,7 +366,7 @@ function col(a, b, r)
 	return (x * x + y * y) < r * r
 end
 
---rect rect AABB
+--rect rect AABB collision
 function rect_rect_collision(r1, r2)
 	return r1.x < r2.x + r2.w
 			and r1.x + r1.w > r2.x
@@ -376,8 +377,7 @@ end
 --adapted from musurca
 --https://www.lexaloffle.com/bbs/?tid=36059
 function approx_dist(x1, y1, x2, y2)
-	local dx = abs(x2 - x1)
-	local dy = abs(y2 - y1)
+	local dx, dy = abs(x2 - x1), abs(y2 - y1)
 	local maskx, masky = dx >> 31, dy >> 31
 	local a0, b0 = (dx + maskx) ^^ maskx, (dy + masky) ^^ masky
 	if a0 > b0 then
@@ -404,17 +404,14 @@ function find_closest(o, t, r)
 		if e != o then
 			d = approx_dist(o.x, o.y, e.x, e.y)
 			if (d < c) and (d < r) then
-				c = d
-				ce = e
+				c, ce = d, e
 			end
 		end
 	end
 	return ce
 end
 
---adapted from @aioobe via stackoverflow
 function rand_in_circle(x, y, r)
-	local n = r * sqrt(rnd())
 	local theta = rnd() * 2 * pi
 	local rx = x + r * cos(theta)
 	local ry = y + r * sin(theta)
@@ -429,40 +426,45 @@ function rand_in_circlefill(x, y, r)
 	return t
 end
 
---tentacle functions
+--tentacle functions--
+
+function create_tentacle(sx, sy, r1, r2, l, c)
+	local t = {}
+	--random length
+	local r = round(rnd(l / 2))
+	local rl, rlmax
+	rl = l + r
+	rlmax = rl + r
+	r = rand_in_circle(sx, sy, rl)
+	t = {
+		sx = sx,
+		sy = sy,
+		ex = r.x,
+		ey = r.y,
+		tx = r.x,
+		ty = r.y,
+		r1 = r1,
+		r2 = r2,
+		length = rl,
+		max_length = rlmax,
+		colors = c,
+		start_time = 0
+	}
+	return t
+end
+
 function create_tentacles(n, sx, sy, r1, r2, l, c)
 	local t = {}
-	local rnd_l, rnd_lmax, ex, ey
-	for i = 0, n - 1 do
-		--random length
-		rnd_l = l + rnd(l / 2)
-		--random max length
-		rnd_lmax = rnd_l + rnd(l / 2)
-		--end point of tentacles on random points
-		--in a circle around start coords
-		ex = sx + l * cos(rnd())
-		ey = sy + l * sin(rnd())
-		add(
-			t, {
-				sx = sx,
-				sy = sy,
-				ex = ex,
-				ey = ey,
-				tx = ex,
-				ty = ey,
-				r1 = r1,
-				r2 = r2,
-				length = rnd_l,
-				max_length = rnd_lmax,
-				colors = c,
-				start_time = time()
-			}
-		)
+	local rl, rlmax
+	for i = 1, n do
+		local _t = create_tentacle(sx, sy, r1, r2, l, c)
+		add(t, _t)
 	end
 	return t
 end
 
 function draw_tentacle(t)
+	--samples
 	local s = round(t.length * 1.5)
 	local x, y, r, c
 	for i = 0, s do
@@ -487,16 +489,16 @@ end
 function update_tentacles(o)
 	local timer, d_center, d_move
 	for t in all(o.tentacles) do
-		t.sx, t.sy = o.midx, o.midy
 		t.tx += psx
 		t.ty += psy
-		d_center = approx_dist(t.ex, t.ey, t.sx, t.sy)
+		d_center = approx_dist(o.midx, o.midy, t.ex, t.ey)
 		d_move = approx_dist(t.ex, t.ey, t.tx, t.ty)
-		if d_center > t.max_length and d_move < 0.01 then
+		if d_center >= t.max_length and d_move < 0.01 then
 			--(o.dx * t.length / 2) = moves the target pos (tx,ty)
 			--to direction obj is headed (dx,dy)
-			t.tx = t.sx + t.length * cos(rnd()) - o.dx * t.length / 2
-			t.ty = t.sy + t.length * sin(rnd()) - o.dy * t.length / 2
+			local r = rand_in_circle(o.midx, o.midy, t.length)
+			t.tx = r.x - o.dx * (t.length / 2)
+			t.ty = r.y - o.dy * (t.length / 2)
 			--restart timer for lerp anim
 			t.start_time = time()
 		end
@@ -504,5 +506,6 @@ function update_tentacles(o)
 		timer = mid(0, ((time() - t.start_time) % 1) * 2.25, 1)
 		t.ex = lerp(t.ex, t.tx, easeoutquart(timer)) + psx
 		t.ey = lerp(t.ey, t.ty, easeoutquart(timer)) + psy
+		t.sx, t.sy = o.midx, o.midy
 	end
 end

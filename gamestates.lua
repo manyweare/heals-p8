@@ -3,7 +3,6 @@
 --init--------------------------
 
 function init_game()
-    init_manager()
     init_map()
     init_player()
     init_ui()
@@ -34,9 +33,10 @@ function update_start()
 end
 
 function update_game()
-    playtime = time() - pt
+    playtime += 1
     get_inputs()
     update_player()
+    update_spawner()
     update_entities()
     update_enemies()
     update_heals()
@@ -51,12 +51,9 @@ end
 
 function update_upgrade()
     get_inputs()
-    -- update_heals()
     update_items()
     update_ui()
     update_fx()
-    -- update_cam()
-    -- update_map()
     update_lvlup()
 end
 
@@ -64,22 +61,6 @@ function update_gameover()
     get_inputs()
     -- update_ui()
     update_gameover_screen()
-end
-
-function update_debug()
-    playtime = time() - pt
-    get_inputs()
-    -- update_heals()
-    -- update_entities()
-    -- update_enemies()
-    update_player()
-    update_ui()
-    update_items()
-    update_bullets()
-    -- update_fx()
-    update_cam()
-    update_map()
-    cheat()
 end
 
 --draw-----------------------------
@@ -110,15 +91,8 @@ end
 
 function draw_upgrade()
     cls()
-    -- draw_map()
-    -- draw_range()
-    -- draw_dead_ens()
-    -- draw_dead_es()
     draw_fx()
     draw_player()
-    -- draw_entities()
-    -- draw_heals()
-    -- draw_enemies()
     draw_items()
     draw_ui()
     draw_cam()
@@ -129,23 +103,4 @@ function draw_gameover()
     cls()
     -- draw_ui()
     draw_gameover_screen()
-end
-
-function draw_debug()
-    cls()
-    draw_map()
-    -- draw_range()
-    -- draw_dead_ens()
-    -- draw_dead_es()
-    -- draw_fx()
-    draw_player()
-    -- draw_entities()
-    -- draw_heals()
-    -- draw_enemies()
-    draw_items()
-    draw_bullets()
-    draw_ui()
-    draw_hud()
-    draw_log()
-    draw_cam()
 end
