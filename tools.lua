@@ -1,16 +1,16 @@
 --tools
 
-function print_align(t, x, y, c, u, v)
-	local ox, oy = print(t, 0, 128)
-	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
-end
+-- function print_align(t, x, y, c, u, v)
+-- 	local ox, oy = print(t, 0, 128)
+-- 	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
+-- end
 
-function indexof(o, t)
-	for i, v in ipairs(t) do
-		if (v == o) return i
-	end
-	return nil
-end
+-- function indexof(o, t)
+-- 	for i, v in ipairs(t) do
+-- 		if (v == o) return i
+-- 	end
+-- 	return nil
+-- end
 
 -- vector library by @thacuber2a03
 function vector(x, y) return { x = x or 0, y = y or 0 } end
@@ -38,21 +38,21 @@ function v_limit(v, n)
 	return v
 end
 
---OOP implementation by kevinthompson
---https://github.com/kevinthompson/object-oriented-pico-8?tab=readme-ov-file
--- class = setmetatable(
--- 	{
--- 		new = function(_ENV, tbl)
--- 			return setmetatable(
--- 				tbl or {}, {
--- 					__index = _ENV
--- 				}
--- 			)
--- 		end
--- 	}, { __index = _ENV }
--- )
+-- update position relative to player
+-- needed for scrolling map with player in center
+function sync_pos(a)
+	a.x += psx
+	a.y += psy
+end
 
--- object constructor
+function find_orbit_pos(o, i, r)
+	r = r or 18
+	local d = i / #turrets
+	local x, y = o.x + r * cos(d), o.y + r * sin(d)
+	return vector(x, y)
+end
+
+-- object constructor --
 object = {}
 function object:new(o)
 	o = o or {}
@@ -73,40 +73,15 @@ end
 function object:update()
 	if (self.tentacles) update_tentacles(self)
 	self.frame += 1
-	self.midx = self.x + 4
-	self.midy = self.y + 4
 	self:reset_pos()
 	sync_pos(self)
 end
 
-function object:take_dmg(dmg)
-	self.hitframe = 1
-	self.hp -= dmg
-	if (self.hp <= 0) self:die()
-end
-
 function object:move_to(x, y)
-	local dir = get_dir(x, y, self.midx, self.midy)
+	local dir = get_dir(x, y, self.x, self.y)
 	self.dx, self.dy = cos(dir), sin(dir)
 	self.x -= self.dx * self.spd
 	self.y -= self.dy * self.spd
-end
-
--- function object:orbit(o, i, r)
--- 	r = r or 18
--- 	-- rnd() * 2 * pi
--- 	local d = (i / #turrets) * 2 * pi
--- 	local x = o.midx + r * cos(d)
--- 	local y = o.midy + r * sin(d)
--- 	self:move_to(x, y)
--- end
-
-function find_orbit_pos(o, i, r)
-	r = r or 18
-	local d = i / #turrets
-	local x = o.midx + r * cos(d)
-	local y = o.midy + r * sin(d)
-	return vector(x, y)
 end
 
 function object:move_apart(t, r)
@@ -115,8 +90,8 @@ function object:move_apart(t, r)
 	for i = 1, #t do
 		if t[i] != self then
 			if col(self, t[i], 8) then
-				dist = approx_dist(self.midx, self.midy, t[i].midx, t[i].midy)
-				dir = get_dir(self.midx, self.midy, t[i].midx, t[i].midy)
+				dist = approx_dist(self.x, self.y, t[i].x, t[i].y)
+				dir = get_dir(self.x, self.y, t[i].x, t[i].y)
 				dif = r - dist
 				t[i].x += cos(dir) * dif
 				t[i].y += sin(dir) * dif
@@ -132,21 +107,30 @@ end
 --reset pos when out of map bounds
 function object:reset_pos()
 	if self.x > 170 or self.y > 170 then
-		local pos = rand_in_circle(p.midx, p.midy, 64)
+		local pos = rand_in_circle(p.x, p.y, 64)
 		self.x, self.y = pos.x, pos.y
 	end
+end
+
+function object:take_dmg(dmg)
+	self.hitframe = 1
+	self.hp -= dmg
+	if (self.hp <= 0) self:die()
 end
 
 function object:shoot(tgt, is_friendly)
 	is_friendly = is_friendly or false
 	local b = bullet:new({
-		x = self.midx,
-		y = self.midy,
+		x = self.x,
+		y = self.y,
+		ix = self.x,
+		iy = self.y,
+		tx = tgt.x,
+		ty = tgt.y,
 		dmg = self.dmg,
 		tgt = tgt,
 		friendly = is_friendly
 	})
-	b.ix, b.iy = b.x, b.y
 	add(bullets, b)
 end
 
@@ -203,13 +187,6 @@ function agent:arrive(tgt, r)
 	end
 	local s = v_sub(d, self.vel)
 	self:apply_force(s)
-end
-
--- update position relative to player
--- needed for scrolling map with player in center
-function sync_pos(a)
-	a.x += psx
-	a.y += psy
 end
 
 -- from Beckon the Hellspawn
@@ -491,12 +468,12 @@ function update_tentacles(o)
 	for t in all(o.tentacles) do
 		t.tx += psx
 		t.ty += psy
-		d_center = approx_dist(o.midx, o.midy, t.ex, t.ey)
+		d_center = approx_dist(o.x, o.y, t.ex, t.ey)
 		d_move = approx_dist(t.ex, t.ey, t.tx, t.ty)
 		if d_center >= t.max_length and d_move < 0.01 then
 			--(o.dx * t.length / 2) = moves the target pos (tx,ty)
 			--to direction obj is headed (dx,dy)
-			local r = rand_in_circle(o.midx, o.midy, t.length)
+			local r = rand_in_circle(o.x, o.y, t.length)
 			t.tx = r.x - o.dx * (t.length / 2)
 			t.ty = r.y - o.dy * (t.length / 2)
 			--restart timer for lerp anim
@@ -506,6 +483,6 @@ function update_tentacles(o)
 		timer = mid(0, ((time() - t.start_time) % 1) * 2.25, 1)
 		t.ex = lerp(t.ex, t.tx, easeoutquart(timer)) + psx
 		t.ey = lerp(t.ey, t.ty, easeoutquart(timer)) + psy
-		t.sx, t.sy = o.midx, o.midy
+		t.sx, t.sy = o.x, o.y
 	end
 end

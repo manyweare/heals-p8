@@ -76,7 +76,7 @@ function draw_hud()
 	end
 	for e in all(entities) do
 		d_hp_bar(e)
-		d_offscreen_marker(e.midx, e.midy, 8)
+		d_offscreen_marker(e.x, e.y, 8)
 	end
 	print("pt:" .. tostr(round(playtime / 30)), uix + 1, uiy + 121, 7)
 	print("ls:" .. tostr(round(level_up_stat(10, p.lvl, xpmax))), uix + 25, uiy + 121, 11)
@@ -143,15 +143,15 @@ end
 function d_hp_bar(a)
 	if (a == p and a.hp >= a.hpmax) return
 	local hp = min((a.hp / a.hpmax) * a.w, a.w)
-	line(a.x, a.y - 4, a.x + a.w, a.y - 4, 1)
+	line(a.x - 4, a.y - 8, a.x + a.w - 4, a.y - 8, 1)
 	local c = 8
 	--TODO: green when healed
 	--flash bar if hp < 10%
 	if (a.hp == 1 or a.hp <= round(a.hpmax / 10)) and uif % 7 < 3.5 then
 		c = 7
-		rect(a.x - 1, a.y - 5, a.x + a.w + 1, a.y - 3, 7)
+		rect(a.x - 5, a.y - 9, a.x + a.w - 3, a.y - 7, 7)
 	end
-	line(a.x, a.y - 4, a.x + hp, a.y - 4, c)
+	line(a.x - 4, a.y - 8, a.x + hp - 4, a.y - 8, c)
 	-- print(a.hpmax, a.x, a.y - 15, 7)
 end
 

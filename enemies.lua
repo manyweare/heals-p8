@@ -24,8 +24,8 @@ enemy = object:new({
 })
 quickset(
 	enemy,
-	"name,x,y,w,h,midx,midy,dx,dy,frame,attframe,hitframe,flip",
-	"enemy,0,0,8,8,0,0,0,0,1,1,0,false"
+	"name,x,y,w,h,dx,dy,frame,attframe,hitframe,flip",
+	"enemy,0,0,8,8,0,0,1,1,0,false"
 )
 
 --enemy types
@@ -68,7 +68,7 @@ function enemy:draw()
 			self.hitframe = 0
 		end
 	end
-	spr(self.spr, self.x, self.y, 1, 1, self.flip)
+	spr(self.spr, self.x - 4, self.y - 4, 1, 1, self.flip)
 end
 
 function init_enemies()
@@ -97,12 +97,15 @@ end
 --separate function to draw on different z-index
 function draw_dead_ens()
 	for e in all(dead_enemies) do
-		spr(e.spr, e.x, e.y, 1, 1, e.flip)
+		spr(e.spr, e.x - 4, e.y - 4, 1, 1, e.flip)
 	end
 end
 
--- function enemy:update()
--- end
+function enemy:update()
+	self.frame += 1
+	self:reset_pos()
+	sync_pos(self)
+end
 
 function enemy:anim_alive()
 	--blink when spawning
@@ -124,7 +127,7 @@ function enemy:anim_alive()
 	end
 	if self.class == "turret" then
 		--always moves away from tgt
-		self:move_to(tgt.midx, tgt.midy)
+		self:move_to(tgt.x, tgt.y)
 		if col(self, tgt, self.search_range) then
 			self.frame = 0
 			self:attack(tgt)
@@ -140,7 +143,7 @@ function enemy:anim_alive()
 			self:attack(tgt)
 		else
 			self.attframe = 0
-			self:move_to(tgt.midx, tgt.midy)
+			self:move_to(tgt.x, tgt.y)
 			self:move_anim()
 		end
 	end
@@ -150,7 +153,6 @@ end
 
 function enemy:anim_dead()
 	if (self.frame > 300) del(dead_enemies, self)
-	-- self.frame += 1
 end
 
 function enemy:move_anim()
@@ -191,8 +193,8 @@ function enemy:die()
 	-- sprite for dead unit is the last in sprite sheet
 	self.spr = self.ss[count(self.ss)]
 	sfx(sfxt.en_die)
-	bloodfx(self.midx, self.midy)
-	drop_xp(vector(self.midx, self.midy), self.xp)
+	bloodfx(self.x, self.y)
+	drop_xp(vector(self.x, self.y), self.xp)
 	dead_ens_c += 1
 	live_ens_c = max(0, live_ens_c - 1)
 	add(dead_enemies, self)

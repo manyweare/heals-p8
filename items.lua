@@ -35,9 +35,9 @@ end
 
 function ixp:update()
     self.frame += 1
-    if (self.frame == 10) self.tgt = vector(p.midx, p.midy)
+    if (self.frame == 10) self.tgt = vector(p.x, p.y)
     self:update_pos()
-    if col(self.pos, vector(p.midx, p.midy), 6) then
+    if col(self.pos, vector(p.x, p.y), 6) then
         addxp()
         sfx(sfxt.ixp)
         del(items, self)

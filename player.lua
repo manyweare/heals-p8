@@ -18,8 +18,6 @@ quickset(
 )
 
 function init_player()
-	p.midx = p.x + p.w / 2
-	p.midy = p.y + p.h / 2
 	--create_tentacles(n, sx, sy, r1, r2, l, c)
 	p.tentacles = create_tentacles(8, 59, 59, 2.2, 1, 7, split("7, 7, 7, 9"))
 end
@@ -40,9 +38,9 @@ end
 function draw_player()
 	draw_tentacles(p.tentacles)
 	if not (p.inv_c / 2 % 2 < 1) then
-		spr(1, p.x, p.y, 1, 1, p.flipx, p.flipy)
+		spr(1, p.x - 4, p.y - 4, 1, 1, p.flipx, p.flipy)
 	else
-		spr(p.spr, p.x, p.y, 1, 1, p.flipx, p.flipy)
+		spr(p.spr, p.x - 4, p.y - 4, 1, 1, p.flipx, p.flipy)
 	end
 end
 
@@ -116,5 +114,5 @@ end
 function draw_range()
 	--inverted draw, visibility range
 	poke(0x5f34, 0x2)
-	circfill(p.midx, p.midy, hrange + 24, 0 | 0x1800)
+	circfill(p.x, p.y, hrange + 24, 0 | 0x1800)
 end

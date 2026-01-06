@@ -75,7 +75,7 @@ function entity:draw()
 	if self.state == "ready" then
 		draw_tentacles(self.tentacles)
 	end
-	spr(self.spr, self.x, self.y, 1, 1, self.flip)
+	spr(self.spr, self.x - 4, self.y - 4, 1, 1, self.flip)
 end
 
 function entity:decay()
@@ -150,7 +150,7 @@ function entity:anim_alive()
 		else
 			sfx(sfxt.healed)
 			healed_es_c += 1
-			drop_xp(vector(self.midx, self.midy), 1)
+			drop_xp(vector(self.x, self.y), 1)
 			self.state = "ready"
 			--index is used for orbiting behavior
 			if self.class == "turret" then
@@ -163,14 +163,14 @@ function entity:anim_alive()
 	elseif self.state == "ready" then
 		local tgt = p
 		if not is_empty(enemies)
-				and approx_dist(self.midx, self.midy, tgt.midx, tgt.midy) < 64 then
+				and approx_dist(self.x, self.y, tgt.x, tgt.y) < 64 then
 			local c = find_closest(self, enemies, self.search_range)
 			if (not is_empty(c)) tgt = c
 		end
 		if self.class == "turret" then
 			--orbit player
 			self:move_to(self.orbit_pos.x, self.orbit_pos.y)
-			printh("midx:" .. tostr(self.midx) .. " midy:" .. tostr(self.midy), "log.p8l", true)
+			printh("x:" .. tostr(self.x) .. " y:" .. tostr(self.y), "log.p8l", true)
 			printh("dx:" .. tostr(self.dx) .. " dy:" .. tostr(self.dy), "log.p8l", true)
 			if tgt == p then
 				self.attframe = 0
@@ -181,9 +181,9 @@ function entity:anim_alive()
 			end
 		elseif self.class == "melee" then
 			if tgt == p then
-				if approx_dist(self.midx, self.midy, p.midx, p.midy) > 18 then
+				if approx_dist(self.x, self.y, p.x, p.y) > 18 then
 					self.attframe = 0
-					self:move_to(p.midx, p.midy)
+					self:move_to(p.x, p.y)
 					self:anim_move()
 				end
 			else
@@ -192,7 +192,7 @@ function entity:anim_alive()
 					self:attack(tgt)
 				else
 					self.attframe = 0
-					self:move_to(tgt.midx, tgt.midy)
+					self:move_to(tgt.x, tgt.y)
 					self:anim_move()
 				end
 			end

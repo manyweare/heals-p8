@@ -101,10 +101,10 @@ function new_beam_heal()
 		local h = beam:new({
 			tgt = c,
 			type = "beam",
-			x = p.midx,
-			y = p.midy,
-			tx = c.midx,
-			ty = c.midy,
+			x = p.x,
+			y = p.y,
+			tx = c.x,
+			ty = c.y,
 			pwr = beam.pwr,
 			lt = 12
 		})
@@ -130,10 +130,10 @@ function new_chain_heal()
 			local h = chain:new({
 				tgt = c,
 				type = "chain",
-				x = src.midx,
-				y = src.midy,
-				tx = c.midx,
-				ty = c.midy,
+				x = src.x,
+				y = src.y,
+				tx = c.x,
+				ty = c.y,
 				pwr = beam.pwr,
 				lt = 12
 			})
@@ -157,10 +157,10 @@ function new_aoe_heal()
 			local h = aoe:new({
 				tgt = e,
 				type = "aoe",
-				x = p.midx,
-				y = p.midy,
-				tx = e.midx,
-				ty = e.midy,
+				x = p.x,
+				y = p.y,
+				tx = e.x,
+				ty = e.y,
 				pwr = aoe.pwr,
 				lt = 12
 			})
@@ -178,10 +178,10 @@ function new_proj_heal()
 		local h = proj:new({
 			tgt = r,
 			type = "projectile",
-			x = p.midx,
-			y = p.midy,
-			tx = r.midx,
-			ty = r.midy,
+			x = p.x,
+			y = p.y,
+			tx = r.x,
+			ty = r.y,
 			pwr = proj.pwr,
 			spd = proj.spd,
 			lt = 60
@@ -251,13 +251,13 @@ function orb_glow()
 end
 
 function d_orb_fx()
-	local eyex = p.midx
+	local eyex = p.x
 	if (p.flipx) eyex -= 1
 	if (orb_lt > 10) then
-		circfill(eyex, p.midy, 3, hclrs[2])
-		circ(eyex, p.midy, 2, hclrs[1])
+		circfill(eyex, p.y, 3, hclrs[2])
+		circ(eyex, p.y, 2, hclrs[1])
 	elseif (orb_lt > 6) then
-		circfill(eyex, p.midy, 1, hclrs[2])
+		circfill(eyex, p.y, 1, hclrs[2])
 	end
 	orb_lt -= 1
 end
@@ -279,7 +279,7 @@ function d_chain_heal(h)
 end
 
 function d_aoe_heal()
-	aoe_fx(p.midx, p.midy, aoe.range, aoe.clrs)
+	aoe_fx(p.x, p.y, aoe.range, aoe.clrs)
 end
 
 function d_proj_heal(h)

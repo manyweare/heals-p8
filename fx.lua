@@ -81,8 +81,8 @@ end
 function lvlup_fx()
 	for i = 0, 1 do
 		add_fx(
-			p.midx,
-			p.midy,
+			p.x,
+			p.y,
 			15 + rnd(15),
 			1 - rnd(2),
 			1 - rnd(2),

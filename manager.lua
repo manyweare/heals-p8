@@ -65,7 +65,7 @@ function spawn_enemies(class, num)
 	for i = 1, num do
 		if #enemies < 32 then
 			local e = {}
-			local pos = rand_in_circle(p.midx, p.midy, 64)
+			local pos = rand_in_circle(p.x, p.y, 64)
 			if class == "s" then
 				e = en_small:new(pos)
 			elseif class == "m" then
@@ -89,16 +89,14 @@ function spawn_entities(class, num)
 				hp = 1 + flr(rnd(3)),
 				x = pos.x,
 				y = pos.y,
-				midx = pos.x + 4,
-				midy = pos.y + 4,
 				flip = rnd() < .5
 			}
 			if class == "melee" then
 				e = e_melee:new(_e)
-				e.tentacles = create_tentacles(8, e.midx, e.midy, 2, 1, 5, split("7, 7, 7, 9"))
+				e.tentacles = create_tentacles(8, e.x, e.y, 2, 1, 5, split("7, 7, 7, 9"))
 			elseif class == "turret" then
 				e = e_turret:new(_e)
-				e.tentacles = create_tentacles(4, e.midx, e.midy, 2, 1, 4, split("7, 7, 7, 15"))
+				e.tentacles = create_tentacles(4, e.x, e.y, 2, 1, 4, split("7, 7, 7, 15"))
 			end
 			e:level_up()
 			add(spawning_es, e)
