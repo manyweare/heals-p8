@@ -104,6 +104,15 @@ function object:flip_spr(tx)
 	self.flip = self.x > tx
 end
 
+function object:tgl_anim(spd, f1, f2, counter)
+	counter = counter or self.frame
+	if (counter % spd < spd / 2) then
+		self.spr = f1
+	else
+		self.spr = f2
+	end
+end
+
 --reset pos when out of map bounds
 function object:reset_pos()
 	if self.x > 170 or self.y > 170 then
@@ -115,7 +124,10 @@ end
 function object:take_dmg(dmg)
 	self.hitframe = 1
 	self.hp -= dmg
-	if (self.hp <= 0) self:die()
+	printh("--- " .. self.name .. " damaged ---", "log.p8l", true)
+	if (self.hp <= 0) then
+		self:die()
+	end
 end
 
 function object:shoot(tgt, is_friendly)
@@ -403,7 +415,7 @@ function rand_in_circlefill(x, y, r)
 	return t
 end
 
---tentacle functions--
+----- tentacles -----
 
 function create_tentacle(sx, sy, r1, r2, l, c)
 	local t = {}
@@ -440,26 +452,36 @@ function create_tentacles(n, sx, sy, r1, r2, l, c)
 	return t
 end
 
-function draw_tentacle(t)
-	--samples
+function draw_tentacle(t, clrs)
+	--s=samples
 	local s = round(t.length * 1.5)
-	local x, y, r, c
+	local x, y, r, c, ratio
 	for i = 0, s do
-		x = t.sx + ((t.ex - t.sx) * i / s)
-		y = t.sy + ((t.ey - t.sy) * i / s)
-		r = t.r1 + ((t.r2 - t.r1) * i / s)
-		c = 1 + round((count(t.colors) - 1) * i / s)
+		ratio = i / s
+		x = t.sx + ((t.ex - t.sx) * ratio)
+		y = t.sy + ((t.ey - t.sy) * ratio)
+		r = t.r1 + ((t.r2 - t.r1) * ratio)
+		c = 1 + round((count(clrs) - 1) * ratio)
 		if r > 1.5 then
-			circfill(x, y, r, t.colors[c])
+			circfill(x, y, r, clrs[c])
 		else
-			pset(x, y, t.colors[c])
+			pset(x, y, clrs[c])
 		end
 	end
 end
 
-function draw_tentacles(tentacles)
+function draw_tentacles(tentacles, main_clrs, state)
+	state = state or "ready"
+	--color tentacles based on state/sprite clrs
+	--default to spawning/hurt colors
+	local clrs = split("13, 13, 13, 1")
+	if state == "ready" then
+		clrs = main_clrs
+	elseif state == "dead" then
+		clrs = split("1, 1, 2, 2")
+	end
 	for t in all(tentacles) do
-		draw_tentacle(t)
+		draw_tentacle(t, clrs)
 	end
 end
 

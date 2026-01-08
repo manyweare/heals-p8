@@ -33,18 +33,18 @@ function bullet:update()
     --so we calculate the difference between initial pos
     --and current pos to maintain direction of shot
     local diff_x, diff_y = self.ix - self.x, self.iy - self.x
-    -- self:move_to(self.tgt.x - diff_x, self.tgt.y - diff_y)
     local dir = get_dir(self.tx, self.ty, self.ix, self.iy)
     self.dx, self.dy = cos(dir), sin(dir)
     self.x -= self.dx * self.spd
     self.y -= self.dy * self.spd
     sync_pos(self)
-    if tgt != p and col(self, vector(self.tgt.x, self.tgt.y), 6) then
+    if col(self, vector(self.tgt.x, self.tgt.y), 6) and tgt != p then
         self.tgt:take_dmg(self.dmg)
         bulletfx(self.x, self.y)
         --sfx
         del(bullets, self)
-    elseif col(self, vector(p.x, p.y), 8) and not self.friendly then
+    end
+    if col(self, vector(p.x, p.y), 8) and not self.friendly then
         p:take_dmg(self.dmg)
         bulletfx(self.x, self.y)
         --sfx

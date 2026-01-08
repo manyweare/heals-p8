@@ -21,17 +21,23 @@ end
 
 function update_spawner()
 	--entity spawning DEBUG--
-	if (#entities < 1 and #spawning_es < 1) spawn_entities("turret")
+	if #entities < 1 and #spawning_es < 1 then
+		local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
+	end
 	if playtime % 150 == 0 then
-		if (#entities < 3 and #spawning_es < 1) spawn_entities("turret")
+		if #entities < 3 and #spawning_es < 1 then
+			local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
+		end
 	end
 	--enemy spawning DEBUG--
-	if (playtime == 3) spawn_enemies("t")
-	if playtime == 150 or playtime % 450 == 0 then
+	if #enemies < 1 and #spawning_ens < 1 then
+		local r = rnd() < .5 and spawn_ens("t") or spawn_ens("m")
+	end
+	if playtime % 300 == 0 then
 		local num = round(en_wave_c / 3)
-		spawn_enemies("m", round(num / 5))
-		spawn_enemies("t", round(num / 3))
-		spawn_enemies("s", num)
+		spawn_ens("m", round(num / 5))
+		spawn_ens("t", round(num / 3))
+		spawn_ens("s", num)
 		en_wave_c += 1
 	end
 	--start spawning bosses and entities after 2m
@@ -40,27 +46,27 @@ function update_spawner()
 	--     if playtime % 180 == 0 and not boss_is_active then
 	--         --spawn miniboss
 	--         --spawn adds
-	--         spawn_enemies("s", 6)
-	--         spawn_enemies("m", 2)
-	--         spawn_enemies("t", 3)
+	--         spawn_ens("s", 6)
+	--         spawn_ens("m", 2)
+	--         spawn_ens("t", 3)
 	--     end
 	--     --final boss at 10m
 	--     if playtime == 600 then
 	--         boss_is_active = true
 	--         --spawn boss
 	--         --spawn adds
-	--         spawn_enemies("s", 12)
-	--         spawn_enemies("m", 4)
-	--         spawn_enemies("t", 6)
+	--         spawn_ens("s", 12)
+	--         spawn_ens("m", 4)
+	--         spawn_ens("t", 6)
 	--     end
 	--     --entity spawning--
 	--     if playtime % 5 == 0 then
-	--         if (live_es == 0) spawn_entities()
+	--         if (live_es == 0) spawn_es()
 	--     end
 	-- end
 end
 
-function spawn_enemies(class, num)
+function spawn_ens(class, num)
 	num = num or 1
 	for i = 1, num do
 		if #enemies < 32 then
@@ -74,12 +80,15 @@ function spawn_enemies(class, num)
 				e = en_turret:new(pos)
 			end
 			e:level_up()
-			add(enemies, e)
+			add(spawning_ens, e)
+			add(all_enemies, e)
+			printh("----- enemy SPAWNED -----", "log.p8l", true)
+			printh("ens:" .. tostr(#enemies) .. " | dead_ens:" .. tostr(#dead_ens), "log.p8l", true)
 		end
 	end
 end
 
-function spawn_entities(class, num)
+function spawn_es(class, num)
 	num = num or 1
 	for i = 1, num do
 		if #entities < 8 then
@@ -93,13 +102,18 @@ function spawn_entities(class, num)
 			}
 			if class == "melee" then
 				e = e_melee:new(_e)
-				e.tentacles = create_tentacles(8, e.x, e.y, 2, 1, 5, split("7, 7, 7, 9"))
+				e.main_clrs = split("7, 7, 7, 10")
+				e.tentacles = create_tentacles(6, e.x, e.y, 1.75, 1, 5, e.main_clrs)
 			elseif class == "turret" then
 				e = e_turret:new(_e)
-				e.tentacles = create_tentacles(4, e.x, e.y, 2, 1, 4, split("7, 7, 7, 15"))
+				e.main_clrs = split("7, 7, 7, 3")
+				e.tentacles = create_tentacles(4, e.x, e.y, 1.75, 1, 4, e.main_clrs)
 			end
 			e:level_up()
 			add(spawning_es, e)
+			add(all_entities, e)
+			printh("----- entity SPAWNED -----", "log.p8l", true)
+			printh("es:" .. tostr(#entities) .. " | dead_es:" .. tostr(#dead_es), "log.p8l", true)
 		end
 	end
 end

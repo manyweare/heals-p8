@@ -48,5 +48,5 @@ function ixp:draw()
     -- if (self.frame % 5 == 0) self.tgl = not self.tgl
     -- if (self.tgl) pset(self.pos.x, self.pos.y, 11)
     circfill(self.pos.x, self.pos.y, 1, 0)
-    pset(self.pos.x, self.pos.y, 9)
+    pset(self.pos.x, self.pos.y, 7)
 end

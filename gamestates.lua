@@ -51,7 +51,7 @@ end
 
 function update_upgrade()
     get_inputs()
-    update_items()
+    -- update_items()
     update_ui()
     update_fx()
     update_lvlup()

@@ -53,8 +53,9 @@ function update_lvlup()
 end
 
 function draw_ui()
-	print(version, uix + 117, uiy + 122, 0)
-	print(version, uix + 116, uiy + 121, 2)
+	print(version, uix + 112, uiy + 122, 0)
+	print(version, uix + 111, uiy + 121, 2)
+	print(tostr(round(playtime / 30)), uix + 1, uiy + 121, 2)
 end
 
 function draw_hud()
@@ -78,10 +79,10 @@ function draw_hud()
 		d_hp_bar(e)
 		d_offscreen_marker(e.x, e.y, 8)
 	end
-	print("pt:" .. tostr(round(playtime / 30)), uix + 1, uiy + 121, 7)
-	print("ls:" .. tostr(round(level_up_stat(10, p.lvl, xpmax))), uix + 25, uiy + 121, 11)
-	print("en:" .. tostr(#enemies), uix + 50, uiy + 121, 8)
-	print("hp:" .. tostr(p.hpmax), uix + 75, uiy + 121, 7)
+	-- print("ls:" .. tostr(round(level_up_stat(10, p.lvl, xpmax))), uix + 25, uiy + 121, 11)
+	-- print("en:" .. tostr(#enemies), uix + 50, uiy + 121, 8)
+	-- print("hp:" .. tostr(p.hpmax), uix + 75, uiy + 121, 7)
+	-- print("w:" .. tostr(en_wave_c), uix + 100, uiy + 121, 13)
 	-- if not is_empty(entities) then
 	-- 	printh("entity: " .. tostr(entities[1].dmg) .. " / " .. tostr(entities[1].hpmax), "log.p8l", true)
 	-- end
@@ -141,7 +142,7 @@ function d_xp_bar()
 end
 
 function d_hp_bar(a)
-	if (a == p and a.hp >= a.hpmax) return
+	if (a.hp >= a.hpmax) return
 	local hp = min((a.hp / a.hpmax) * a.w, a.w)
 	line(a.x - 4, a.y - 8, a.x + a.w - 4, a.y - 8, 1)
 	local c = 8

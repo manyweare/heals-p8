@@ -15,7 +15,7 @@ enemy state machine: -INPROGRESS
 	if nothing in range, wander
 ]]
 
-enemies, dead_enemies = {}, {}
+all_enemies, enemies, spawning_ens, dead_ens = {}, {}, {}, {}
 
 --enemy class
 enemy = object:new({
@@ -31,7 +31,7 @@ quickset(
 --enemy types
 en_small = enemy:new({
 	class = "small",
-	ss = split("64, 65, 66, 67, 68, 112")
+	ss = split("112,64,65,66,67,68")
 })
 quickset(
 	en_small,
@@ -41,7 +41,7 @@ quickset(
 
 en_medium = enemy:new({
 	class = "medium",
-	ss = split("80, 81, 82, 83, 84, 112")
+	ss = split("112,80,81,82,83,84")
 })
 quickset(
 	en_medium,
@@ -51,7 +51,7 @@ quickset(
 
 en_turret = enemy:new({
 	class = "turret",
-	ss = split("96, 97, 98, 99, 100, 112")
+	ss = split("112,96,97,98,99,100")
 })
 quickset(
 	en_turret,
@@ -59,11 +59,17 @@ quickset(
 	"5,5,1,1,-0.15,3,96,30,30,86"
 )
 
+function enemy:update()
+	self.frame += 1
+	sync_pos(self)
+	self:reset_pos()
+end
+
 function enemy:draw()
 	if self.hitframe > 0 then
 		if self.hitframe <= 3 then
 			self.hitframe += 1
-			self.spr = self.ss[count(self.ss) - 1]
+			self.spr = self.ss[count(self.ss)]
 		elseif self.hitframe > 3 then
 			self.hitframe = 0
 		end
@@ -72,23 +78,28 @@ function enemy:draw()
 end
 
 function init_enemies()
-	-- enemies = {}
-	-- dead_enemies = {}
-	-- spawn_enemies()
+	all_enemies, enemies, spawning_ens, dead_ens = {}, {}, {}, {}
 end
 
 function update_enemies()
-	for e in all(enemies) do
+	for e in all(all_enemies) do
 		e:update()
+	end
+	for e in all(spawning_ens) do
+		e:anim_spawn()
+	end
+	for e in all(enemies) do
 		e:anim_alive()
 	end
-	for e in all(dead_enemies) do
-		e:update()
+	for e in all(dead_ens) do
 		e:anim_dead()
 	end
 end
 
 function draw_enemies()
+	for e in all(spawning_ens) do
+		e:draw()
+	end
 	for e in all(enemies) do
 		e:draw()
 	end
@@ -96,29 +107,24 @@ end
 
 --separate function to draw on different z-index
 function draw_dead_ens()
-	for e in all(dead_enemies) do
-		spr(e.spr, e.x - 4, e.y - 4, 1, 1, e.flip)
+	for e in all(dead_ens) do
+		e:draw()
 	end
 end
 
-function enemy:update()
-	self.frame += 1
-	self:reset_pos()
-	sync_pos(self)
+function enemy:anim_spawn()
+	if self.frame == 30 then
+		self.frame = 0
+		self.state = "hurt"
+		add(enemies, self)
+		del(spawning_ens, self)
+		return
+	else
+		self:tgl_anim(5, self.ss[2], 1)
+	end
 end
 
 function enemy:anim_alive()
-	--blink when spawning
-	if self.state == "spawning" and self.frame < 30 then
-		if (self.frame % 5 < 2.5) then
-			self.spr = self.ss[1]
-		else
-			self.spr = 1
-		end
-		return
-	else
-		self.state = "alive"
-	end
 	--default tgt is player
 	local tgt = p
 	if not is_empty(entities) then
@@ -152,22 +158,24 @@ function enemy:anim_alive()
 end
 
 function enemy:anim_dead()
-	if (self.frame > 300) del(dead_enemies, self)
+	self.spr = self.ss[1]
+	if (self.frame > 300) del(dead_ens, self)
 end
 
 function enemy:move_anim()
-	if self.frame < self.animspd / 2 then
-		self.spr = self.ss[2]
-	elseif self.frame == self.animspd then
-		self.frame = 0
-	else
-		self.spr = self.ss[1]
-	end
-	-- self.frame += 1
+	self:tgl_anim(self.animspd, self.ss[2], self.ss[3])
+	-- if self.frame < self.animspd / 2 then
+	-- 	self.spr = self.ss[2]
+	-- elseif self.frame == self.animspd then
+	-- 	self.frame = 0
+	-- else
+	-- 	self.spr = self.ss[3]
+	-- end
 end
 
 function enemy:attack(tgt)
 	if self.attframe < self.attspd / 2 then
+		self.spr = self.ss[4]
 		if (self.attframe == 1) then
 			sfx(sfxt.en_atk)
 			if self.class == "turret" then
@@ -180,23 +188,27 @@ function enemy:attack(tgt)
 				end
 			end
 		end
-		self.spr = self.ss[3]
 	elseif self.attframe == self.attspd then
 		self.attframe = 0
 	else
-		self.spr = self.ss[4]
+		self.spr = self.ss[3]
 	end
 	self.attframe += 1
 end
 
 function enemy:die()
-	-- sprite for dead unit is the last in sprite sheet
-	self.spr = self.ss[count(self.ss)]
+	self.state = "dead"
+	--visuals
 	sfx(sfxt.en_die)
 	bloodfx(self.x, self.y)
 	drop_xp(vector(self.x, self.y), self.xp)
+	--counters
 	dead_ens_c += 1
 	live_ens_c = max(0, live_ens_c - 1)
-	add(dead_enemies, self)
+	--tables
 	del(enemies, self)
+	add(dead_ens, self)
+	--
+	printh("----- " .. self.name .. " DIED -----", "log.p8l", true)
+	printh("ens:" .. tostr(#enemies) .. " | dead_ens:" .. tostr(#dead_ens), "log.p8l", true)
 end

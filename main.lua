@@ -38,7 +38,7 @@
 -- active abilities? rez, tranq, ?
 
 function _init()
-	version = "0.3"
+	version = "V0.3"
 	pi = 3.14
 	--init input lists
 	p_i_last, p_inputs, p_i_data = {}, {}, {}

@@ -67,7 +67,7 @@ function init_heals()
 		tmr = 0,
 		spr = 53,
 		range = min(hrange * 2, 128),
-		clrs = split("10, 3, 15"),
+		clrs = hclrs,
 		hitrange = 16,
 		func = new_proj_heal
 	})

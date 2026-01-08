@@ -59,6 +59,7 @@ function draw_fx()
 end
 
 function add_fx(x, y, lt, dx, dy, r, clrs, is_sw)
+	is_sw = is_sw or false
 	local f = {
 		x = x,
 		y = y,
@@ -161,7 +162,7 @@ function proj_fx(x, y)
 			0,
 			0,
 			rnd(1) + 1,
-			{ 10, 11, 9 }
+			{ 10, 3, 15, 2 }
 		)
 	end
 end
@@ -173,10 +174,10 @@ function explode(x, y, r, t, num)
 		add_fx(
 			x,
 			y,
-			7,
+			12,
 			rnd(2) - 1,
 			rnd(2) - 1,
-			r,
+			3,
 			t
 		)
 	end
@@ -184,11 +185,11 @@ function explode(x, y, r, t, num)
 	add_fx(
 		x,
 		y,
-		10,
+		5,
 		0,
 		0,
 		r,
-		{ 9, 10, 3, 2 },
+		{ 10, 3, 15, 2 },
 		true
 	)
 end

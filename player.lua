@@ -3,6 +3,7 @@
 --screen-based coords
 --used for scrolling map
 psx, psy = 0, 0
+px, py = 63, 63
 
 -- player class
 player = object:new()
@@ -14,12 +15,12 @@ p = player:new({
 quickset(
 	p,
 	"lvl,curxp,totalxp,inv_f,inv_c,hp,hpmax,regen,regen_spd,x,y,dx,dy,w,h,spd,maxspd,spr,frame,animspd,flipx,flipy",
-	"1,0,0,30,0,1,5,.5,30,59,59,0,0,8,8,1,1,16,0,5,false,false"
+	"1,0,0,30,0,1,5,.5,30,63,63,0,0,8,8,1,1,16,0,5,false,false"
 )
 
 function init_player()
 	--create_tentacles(n, sx, sy, r1, r2, l, c)
-	p.tentacles = create_tentacles(8, 59, 59, 2.2, 1, 7, split("7, 7, 7, 9"))
+	p.tentacles = create_tentacles(8, 63, 63, 2.2, 1, 7, split("7, 7, 7, 9"))
 end
 
 function update_player()
@@ -36,7 +37,7 @@ function update_player()
 end
 
 function draw_player()
-	draw_tentacles(p.tentacles)
+	draw_tentacles(p.tentacles, split("7, 7, 7, 9"))
 	if not (p.inv_c / 2 % 2 < 1) then
 		spr(1, p.x - 4, p.y - 4, 1, 1, p.flipx, p.flipy)
 	else
