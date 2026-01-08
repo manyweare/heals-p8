@@ -4,6 +4,7 @@ __lua__
 --healers v0.3
 --by mdvn
 #include tools.lua
+#include object.lua
 #include main.lua
 #include gamestates.lua
 #include manager.lua
