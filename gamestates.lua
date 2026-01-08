@@ -85,7 +85,6 @@ function draw_game()
     draw_range()
     draw_ui()
     draw_hud()
-    draw_log()
     draw_cam()
 end
 

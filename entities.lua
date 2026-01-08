@@ -1,6 +1,6 @@
 --entities
 
-all_entities, entities, turrets, spawning_es, dead_es = {}, {}, {}, {}, {}
+entities, turrets, spawning_es, dead_es, live_es, all_es = {}, {}, {}, {}, {}, {}
 
 --entity class--
 entity = object:new({
@@ -27,8 +27,7 @@ quickset(
 
 e_turret = entity:new({
 	class = "turret",
-	ss = split("32,33,34,35,36,37,38,39"),
-	orbit_pos = vector()
+	ss = split("32,33,34,35,36,37,38,39")
 })
 quickset(
 	e_turret,
@@ -37,11 +36,13 @@ quickset(
 )
 
 function init_entities()
-	all_entities, entities, turrets, spawning_es, dead_es = {}, {}, {}, {}, {}
+	entities, turrets, spawning_es, dead_es, live_es, all_es = {}, {}, {}, {}, {}, {}
 end
 
 function update_entities()
-	for e in all(all_entities) do
+	live_es = cat(entities, spawning_es)
+	all_es = cat(entities, spawning_es, dead_es)
+	for e in all(all_es) do
 		e:update()
 	end
 	for e in all(spawning_es) do
@@ -140,9 +141,9 @@ function entity:anim_alive()
 			--index is used for orbiting behavior
 			if self.class == "turret" then
 				add(turrets, self)
-				for i = 1, #turrets do
-					turrets[i].orbit_pos = find_orbit_pos(p, i)
-				end
+				-- for i = 1, #turrets do
+				-- 	turrets[i].orbit_pos = find_orbit_pos(p, i)
+				-- end
 			end
 		end
 	elseif self.state == "ready" then

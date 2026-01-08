@@ -111,7 +111,6 @@ function spawn_es(class, num)
 			end
 			e:level_up()
 			add(spawning_es, e)
-			add(all_entities, e)
 			printh("----- entity SPAWNED -----", "log.p8l", true)
 			printh("es:" .. tostr(#entities) .. " | dead_es:" .. tostr(#dead_es), "log.p8l", true)
 		end

@@ -39,7 +39,6 @@
 
 function _init()
 	version = "V0.3"
-	pi = 3.14
 	--init input lists
 	p_i_last, p_inputs, p_i_data = {}, {}, {}
 	-- map coords

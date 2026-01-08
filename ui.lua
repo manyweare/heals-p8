@@ -72,10 +72,11 @@ function draw_hud()
 	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(xpmax), uix + 90, uiy + 3, 7)
 	d_xp_bar()
 	d_hp_bar(p)
-	for e in all(spawning_es) do
-		d_hp_bar(e)
-	end
-	for e in all(entities) do
+	for e in all(live_es) do
+		-- 	d_hp_bar(e)
+		-- 	d_offscreen_marker(e.x, e.y, 8)
+		-- end
+		-- for e in all(entities) do
 		d_hp_bar(e)
 		d_offscreen_marker(e.x, e.y, 8)
 	end
@@ -158,20 +159,12 @@ end
 
 --p=padding
 function d_offscreen_marker(x, y, p)
-	local r = 128 - p - 4
+	p = p or 16
+	local r = 128 - p
 	local offr, offl, offt, offb = x > r, x < p, y < p, y > r
 	local x, y = mid(p, x, r), mid(p + uih, y, r)
 	if offr or offl or offt or offb then
 		circfill(x, y, 1, 7)
 		pset(x, y, 11)
 	end
-end
-
-function draw_log()
-	-- for i = 1, #curr_heals do
-	-- 	print(
-	-- 		curr_heals[i].name .. " " .. tostr(curr_heals[i].lvl),
-	-- 		uix + 10, uiy + 8 + i * 6, 7
-	-- 	)
-	-- end
 end
