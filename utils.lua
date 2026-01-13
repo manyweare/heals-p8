@@ -67,27 +67,25 @@ function log2(n)
 end
 
 --map a value from one range to another
---similar to p5.js map
 function map_value(n, min1, max1, min2, max2)
 	return (((n - min1) * (max2 - min2)) / (max1 - min1)) + min2
 end
 
---adapted from @shiftalow (https://www.lexaloffle.com/bbs/?tid=32411)
-function cat(...)
-	local c = {}
+--by @shiftalow (https://www.lexaloffle.com/bbs/?tid=32411)
+function cat(f, ...)
 	for i, s in pairs({ ... }) do
 		for k, v in pairs(s) do
 			if tonum(k) then
-				add(c, v)
+				add(f, v)
 			else
-				c[k] = v
+				f[k] = v
 			end
 		end
 	end
-	return c
+	return f
 end
 
---by magic_chopstick on bbs
+--by @magic_chopstick
 function quickset(obj, keys, vals)
 	local v, k = split(vals), split(keys)
 	-- remove/comment out below before publication
@@ -164,23 +162,23 @@ end
 
 --ease library by:
 --https://www.lexaloffle.com/bbs/?tid=40577
-function easeinquart(t)
-	return t * t * t * t
-end
+-- function easeinquart(t)
+-- 	return t * t * t * t
+-- end
 
 function easeoutquart(t)
 	t -= 1
 	return 1 - t * t * t * t
 end
 
-function easeinoutquart(t)
-	if t < .5 then
-		return 8 * t * t * t * t
-	else
-		t -= 1
-		return (1 - 8 * t * t * t * t)
-	end
-end
+-- function easeinoutquart(t)
+-- 	if t < .5 then
+-- 		return 8 * t * t * t * t
+-- 	else
+-- 		t -= 1
+-- 		return (1 - 8 * t * t * t * t)
+-- 	end
+-- end
 
 function lerp(a, b, t)
 	return a + (b - a) * t
@@ -223,12 +221,12 @@ function col(a, b, r)
 end
 
 --rect rect AABB collision
-function rect_rect_collision(r1, r2)
-	return r1.x < r2.x + r2.w
-			and r1.x + r1.w > r2.x
-			and r1.y < r2.y + r2.h
-			and r1.y + r1.h > r2.y
-end
+-- function rect_rect_collision(r1, r2)
+-- 	return r1.x < r2.x + r2.w
+-- 			and r1.x + r1.w > r2.x
+-- 			and r1.y < r2.y + r2.h
+-- 			and r1.y + r1.h > r2.y
+-- end
 
 --adapted from musurca
 --https://www.lexaloffle.com/bbs/?tid=36059
@@ -250,13 +248,13 @@ function nearby(a, t, r)
 	return n
 end
 
-function offscreen(t)
-	local o = {}
-	for e in all(t) do
-		if (e.x > 128 or e.x < 0 or e.y > 128 or e.y < 0) add(o, e)
-	end
-	return o
-end
+-- function offscreen(t)
+-- 	local o = {}
+-- 	for e in all(t) do
+-- 		if (e.x > 128 or e.x < 0 or e.y > 128 or e.y < 0) add(o, e)
+-- 	end
+-- 	return o
+-- end
 
 function find_closest(o, t, r)
 	-- c = initial range check
@@ -275,12 +273,6 @@ function find_closest(o, t, r)
 	return ce
 end
 
-function closest_offscreen(o, t)
-	local ot = offscreen(t)
-	local c = find_closest(o, ot)
-	return c
-end
-
 function rand_in_circle(x, y, r)
 	local theta = rnd() * 2 * pi
 	local rx = x + r * cos(theta)
@@ -290,8 +282,9 @@ end
 
 function rand_in_circlefill(x, y, r)
 	local t = {}
-	for i = 1, r do
+	while r > 0 do
 		add(t, rand_in_circle(x, y, r))
+		r -= 1
 	end
 	return t
 end

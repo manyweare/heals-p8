@@ -1,10 +1,5 @@
 --heals
 
---TODOS:
---chain heal
---player heal fx
---better heal "movement"
-
 --range for non aura heals
 base_hrange, hrange = 36, 36
 
@@ -22,29 +17,26 @@ function init_heals()
 	--sub-classes
 	--TODO: better names
 	beam = heal:new({
-		name = "beam",
-		lvl = 1,
-		pwr = 1,
-		freq = 15,
-		spd = 1,
-		tmr = 0,
 		range = hrange,
 		clrs = hclrs,
 		func = new_beam_heal
 	})
+	quickset(
+		beam,
+		"name,lvl,pwr,freq,spd,tmr",
+		"beam,1,1,15,1,0"
+	)
 
 	chain = heal:new({
-		name = "chain",
-		lvl = 1,
-		pwr = 1,
-		freq = 30,
-		spd = 1,
-		tmr = 0,
-		num_chains = 3,
 		range = round(hrange * 1.5),
 		clrs = split("15, 10, 9, 7"),
 		func = new_chain_heal
 	})
+	quickset(
+		chain,
+		"name,lvl,pwr,freq,spd,tmr,num_chains",
+		"chain,1,1,30,1,0,3"
+	)
 
 	aoe = heal:new({
 		name = "aura",
@@ -63,7 +55,7 @@ function init_heals()
 		lvl = 1,
 		pwr = 3,
 		freq = 60,
-		spd = 2,
+		spd = .5,
 		tmr = 0,
 		spr = 53,
 		range = min(hrange * 2, 128),
@@ -96,7 +88,7 @@ end
 
 function new_beam_heal()
 	-- must find a closest hurt entity
-	local c = closest_hurt(p, entities)
+	local c = closest_hurt(p, entities, spawning_es)
 	if not is_empty(c) and is_in_range(p, c, beam.range) then
 		local h = beam:new({
 			tgt = c,
@@ -125,7 +117,7 @@ function new_chain_heal()
 	local c = {}
 	--create all heals in the chain
 	for i = 1, chain.num_chains do
-		c = closest_hurt(src, entities)
+		c = closest_hurt(src, entities, spawning_es)
 		if not is_empty(c) and is_in_range(src, c, max(16, range / 2)) then
 			local h = chain:new({
 				tgt = c,
@@ -172,7 +164,7 @@ end
 
 function new_proj_heal()
 	-- must find hurt entity
-	local t = all_hurt(entities)
+	local t = all_hurt(entities, spawning_es)
 	local r = rnd(t)
 	if not is_empty(r) and is_in_range(p, r, proj.range) then
 		local h = proj:new({
@@ -219,10 +211,12 @@ end
 function animate_heals()
 	for h in all(heals) do
 		if h.type == "projectile" then
-			--MAYBE: better projectile movement
-			local dir = angle_move(h.x, h.y, h.tx, h.ty, h.spd)
-			h.x += dir.x
-			h.y += dir.y
+			-- local dir = angle_move(h.x, h.y, h.tx, h.ty, h.spd)
+			local dir = get_dir(h.x, h.y, h.tx, h.ty)
+			local dx, dy = cos(dir), sin(dir)
+			h.x += dx * h.spd
+			h.y += dy * h.spd
+			h.spd += .2
 			sync_pos(h)
 			if col(h, vector(h.tx, h.ty), 2) then
 				explode(h.x, h.y, h.hitrange, h.clrs, 1)
@@ -298,14 +292,16 @@ function is_hurt(e)
 	return (e.hp > 0) and (e.hp < e.hpmax)
 end
 
-function closest_hurt(e, t)
-	return find_closest(e, all_hurt(t))
+function closest_hurt(e, ...)
+	return find_closest(e, all_hurt(...))
 end
 
-function all_hurt(t)
-	local ah = {}
-	for e in all(t) do
-		if (is_hurt(e)) add(ah, e)
+function all_hurt(...)
+	local a = {}
+	for k, v in pairs({ ... }) do
+		for e in all(v) do
+			if (is_hurt(e)) add(a, e)
+		end
 	end
-	return ah
+	return a
 end

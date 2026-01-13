@@ -1,55 +1,35 @@
 -- map
 
---TODO:
---vertical scrolling -DONE
---map art
---props art
---draw props
-
 function init_map()
-    s_map = { x = 0, y = 0 }
+    mapx, mapy = 0, 0
     flags = {
         wall = 0,
         entity = 1,
         pickup = 2,
         enemy = 3
     }
-    seg_h = 16
-    mid_segs = 2
-    seg_sy = {}
-    for i = 0, mid_segs + 1 do
-        add(seg_sy, -128 * i)
+    redraw_map = true
+    tiles = rand_in_circlefill(63, 63, 128)
+    for t in all(tiles) do
+        t.spr = mid(1, ceil(rnd(4)), 4)
     end
 end
 
 function update_map()
-    s_map.x += psx
-    s_map.y += psy
+    mapx += psx
+    mapy += psy
+    for t in all(tiles) do
+        sync_pos(t)
+        if t.x > 172 or t.x < -44 or t.y > 172 or t.y < -44 then
+            local r = rand_in_circle(63, 63, 64)
+            t.x, t.y = r.x, r.y
+        end
+    end
+    printh(stat(0), "log.p8l", true)
 end
 
 function draw_map()
-    --draw scrolling map
-    for i = 0, 2 do
-        for j = 0, 2 do
-            map(
-                0, 0,
-                s_map.x % 128 + 128 * i - 128,
-                s_map.y % 128 + 128 * j - 128
-            )
-        end
+    for i = 1, #tiles do
+        if (i < 128) spr(tiles[i].spr, tiles[i].x, tiles[i].y)
     end
-end
-
-function draw_map_f()
-    --segment the player is on based on the cam y pos
-    local s = flr(abs(cam.y) / 128) + 1
-    --which segments to draw
-    --clamped to 2 (bottom and mid) in the map editor
-    --these values start at 1,2
-    --stick to 2,2 until we get to the top
-    local segs = { mid(s, 0, 2), min(s + 1, 2) }
-    --if we're at the top, clamp the 2nd to 3 (top)
-    if (s == #seg_sy - 1) segs[2] = 3
-    map((segs[1] - 1) * seg_h, 0, cam.x, seg_sy[s])
-    map((segs[2] - 1) * seg_h, 0, cam.x, seg_sy[s + 1])
 end

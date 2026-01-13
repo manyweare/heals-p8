@@ -72,11 +72,11 @@ function draw_hud()
 	-- print("xp:" .. tostr(p.curxp) .. "/" .. tostr(xpmax), uix + 90, uiy + 3, 7)
 	d_xp_bar()
 	d_hp_bar(p)
-	for e in all(live_es) do
-		-- 	d_hp_bar(e)
-		-- 	d_offscreen_marker(e.x, e.y, 8)
-		-- end
-		-- for e in all(entities) do
+	for e in all(entities) do
+		d_hp_bar(e)
+		d_offscreen_marker(e.x, e.y, 8)
+	end
+	for e in all(spawning_es) do
 		d_hp_bar(e)
 		d_offscreen_marker(e.x, e.y, 8)
 	end

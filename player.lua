@@ -1,12 +1,11 @@
 --player
 
---screen-based coords
 --used for scrolling map
 psx, psy = 0, 0
 px, py = 63, 63
 
 -- player class
-player = object:new()
+player = unit:new()
 
 p = player:new({
 	ss = split("16, 17, 18, 19"),
@@ -39,9 +38,9 @@ end
 function draw_player()
 	draw_tentacles(p.tentacles, split("7, 7, 7, 9"))
 	if not (p.inv_c / 2 % 2 < 1) then
-		spr(1, p.x - 4, p.y - 4, 1, 1, p.flipx, p.flipy)
+		spr(1, 59, 59, 1, 1, p.flipx, p.flipy)
 	else
-		spr(p.spr, p.x - 4, p.y - 4, 1, 1, p.flipx, p.flipy)
+		spr(p.spr, 59, 59, 1, 1, p.flipx, p.flipy)
 	end
 end
 
@@ -69,8 +68,7 @@ end
 function anim_player()
 	if is_moving(p) then
 		p.frame += 1
-		p.flipx = p.dx > 0
-		p.flipy = p.dy > 0
+		p.flipx, p.flipy = p.dx > 0, p.dy > 0
 		if p.frame == p.animspd then
 			p.frame = 0
 			--randomize blinking speed
@@ -115,5 +113,5 @@ end
 function draw_range()
 	--inverted draw, visibility range
 	poke(0x5f34, 0x2)
-	circfill(p.x, p.y, hrange + 24, 0 | 0x1800)
+	circfill(63, 63, hrange + 24, 0 | 0x1800)
 end

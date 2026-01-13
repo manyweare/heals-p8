@@ -4,7 +4,7 @@ function init_fx()
 	fx = {}
 	-- fx settings
 	hfx_size = 2
-	hfx_clr = { 7, 11, -13 }
+	hfx_clr = split("7,11,-13")
 	hfx_amt = 4
 end
 
@@ -124,7 +124,7 @@ function trail_fx(x, y, clrs)
 end
 
 function aoe_fx(x, y, r, clrs)
-	for i = 0, 6 do
+	for i = 0, 4 do
 		local pt = rand_in_circle(x, y, r)
 		add_fx(
 			pt.x,
@@ -139,12 +139,12 @@ function aoe_fx(x, y, r, clrs)
 end
 
 function aoe_fx_fill(x, y, r, clrs)
-	for i = 8, r do
+	for i = 1, r do
 		local pt = rand_in_circle(x, y, i)
 		add_fx(
 			pt.x,
-			pt.y,
-			30 + rnd(30),
+			pt.y - 1,
+			16 + rnd(16),
 			0,
 			0,
 			1,
@@ -162,7 +162,7 @@ function proj_fx(x, y)
 			0,
 			0,
 			rnd(1) + 1,
-			{ 10, 3, 15, 2 }
+			split("10,3,15,2")
 		)
 	end
 end
@@ -189,23 +189,24 @@ function explode(x, y, r, t, num)
 		0,
 		0,
 		r,
-		{ 10, 3, 15, 2 },
+		split("10,3,15,2"),
 		true
 	)
 end
 
 -- add_fx(x, y, lt, dx, dy, r, clrs)
 
-function bloodfx(x, y)
-	for i = 0, 32 do
+function splatfx(x, y, t)
+	t = t or split("8,8,12,14")
+	for i = 0, 24 do
 		add_fx(
 			x,
 			y,
-			7 + rnd(8),
+			8 + rnd(8),
 			rnd(2) - 1,
 			rnd(2) - 1,
 			2,
-			{ 8, 8, 12, 14 }
+			t
 		)
 	end
 end
@@ -219,7 +220,7 @@ function bulletfx(x, y)
 			rnd(2) - 1,
 			rnd(2) - 1,
 			2,
-			{ 7, 8, 12, 14 }
+			split("7,8,12,14")
 		)
 	end
 	--shockwave
@@ -230,7 +231,7 @@ function bulletfx(x, y)
 		0,
 		0,
 		4,
-		{ 7, 8, 12, 14 },
+		split("7,8,12,14"),
 		true
 	)
 end

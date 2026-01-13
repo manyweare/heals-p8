@@ -1,9 +1,9 @@
 --manager
 
 --entity counters
-live_es_c, dead_es_c, healed_es_c = 0, 0, 0
+live_es_c, spawning_es_c, dead_es_c, healed_es_c = 0, 0, 0, 0
 --enemy counters
-live_ens_c, dead_ens_c, en_wave_c = 0, 0, 1
+live_ens_c, spawning_ens_c, dead_ens_c, en_wave_c = 0, 0, 0, 0
 
 xpmax, xpmod = 5, 1
 boss_is_active = false
@@ -14,24 +14,24 @@ function init_manager()
 end
 
 function resume_game()
-	--change states
 	_update = update_game
 	_draw = draw_game
 end
 
 function update_spawner()
 	--entity spawning DEBUG--
-	if #entities < 1 and #spawning_es < 1 then
-		local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
+	if #entities < 1 and #spawning_es == 0 then
+		local r = rnd() < .5 and spawn_es("melee") or spawn_es("melee")
 	end
 	if playtime % 150 == 0 then
-		if #entities < 3 and #spawning_es < 1 then
-			local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
+		if #entities < 5 and #spawning_es == 0 then
+			local r = rnd() < .5 and spawn_es("melee") or spawn_es("melee")
 		end
 	end
 	--enemy spawning DEBUG--
-	if #enemies < 1 and #spawning_ens < 1 then
-		local r = rnd() < .5 and spawn_ens("t") or spawn_ens("m")
+	if #enemies < 1 and #spawning_ens == 0 then
+		local r = rnd() < .5 and spawn_ens("t") or spawn_ens("t")
+		en_wave_c += 1
 	end
 	if playtime % 300 == 0 then
 		local num = round(en_wave_c / 3)
@@ -41,50 +41,29 @@ function update_spawner()
 		en_wave_c += 1
 	end
 	--start spawning bosses and entities after 2m
-	-- if playtime > 120 then
 	--     --miniboss every 3m
-	--     if playtime % 180 == 0 and not boss_is_active then
 	--         --spawn miniboss
 	--         --spawn adds
-	--         spawn_ens("s", 6)
-	--         spawn_ens("m", 2)
-	--         spawn_ens("t", 3)
-	--     end
 	--     --final boss at 10m
-	--     if playtime == 600 then
-	--         boss_is_active = true
 	--         --spawn boss
 	--         --spawn adds
-	--         spawn_ens("s", 12)
-	--         spawn_ens("m", 4)
-	--         spawn_ens("t", 6)
-	--     end
 	--     --entity spawning--
-	--     if playtime % 5 == 0 then
-	--         if (live_es == 0) spawn_es()
-	--     end
-	-- end
 end
 
 function spawn_ens(class, num)
 	num = num or 1
 	for i = 1, num do
-		if #enemies < 32 then
-			local e = {}
-			local pos = rand_in_circle(p.x, p.y, 64)
-			if class == "s" then
-				e = en_small:new(pos)
-			elseif class == "m" then
-				e = en_medium:new(pos)
-			elseif class == "t" then
-				e = en_turret:new(pos)
-			end
-			e:level_up()
-			add(spawning_ens, e)
-			add(all_enemies, e)
-			printh("----- enemy SPAWNED -----", "log.p8l", true)
-			printh("ens:" .. tostr(#enemies) .. " | dead_ens:" .. tostr(#dead_ens), "log.p8l", true)
+		local e = {}
+		local pos = rand_in_circle(p.x, p.y, 64)
+		if class == "s" then
+			e = en_small:new(pos)
+		elseif class == "m" then
+			e = en_medium:new(pos)
+		elseif class == "t" then
+			e = en_turret:new(pos)
 		end
+		e:level_up()
+		add(spawning_ens, e)
 	end
 end
 
@@ -111,8 +90,6 @@ function spawn_es(class, num)
 			end
 			e:level_up()
 			add(spawning_es, e)
-			printh("----- entity SPAWNED -----", "log.p8l", true)
-			printh("es:" .. tostr(#entities) .. " | dead_es:" .. tostr(#dead_es), "log.p8l", true)
 		end
 	end
 end
@@ -166,7 +143,7 @@ function lvlup()
 		t.max_length += .1
 	end
 	if (p.lvl % 5 == 0) add(p.tentacles, create_tentacle(59, 59, 2.2, 1, 7, split("7, 7, 7, 9")))
-	--lvl up entities
+	--lvl up current active entities
 	for e in all(entities) do
 		e:level_up()
 	end

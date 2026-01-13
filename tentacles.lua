@@ -20,8 +20,7 @@ function create_tentacle(sx, sy, r1, r2, l, c)
         length = rl,
         max_length = rlmax,
         colors = c,
-        start_time = 0,
-        is_pointing = false
+        start_time = 0
     }
     return t
 end
@@ -55,11 +54,11 @@ function draw_tentacle(t, clrs)
 end
 
 function draw_tentacles(tentacles, main_clrs, state)
-    state = state or "ready"
+    state = state or "alive"
     --color tentacles based on state/sprite clrs
     --default to spawning/hurt colors
     local clrs = split("13, 13, 13, 1")
-    if state == "ready" then
+    if state == "alive" then
         clrs = main_clrs
     elseif state == "dead" then
         clrs = split("1, 1, 2, 2")
@@ -91,19 +90,3 @@ function update_tentacles(o)
         t.sx, t.sy = o.x, o.y
     end
 end
-
--- function t_point_to(t, x, y)
---     t.tx = mid(t.sx - t.max_length * 1.5, x, t.sx + t.max_length * 1.5)
---     t.ty = mid(t.sx - t.max_length * 1.5, y, t.sy + t.max_length * 1.5)
--- end
-
--- function t_point_offscreen(tentacles, targets)
---     local t = tentacles[1]
---     local c = closest_offscreen(vector(t.sx, t.sy), targets)
---     if not is_empty(c) then
---         t.is_pointing = true
---         t.colors = split("7, 7, 8, 8")
---     else
---         t.is_pointing = false
---     end
--- end

@@ -8,7 +8,8 @@ end
 function update_cam()
     -- cam.x = p.x + flr(p.w / 2) - 63 - shk.x
     cam.x = shk.x
-    cam.y = mid(0, p.y + flr(p.w / 2) - 63, seg_sy[#seg_sy] + 64) - shk.y
+    cam.y = shk.y
+    -- cam.y = mid(0, p.y + flr(p.w / 2) - 63, seg_sy[#seg_sy] + 64) - shk.y
     update_shake()
 end
 
