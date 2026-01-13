@@ -21,16 +21,16 @@ end
 function update_spawner()
 	--entity spawning DEBUG--
 	if #entities < 1 and #spawning_es == 0 then
-		local r = rnd() < .5 and spawn_es("melee") or spawn_es("melee")
+		local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
 	end
 	if playtime % 150 == 0 then
 		if #entities < 5 and #spawning_es == 0 then
-			local r = rnd() < .5 and spawn_es("melee") or spawn_es("melee")
+			local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
 		end
 	end
 	--enemy spawning DEBUG--
 	if #enemies < 1 and #spawning_ens == 0 then
-		local r = rnd() < .5 and spawn_ens("t") or spawn_ens("t")
+		local r = rnd() < .5 and spawn_ens("t") or spawn_ens("m")
 		en_wave_c += 1
 	end
 	if playtime % 300 == 0 then
@@ -71,20 +71,20 @@ function spawn_es(class, num)
 	num = num or 1
 	for i = 1, num do
 		if #entities < 8 then
-			local pos = rand_in_circle(59, 59, 64)
-			local e, _e = {}, {}
-			_e = {
-				hp = 1 + flr(rnd(3)),
+			local pos = rand_in_circle(63, 63, 64)
+			local e, _e = {}, {
 				x = pos.x,
 				y = pos.y,
 				flip = rnd() < .5
 			}
 			if class == "melee" then
 				e = e_melee:new(_e)
+				e.hp = 1 + flr(rnd(e_melee.hpmax - 1))
 				e.main_clrs = split("7, 7, 7, 10")
 				e.tentacles = create_tentacles(6, e.x, e.y, 1.75, 1, 5, e.main_clrs)
 			elseif class == "turret" then
 				e = e_turret:new(_e)
+				e.hp = 1 + flr(rnd(e_turret.hpmax - 1))
 				e.main_clrs = split("7, 7, 7, 3")
 				e.tentacles = create_tentacles(4, e.x, e.y, 1.75, 1, 4, e.main_clrs)
 			end
@@ -121,7 +121,8 @@ function heal_upgrade(h, stat)
 	stat = stat or h.pwr
 	h.lvl += 1
 	h.pwr = level_up_stat(10, h.lvl, stat)
-	-- if (h == aoe) h.range = min(h.range + 2, 48)
+	if (h.type == "orb") max_h_orbs += 1
+	if (h.type == "aoe") h.range = min(h.range + 2, 72)
 end
 
 function object:level_up()
@@ -134,9 +135,9 @@ function lvlup()
 	sfx(sfxt.lvlup)
 	lvlanim = 1
 	p.lvl += 1
+	p.hpmax = round(level_up_stat(10, p.lvl, p.hpmax))
 	xpmax = round(level_up_stat(10, p.lvl, xpmax))
 	hrange = level_up_stat(5, p.lvl, hrange)
-	p.hpmax = round(level_up_stat(10, p.lvl, p.hpmax))
 	--lengthen tentacles
 	for t in all(p.tentacles) do
 		t.length += .1

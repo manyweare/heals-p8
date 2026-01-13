@@ -144,14 +144,15 @@ end
 
 function d_hp_bar(a)
 	if (a.hp >= a.hpmax) return
+	if (a.state == "spawning") return
 	local hp = min((a.hp / a.hpmax) * a.w, a.w)
 	line(a.x - 4, a.y - 8, a.x + a.w - 4, a.y - 8, 1)
 	local c = 8
-	--TODO: green when healed
+	if (a.state == "decaying") c = 6
 	--flash bar if hp < 10%
-	if (a.hp == 1 or a.hp <= round(a.hpmax / 10)) and uif % 7 < 3.5 then
+	if (a.hp == 1 or a.hp <= round(a.hpmax / 20)) and uif % 10 < 5 then
 		c = 7
-		rect(a.x - 5, a.y - 9, a.x + a.w - 3, a.y - 7, 7)
+		rect(a.x - 5, a.y - 9, a.x + a.w - 3, a.y - 7, 1)
 	end
 	line(a.x - 4, a.y - 8, a.x + hp - 4, a.y - 8, c)
 	-- print(a.hpmax, a.x, a.y - 15, 7)

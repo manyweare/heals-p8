@@ -16,23 +16,21 @@ quickset(
 
 --entity types--
 e_melee = entity:new({
-	class = "melee",
 	ss = split("32,33,34,35,36,37,38,39")
 })
 quickset(
 	e_melee,
-	"dmg,base_dmg,spd,attspd,search_range,spr",
-	".5,.5,.5,15,64,33"
+	"class,dmg,base_dmg,hpmax,spd,attspd,search_range,spr",
+	"melee,.5,.5,4,.5,15,64,33"
 )
 
 e_turret = entity:new({
-	class = "turret",
 	ss = split("32,33,34,35,36,37,38,39")
 })
 quickset(
 	e_turret,
-	"dmg,base_dmg,spd,attspd,search_range,spr",
-	"1,1,.75,30,64,33"
+	"class,dmg,base_dmg,hpmax,spd,attspd,search_range,spr",
+	"turret,.5,.5,3,.75,30,64,33"
 )
 
 function init_entities()
@@ -72,12 +70,17 @@ function entity:update_decaying()
 			self.decay_state = 0
 		end
 		self:tgl_anim(30, 33, 34)
-		aoe_fx_fill(self.x, self.y, 8, split("15,1,2"))
+		aoe_fx_fill(self.x, self.y, 8 + rnd(6), split("15,1,2"))
 	else
 		self.frame = 0
 		self.state = "alive"
 		sfx(sfxt.healed)
-		splatfx(self.x, self.y, split("10,11,7,7"))
+		for i = 1, 8 do
+			aoe_fx_fill(self.x, self.y, 6, split("9,7,15,1"))
+			aoe_fx_fill(self.x, self.y, 8, split("10,11,15,1"))
+			aoe_fx_fill(self.x, self.y, 12, split("3,11,15,1"))
+		end
+		-- splatfx(self.x, self.y, split("10,11,7,7"))
 		drop_xp(vector(self.x, self.y), 1)
 		healed_es_c += 1
 	end
@@ -95,18 +98,26 @@ function entity:update_alive()
 	end
 	if self.class == "turret" then
 		if tgt == p then
-			if (dist > 16) self:anim_move(p.x, p.y)
+			if dist > 16 then
+				self.attframe = 0
+				self:anim_move(p.x, p.y)
+			end
 		else
 			if (dist < self.search_range) self:attack(tgt, 37, 38, true)
 		end
 	elseif self.class == "melee" then
 		if tgt == p then
-			if (dist > 24) self:anim_move(p.x, p.y)
+			if dist > 24 then
+				self.attframe = 0
+				self:anim_move(p.x, p.y)
+			end
 		else
-			if dist < 16 then
+			if dist < 12 then
 				self:attack(tgt, 37, 38, true)
-			elseif dist > 8 then
+			elseif dist > 4 then
 				self:anim_move(tgt.x, tgt.y)
+			elseif dist > 12 then
+				self.attframe = 0
 			end
 		end
 	end
@@ -115,7 +126,6 @@ function entity:update_alive()
 end
 
 function entity:anim_move(x, y)
-	self.attframe = 0
 	self:tgl_anim(30, 35, 36)
 	self:move_to(x, y)
 end

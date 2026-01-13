@@ -1,5 +1,50 @@
 --object
 
+-- different oop approach --
+--by @Stompy, https://www.lexaloffle.com/bbs/?pid=79601
+
+-- _G = _ENV -- just a new name to distinguish this as the original global scope
+-- _G.__index = _G -- if _G is used as a metatable, it will look itself for unfound properties
+
+-- local class do
+-- 	local mt = setmetatable(
+-- 		{
+-- 			--defaults
+-- 			update = function(_ENV)
+-- 			end,
+-- 			draw = function(_ENV)
+-- 			end,
+-- 			init = function(_ENV)
+-- 			end,
+-- 			-- takes a table of nondefault values
+-- 			__call = function(self, o)
+-- 				o = o or {}
+-- 				-- each instance sets itself as the new prototype
+-- 				setmetatable(o, self)
+-- 				-- looks in itself for unfound properties
+-- 				self.__index = self
+-- 				-- sugar to allow calling class like a function
+-- 				self.__call = getmetatable(self).__call
+-- 				-- call an init/constructor function if given
+-- 				o:init(self)
+-- 				-- return the new instance
+-- 				return o
+-- 			end
+-- 		}, _G
+-- 	)
+-- 	-- the class mt is the global _G scope !IMPORTANT
+-- 	-- if you don't keep this reference to _G you're going to run into trouble later
+-- 	mt.__index = mt -- this class mt indexes itself if child doesn't have a property
+-- 	class = setmetatable({}, mt) -- set the classes metatable
+-- end
+
+-- dog = class {
+-- 	x = 10,
+-- 	update = function(_ENV)
+-- 		if (x < 127) x += 1
+-- 	end
+-- }
+
 -- object constructor --
 object = {}
 function object:new(o)
@@ -75,10 +120,18 @@ function unit:update()
 end
 
 function unit:update_spawning()
-	if self.frame < 30 then
+	--blink
+	if self.frame < 45 then
 		self:tgl_anim(5, self.ss[2], 1)
+		if (self.frame % 5 < 2.5) then
+			self.tgl_tentacles = true
+		else
+			self.tgl_tentacles = false
+		end
 	else
+		--come alive once done blinking
 		self.frame = 0
+		self.tgl_tentacles = true
 		if self.name == "entity" then
 			self.state = "decaying"
 			add(entities, self)
@@ -115,14 +168,14 @@ function unit:draw()
 			end
 		end
 	end
-	if (self.tentacles) draw_tentacles(self.tentacles, self.main_clrs, self.state)
+	if (self.tentacles and self.tgl_tentacles) draw_tentacles(self.tentacles, self.main_clrs, self.state)
 	spr(self.spr, self.x - 4, self.y - 4, 1, 1, self.flip)
 	-- print(self.state, self.x - 10, self.y + 10, 2)
 end
 
 --reset pos when out of map bounds
 function unit:reset_pos(new_r)
-	if (self.state == "dead") return
+	if (self.state == "dead" or self.state == "decaying") return
 	new_r = new_r or 64
 	if self.x > 172 or self.x < -44 or self.y > 172 or self.y < -44 then
 		local pos = rand_in_circle(p.x, p.y, new_r)
@@ -168,6 +221,13 @@ function unit:die()
 	self.frame = 1
 	self.state = "dead"
 	--visuals
+	if self.name == "entity" then
+		for i = 1, 10 do
+			aoe_fx_fill(self.x, self.y, 6, split("8,8,12,14"))
+			aoe_fx_fill(self.x, self.y, 10, split("12,8,12,14"))
+			aoe_fx_fill(self.x, self.y, 12, split("12,12,14,14"))
+		end
+	end
 	splatfx(self.x, self.y)
 	sfx(self.die_sfx)
 	--counters

@@ -162,14 +162,18 @@ end
 
 --ease library by:
 --https://www.lexaloffle.com/bbs/?tid=40577
--- function easeinquart(t)
--- 	return t * t * t * t
--- end
+function lerp(a, b, t)
+	return a + (b - a) * t
+end
 
 function easeoutquart(t)
 	t -= 1
 	return 1 - t * t * t * t
 end
+
+-- function easeinquart(t)
+-- 	return t * t * t * t
+-- end
 
 -- function easeinoutquart(t)
 -- 	if t < .5 then
@@ -180,15 +184,10 @@ end
 -- 	end
 -- end
 
-function lerp(a, b, t)
-	return a + (b - a) * t
-end
-
 function get_dir(x1, y1, x2, y2)
 	return atan2(x2 - x1, y2 - y1)
 end
 
---used by projectiles
 function angle_move(x, y, tx, ty, spd)
 	local dir = get_dir(x, y, tx, ty)
 	return { x = cos(dir) * spd, y = sin(dir) * spd }
@@ -271,6 +270,28 @@ function find_closest(o, t, r)
 		end
 	end
 	return ce
+end
+
+function is_in_range(a, b, r)
+	return approx_dist(a.x, a.y, b.x, b.y) < r
+end
+
+function is_hurt(e)
+	return (e.hp > 0) and (e.hp < e.hpmax)
+end
+
+function closest_hurt(e, ...)
+	return find_closest(e, all_hurt(...))
+end
+
+function all_hurt(...)
+	local a = {}
+	for k, v in pairs({ ... }) do
+		for e in all(v) do
+			if (is_hurt(e)) add(a, e)
+		end
+	end
+	return a
 end
 
 function rand_in_circle(x, y, r)

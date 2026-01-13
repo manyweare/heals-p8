@@ -1,6 +1,7 @@
 --bullets
 
 bullets = {}
+
 bullet = object:new({
     x = 0,
     y = 0,
@@ -70,14 +71,15 @@ end
 function bullet:draw()
     local c, x, y = 8, self.x, self.y
     if (self.friendly) c = 10
-    if (self.frame % 3 == 0) self.tgl = not self.tgl
-    if self.tgl then
-        circfill(x, y, 2, 1)
-        -- circfill(x, y, 1, 7)
-    end
+    -- if (self.frame % 3 == 0) self.tgl = not self.tgl
     -- circfill(x, y, 1, c)
     line(x, y, x + self.dx * self.spd, y + self.dy * self.spd, c)
     -- pset(x, y, 7)
+    -- if self.tgl then
+    --     pset(x, y, 7)
+    --     -- circfill(x, y, 2, 1)
+    --     -- circfill(x, y, 1, 7)
+    -- end
 end
 
 function bullet:die()

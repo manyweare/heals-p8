@@ -109,7 +109,7 @@ end
 
 function trail_fx(x, y, clrs)
 	-- emit only 25% of the time
-	local emit = rnd() < .25
+	local emit = rnd() < .5
 	if emit then
 		add_fx(
 			x,
@@ -140,16 +140,18 @@ end
 
 function aoe_fx_fill(x, y, r, clrs)
 	for i = 1, r do
-		local pt = rand_in_circle(x, y, i)
-		add_fx(
-			pt.x,
-			pt.y - 1,
-			16 + rnd(16),
-			0,
-			0,
-			1,
-			clrs
-		)
+		if rnd() < .33 then
+			local pt = rand_in_circle(x, y, i)
+			add_fx(
+				pt.x,
+				pt.y,
+				2 + (i * 6),
+				0,
+				0,
+				1,
+				clrs
+			)
+		end
 	end
 end
 
@@ -162,6 +164,20 @@ function proj_fx(x, y)
 			0,
 			0,
 			rnd(1) + 1,
+			split("10,3,15,2")
+		)
+	end
+end
+
+function orb_fx(x, y)
+	for i = 0, 3 do
+		add_fx(
+			x + rnd(2) - 1,
+			y + rnd(2) - 1,
+			4 + rnd(4),
+			0,
+			0,
+			rnd(1) + .5,
 			split("10,3,15,2")
 		)
 	end

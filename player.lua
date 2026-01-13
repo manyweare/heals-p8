@@ -112,6 +112,6 @@ end
 --draws circle around player
 function draw_range()
 	--inverted draw, visibility range
-	poke(0x5f34, 0x2)
-	circfill(63, 63, hrange + 24, 0 | 0x1800)
+	-- poke(0x5f34, 0x2)
+	-- circfill(63, 63, hrange + 24, 0 | 0x1800)
 end
