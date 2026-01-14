@@ -4,7 +4,7 @@
 base_hrange, hrange = 36, 36
 
 -- heal class
-heal = object:new({ lvl = 1, lt = 12 })
+heal = object:new({ lvl = 1, lt = 12, heal_sfx = 4 })
 
 function init_heals()
 	--current heals in the queue
@@ -22,6 +22,7 @@ function init_heals()
 	beam = heal:new({
 		range = hrange,
 		clrs = hclrs,
+		src = p,
 		func = new_beam_heal
 	})
 	quickset(
@@ -32,8 +33,9 @@ function init_heals()
 
 	-- CHAIN --
 	chain = heal:new({
-		range = round(hrange * 1.5),
-		clrs = split("15, 10, 9, 7"),
+		range = hrange * 1.5,
+		clrs = split("11, 10, 3, 15"),
+		src = {},
 		func = new_chain_heal
 	})
 	quickset(
@@ -68,19 +70,19 @@ function init_heals()
 
 	-- ORBS --
 	orb = heal:new({
-		range = min(hrange, 128) / 2,
+		range = min(hrange, 128) / 10,
 		clrs = hclrs,
 		func = new_orb_heal
 	})
 	quickset(
 		orb,
-		"type,name,pwr,freq,tmr,spd,hitrange,orb_index",
-		"orb,orbs,2,90,90,.33,16,1"
+		"type,name,pwr,freq,tmr,spd,hitrange,orb_index,size",
+		"orb,orbs,2,90,90,.33,16,1,1"
 	)
 
 	-- player abilities
 	all_heals = { beam, aoe, proj, chain, orb }
-	curr_heals = { beam }
+	curr_heals = { chain }
 end
 
 function update_heals()
@@ -106,50 +108,52 @@ function new_beam_heal()
 	if not is_empty(c) and is_in_range(p, c, beam.range) then
 		local h = beam:new({
 			tgt = c,
-			x = p.x,
-			y = p.y,
+			x = px,
+			y = py,
 			tx = c.x,
 			ty = c.y,
 			pwr = beam.pwr
 		})
 		add(heals, h)
-		fire_heal(h)
+		h:fire_heal()
 		cast_glow()
 	end
 end
 
 function new_chain_heal()
-	local chains = {}
-	--range is halved with every chain
-	--so we start with it doubled
-	local range = chain.range * 2
-	--source starts with player and
-	--changes from chain to chain
-	local src = p
-	local c = {}
+	local range, pwr = chain.range, chain.pwr
+	--source starts with player and changes from chain to chain
+	local _src, _tgt, chains = p, {}, {}
+	--table to hold subset of entities minus last heal target
+	local _entities = cat(entities, spawning_es)
 	--create all heals in the chain
 	for i = 1, chain.num_chains do
-		c = closest_hurt(src, entities, spawning_es)
-		if not is_empty(c) and is_in_range(src, c, max(16, range / 2)) then
+		_tgt = closest_hurt(_src, _entities)
+		if not is_empty(_tgt) and is_in_range(_src, _tgt, max(16, range)) then
 			local h = chain:new({
-				tgt = c,
-				x = src.x,
-				y = src.y,
-				tx = c.x,
-				ty = c.y,
-				pwr = beam.pwr
+				src = _src,
+				tgt = _tgt,
+				x = _src.x,
+				y = _src.y,
+				tx = _tgt.x,
+				ty = _tgt.y,
+				pwr = pwr
 			})
 			add(chains, h)
-			src = c
+			del(_entities, _tgt)
+			_src = _tgt
+			--range reduced with each jump
+			range *= .75
+			pwr /= 2
 		end
 	end
 	--fire off heals added to chain
 	--TODO: add delay between each jump?
 	for h in all(chains) do
 		add(heals, h)
-		fire_heal(h)
-		cast_glow()
+		h:fire_heal()
 	end
+	if (not is_empty(chain)) cast_glow()
 end
 
 function new_aoe_heal()
@@ -159,14 +163,14 @@ function new_aoe_heal()
 			local h = aoe:new({
 				tgt = e,
 				type = "aoe",
-				x = p.x,
-				y = p.y,
+				x = px,
+				y = py,
 				tx = e.x,
 				ty = e.y,
 				pwr = aoe.pwr
 			})
 			add(heals, h)
-			fire_heal(h)
+			h:fire_heal()
 		end
 	end
 end
@@ -178,8 +182,8 @@ function new_proj_heal()
 	if not is_empty(r) and is_in_range(p, r, proj.range) then
 		local h = proj:new({
 			tgt = r,
-			x = p.x,
-			y = p.y,
+			x = px,
+			y = py,
 			tx = r.x,
 			ty = r.y,
 			pwr = proj.pwr,
@@ -196,8 +200,8 @@ function new_orb_heal()
 	h_orbs += 1
 	local h = orb:new({
 		tgt = orb.range,
-		x = p.x,
-		y = p.y,
+		x = px,
+		y = py,
 		pwr = orb.pwr,
 		spd = orb.spd,
 		lt = 600,
@@ -207,25 +211,27 @@ function new_orb_heal()
 	cast_glow()
 end
 
-function fire_heal(h)
-	h.tgt:heal(h.pwr)
-	heal_fx(h.tx, h.ty)
-	if (h.type != "aoe") then
-		sfx(sfxt.heal)
+function heal:fire_heal()
+	local _ENV = self
+	tgt:heal(pwr)
+	heal_fx(tx, ty)
+	if (type != "aoe") then
+		sfx(heal_sfx)
 	end
 end
 
-function burst_heal(h, t)
+function heal:burst_heal(t)
+	local _ENV = self
 	t = t or all_hurt(entities)
-	explode(h.x, h.y, h.hitrange, h.clrs, 1)
+	explode(x, y, hitrange, clrs, 1)
 	sfx(sfxt.explode)
 	for e in all(t) do
-		if is_in_range(h, e, h.hitrange) then
-			h.tgt, h.tx, h.ty = e, e.x, e.y
-			fire_heal(h)
+		if is_in_range(self, e, hitrange) then
+			tgt, tx, ty = e, e.x, e.y
+			self:fire_heal()
 		end
 	end
-	del(heals, h)
+	del(heals, self)
 end
 
 function draw_heals()
@@ -233,13 +239,13 @@ function draw_heals()
 		-- eye orb glow for all but aoe
 		if (h.type != "aoe") then d_cast_fx() end
 		if h.type == "beam" then
-			d_beam_heal(h)
+			h:d_beam_heal()
 		elseif h.type == "chain" then
-			d_chain_heal(h)
+			h:d_chain_heal()
 		elseif h.type == "projectile" then
-			d_proj_heal(h)
+			h:d_proj_heal()
 		elseif h.type == "orb" then
-			d_orb_heal(h)
+			h:d_orb_heal()
 		end
 	end
 	--out of for loop because it isn't drawn
@@ -249,36 +255,39 @@ end
 
 function animate_heals()
 	for h in all(heals) do
-		if h.type == "projectile" then
-			local dir = get_dir(h.x, h.y, h.tx, h.ty)
-			local dx, dy = cos(dir), sin(dir)
-			h.x += dx * h.spd
-			h.y += dy * h.spd
-			h.spd += .2
-			if (col(h, vector(h.tx, h.ty), 4)) burst_heal(h)
-		elseif h.type == "orb" then
-			local d = h.orb_index / max_h_orbs
-			h.x = p.x + (h.range + (h.orb_index * 2)) * cos(d * t() * h.spd)
-			h.y = p.y + (h.range + (h.orb_index * 2)) * sin(d * t() * h.spd)
-			local t = all_hurt(entities)
-			for e in all(t) do
-				if col(h, e, 8) then
-					burst_heal(h)
-					h_orbs -= 1
-				end
+		h:animate()
+	end
+end
+
+function heal:animate()
+	local _ENV = self
+	if type == "projectile" then
+		local dir = get_dir(x, y, tx, ty)
+		local dx, dy = cos(dir), sin(dir)
+		x += dx * spd
+		y += dy * spd
+		spd += .2
+		if (col(self, vector(tx, ty), 4)) self:burst_heal()
+	elseif type == "orb" then
+		local d = orb_index / _G.max_h_orbs
+		x = px + (range + (orb_index * 2)) * cos(d * t() * spd)
+		y = py + (range + (orb_index * 2)) * sin(d * t() * spd)
+		range = min(hrange, range + .05)
+		size = min(2, size + .001)
+		local t = all_hurt(_G.entities)
+		for e in all(t) do
+			if col(self, e, 8) then
+				self:burst_heal()
+				_G.h_orbs -= 1
 			end
-		else
-			h.tx += psx
-			h.ty += psy
 		end
-		--updates h pos in relation to player
-		sync_pos(h)
-		h.lt -= 1
-		--clear heal once lt over
-		if h.lt == 0 then
-			del(heals, h)
-			if (h.type == "orb") h_orbs -= 1
+	end
+	lt -= 1
+	if lt < 0 then
+		if type == "orb" then
+			_G.h_orbs -= 1
 		end
+		del(_G.heals, self)
 	end
 end
 
@@ -288,47 +297,48 @@ function cast_glow()
 end
 
 function d_cast_fx()
-	local eyex = p.x
+	local eyex = px
 	if (p.flipx) eyex -= 1
 	if (cast_lt > 10) then
-		circfill(eyex, p.y, 3, hclrs[2])
-		circ(eyex, p.y, 2, hclrs[1])
+		circfill(eyex, py, 3, _G.hclrs[2])
+		circ(eyex, py, 2, hclrs[1])
 	elseif (cast_lt > 6) then
-		circfill(eyex, p.y, 1, hclrs[2])
+		circfill(eyex, py, 1, _G.hclrs[2])
 	end
 	cast_lt -= 1
 end
 
-function d_beam_heal(h)
-	local c
-	if (h.lt > 10) then
-		c = h.clrs[1]
-	elseif (h.lt > 3) then
-		c = h.clrs[2]
+function heal:d_beam_heal()
+	local _ENV, clr = self, 15
+	if (lt > 10) then
+		clr = clrs[1]
+	elseif (lt > 3) then
+		clr = clrs[2]
 	else
-		c = h.clrs[3]
+		clr = clrs[3]
 	end
-	line(h.x, h.y, h.tx, h.ty, c)
+	line(src.x, src.y, tgt.x, tgt.y, clr)
 end
 
-function d_chain_heal(h)
-	d_beam_heal(h)
+function heal:d_chain_heal()
+	self:d_beam_heal()
 end
 
 function d_aoe_heal()
-	aoe_fx(p.x, p.y, aoe.range, aoe.clrs)
+	aoe_fx(px, py, aoe.range, aoe.clrs)
 end
 
-function d_proj_heal(h)
-	sync_pos(h)
-	h.tx += psx
-	h.ty += psy
-	circfill(h.x, h.y, 2, hclrs[1])
-	proj_fx(h.x, h.y)
+function heal:d_proj_heal()
+	local _ENV = self
+	sync_screen_pos(x, y)
+	sync_screen_pos(tx, ty)
+	circfill(x, y, 2, _G.hclrs[1])
+	proj_fx(x, y)
 end
 
-function d_orb_heal(h)
-	sync_pos(h)
-	circfill(h.x, h.y, 1, hclrs[1])
-	orb_fx(h.x, h.y)
+function heal:d_orb_heal(h)
+	local _ENV = self
+	sync_pos(self)
+	circfill(x, y, size, _G.hclrs[1])
+	orb_fx(x, y)
 end

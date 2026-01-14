@@ -1,14 +1,12 @@
 --tentacles
 
 function create_tentacle(sx, sy, r1, r2, l, c)
-    local t = {}
     --random length
     local r = round(rnd(l / 2))
-    local rl, rlmax
-    rl = l + r
-    rlmax = rl + r
+    local rl = l + r
+    local rlmax = rl + r
     r = rand_in_circle(sx, sy, rl)
-    t = {
+    local t = {
         sx = sx,
         sy = sy,
         ex = r.x,
@@ -27,7 +25,6 @@ end
 
 function create_tentacles(n, sx, sy, r1, r2, l, c)
     local t = {}
-    local rl, rlmax
     for i = 1, n do
         local _t = create_tentacle(sx, sy, r1, r2, l, c)
         add(t, _t)
@@ -83,7 +80,7 @@ function update_tentacles(o)
             t.ty = r.y - o.dy * (t.length / 2)
             t.start_time = time()
         end
-        --animation speed = ((time() - t.start_time) % 1) * 2
+        --animation speed = ((time() - start_time) % 1) * modifier
         timer = mid(0, ((time() - t.start_time) % 1) * 2.25, 1)
         t.ex = lerp(t.ex, t.tx, easeoutquart(timer)) + psx
         t.ey = lerp(t.ey, t.ty, easeoutquart(timer)) + psy

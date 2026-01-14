@@ -39,8 +39,6 @@
 
 function _init()
 	version = "V0.3"
-	--init input lists
-	p_i_last, p_inputs, p_i_data = {}, {}, {}
 	-- map coords
 	map_x, map_y = 0, 0
 	--total playtime

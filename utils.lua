@@ -5,13 +5,6 @@
 -- 	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
 -- end
 
--- function indexof(o, t)
--- 	for i, v in ipairs(t) do
--- 		if (v == o) return i
--- 	end
--- 	return nil
--- end
-
 pi = 3.14
 
 -- vector library by @thacuber2a03
@@ -61,8 +54,7 @@ function log2(n)
 		f = n * (1 / i - f)
 	end
 	t += f
-	-- to change base, change the
-	-- divisor below to ln(base)
+	-- to change base, change the divisor below to ln(base)
 	return t / 0.69314
 end
 
@@ -72,7 +64,8 @@ function map_value(n, min1, max1, min2, max2)
 end
 
 --by @shiftalow (https://www.lexaloffle.com/bbs/?tid=32411)
-function cat(f, ...)
+function cat(...)
+	local f = {}
 	for i, s in pairs({ ... }) do
 		for k, v in pairs(s) do
 			if tonum(k) then
@@ -111,28 +104,6 @@ function is_empty(t)
 		return false
 	end
 	return true
-end
-
--- from Beckon the Hellspawn
--- TODO: add author
-function get_inputs()
-	--register last inputs
-	for x = 1, 8 do
-		p_i_last[x] = p_inputs[x]
-	end
-	local wasd = split("4,7,26,22,0,40")
-	--register current inputs
-	for x = 1, 6 do
-		p_inputs[x] = btn(x - 1) or stat(28, wasd[x])
-	end
-	--assign direction values
-	for x = 1, 4 do
-		if p_inputs[x] then
-			p_i_data[x] = 1
-		else
-			p_i_data[x] = 0
-		end
-	end
 end
 
 -- function for calculating
@@ -198,10 +169,15 @@ function is_moving(e)
 	return false
 end
 
--- update position relative to player for scrolling map
+-- update position relative to player's  for scrolling map
 function sync_pos(a)
 	a.x += psx
 	a.y += psy
+end
+
+function sync_screen_pos(x, y)
+	x += psx
+	y += psy
 end
 
 function find_orbit_pos(o, i, r, t)
@@ -212,20 +188,11 @@ function find_orbit_pos(o, i, r, t)
 end
 
 function col(a, b, r)
-	local x = abs(a.x - b.x)
+	local x, y = abs(a.x - b.x), abs(a.y - b.y)
 	if x > r then return false end
-	local y = abs(a.y - b.y)
 	if y > r then return false end
 	return (x * x + y * y) < r * r
 end
-
---rect rect AABB collision
--- function rect_rect_collision(r1, r2)
--- 	return r1.x < r2.x + r2.w
--- 			and r1.x + r1.w > r2.x
--- 			and r1.y < r2.y + r2.h
--- 			and r1.y + r1.h > r2.y
--- end
 
 --adapted from musurca
 --https://www.lexaloffle.com/bbs/?tid=36059
@@ -255,15 +222,15 @@ end
 -- 	return o
 -- end
 
-function find_closest(o, t, r)
+function find_closest(u, t, r)
 	-- c = initial range check
 	-- ce = closest entity
 	-- 32767 is the largest num p8 supports
 	local c, d, ce = 32767, 0, {}
 	r = r or c
 	for e in all(t) do
-		if e != o then
-			d = approx_dist(o.x, o.y, e.x, e.y)
+		if e != u then
+			d = approx_dist(u.x, u.y, e.x, e.y)
 			if (d < c) and (d < r) then
 				c, ce = d, e
 			end

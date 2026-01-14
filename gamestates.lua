@@ -85,17 +85,17 @@ function draw_game()
     draw_range()
     draw_ui()
     draw_hud()
-    draw_cam()
+    camera(camx, camy)
 end
 
 function draw_upgrade()
     cls()
     draw_fx()
     draw_player()
-    draw_items()
+    -- draw_items()
     draw_ui()
-    draw_cam()
     draw_lvlup()
+    camera(camx, camy)
 end
 
 function draw_gameover()

@@ -20,7 +20,7 @@ end
 
 function update_spawner()
 	--entity spawning DEBUG--
-	if #entities < 1 and #spawning_es == 0 then
+	if #entities < 3 and #spawning_es == 0 then
 		local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
 	end
 	if playtime % 150 == 0 then
@@ -54,7 +54,7 @@ function spawn_ens(class, num)
 	num = num or 1
 	for i = 1, num do
 		local e = {}
-		local pos = rand_in_circle(p.x, p.y, 64)
+		local pos = rand_in_circle(px, py, 64)
 		if class == "s" then
 			e = en_small:new(pos)
 		elseif class == "m" then

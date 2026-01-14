@@ -10,38 +10,35 @@ end
 
 function update_fx()
 	for f in all(fx) do
-		local c, r, ft, flt = f.c, f.r, f.t, f.lt
-		local fclrs = f.clrs
-		ft += 1
-		if ft > flt then
-			del(fx, f)
-		end
+		local c, r, t, lt, clrs = f.c, f.r, f.t, f.lt, f.clrs
+		t += 1
+		if t > lt then del(fx, f) end
 		if f.is_sw then
-			r += f.maxr / flt
-			if ft / flt < 1 / #fclrs then
-				c = fclrs[1]
-			elseif ft / flt < 2 / #fclrs then
-				c = fclrs[2]
-			elseif ft / flt < 3 / #fclrs then
-				c = fclrs[3]
+			r += f.maxr / lt
+			if t / lt < 1 / #clrs then
+				c = clrs[1]
+			elseif t / lt < 2 / #clrs then
+				c = clrs[2]
+			elseif t / lt < 3 / #clrs then
+				c = clrs[3]
 			else
-				c = fclrs[4]
+				c = clrs[4]
 			end
 		else
-			if ft / flt < 1 / #fclrs then
-				c = fclrs[1]
-			elseif ft / flt < 2 / #fclrs then
-				c = fclrs[2]
+			if t / lt < 1 / #clrs then
+				c = clrs[1]
+			elseif t / lt < 2 / #clrs then
+				c = clrs[2]
 				r = 3 * (r / 4)
-			elseif ft / flt < 3 / #fclrs then
-				c = fclrs[3]
+			elseif t / lt < 3 / #clrs then
+				c = clrs[3]
 				r = r / 2
 			else
-				c = fclrs[4]
+				c = clrs[4]
 				r = r / 4
 			end
 		end
-		f.r, f.c, f.t = r, c, ft
+		f.r, f.c, f.t = r, c, t
 		f.x += f.dx
 		f.y += f.dy
 	end

@@ -26,7 +26,7 @@ end
 function update_ui()
 	uif += 1
 	if (uif > 30) uif = 1
-	uix, uiy = cam.x, cam.y
+	uix, uiy = camx, camy
 	uixp = min((p.curxp / xpmax) * uiw, uiw)
 end
 
@@ -96,43 +96,35 @@ end
 function draw_lvlup()
 	if lvlanim > 0 then
 		lvlup_fx()
-		if lvlanim_tgl then
-			lvlup_clr = 11
-		else
-			lvlup_clr = 7
-		end
-		print("lvl up!", p.x - 8, p.y - 5 - (lvlanim / 2), lvlup_clr)
+		lvlup_clr = 7
+		if lvlanim_tgl then lvlup_clr = 11 end
+		print("lvl up!", px - 8, py - 5 - (lvlanim / 2), lvlup_clr)
 		if (lvlanim % 3 == 0) lvlanim_tgl = not lvlanim_tgl
 	end
 	--bg
-	local bgc = 1
-	local bgx, bgy = uix + 2, uiy + 42
-	local bgw, bgh = uix + 42, uiy + 78
-	-- fillp(0x7ada)
-	rectfill(bgx + 1, bgy + 1, bgw + 1, bgh + 1, bgc)
-	-- fillp()
+	local bgclr, bgx, bgy, bgw, bgh = 1, uix + 2, uiy + 42, uix + 42, uiy + 78
+	rectfill(bgx + 1, bgy + 1, bgw + 1, bgh + 1, bgclr)
 	rectfill(bgx, bgy, bgw, bgh, 0)
-	rect(bgx, bgy, bgw, bgh, bgc)
+	rect(bgx, bgy, bgw, bgh, bgclr)
 	--text
 	print("select:", bgx + 4, bgy + 4, 7)
 	for i = 1, #lvlup_options do
-		local l = 1
-		local c = 7
+		local lvl, clr = 1, 7
 		--if player already has this heal,
 		--show the next level of the heal
 		if count(curr_heals, lvlup_options[i]) > 0 then
-			l = lvlup_options[i].lvl + 1
+			lvl = lvlup_options[i].lvl + 1
 		end
 		if (i == sel) then
-			c = 11
+			clr = 11
 			print(
-				lvlup_options[i].name .. " " .. tostr(l),
-				bgx + 5, bgy + 5 + (i * 8), bgc
+				lvlup_options[i].name .. " " .. tostr(lvl),
+				bgx + 5, bgy + 5 + (i * 8), bgclr
 			)
 		end
 		print(
-			lvlup_options[i].name .. " " .. tostr(l),
-			bgx + 4, bgy + 4 + (i * 8), c
+			lvlup_options[i].name .. " " .. tostr(lvl),
+			bgx + 4, bgy + 4 + (i * 8), clr
 		)
 	end
 end
@@ -143,19 +135,20 @@ function d_xp_bar()
 end
 
 function d_hp_bar(a)
-	if (a.hp >= a.hpmax) return
-	if (a.state == "spawning") return
-	local hp = min((a.hp / a.hpmax) * a.w, a.w)
-	line(a.x - 4, a.y - 8, a.x + a.w - 4, a.y - 8, 1)
-	local c = 8
-	if (a.state == "decaying") c = 6
-	--flash bar if hp < 10%
-	if (a.hp == 1 or a.hp <= round(a.hpmax / 20)) and uif % 10 < 5 then
-		c = 7
-		rect(a.x - 5, a.y - 9, a.x + a.w - 3, a.y - 7, 1)
+	local x, y, w, hp, hpmax, state = a.x, a.y, a.w, a.hp, a.hpmax, a.state
+	if (state == "spawning") return
+	if (hp >= hpmax) return
+	local _hp = min((hp / hpmax) * w, w)
+	local clr = 8
+	line(x - 4, y - 8, x + w - 4, y - 8, 1)
+	if (state == "decaying") clr = 6
+	--flash bar if hp < 20%
+	if (hp == 1 or hp <= round(hpmax / 20)) and uif % 10 < 5 then
+		rect(x - 5, y - 9, x + w - 3, y - 7, 1)
+		clr = 7
 	end
-	line(a.x - 4, a.y - 8, a.x + hp - 4, a.y - 8, c)
-	-- print(a.hpmax, a.x, a.y - 15, 7)
+	line(x - 4, y - 8, x + _hp - 4, y - 8, clr)
+	-- print(hpmax, x, y - 15, 7)
 end
 
 --p=padding
