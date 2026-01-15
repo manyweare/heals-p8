@@ -5,8 +5,7 @@ entities, spawning_es, dead_es = {}, {}, {}
 --entity class--
 entity = unit:new({
 	live_counter = live_es_c,
-	dead_counter = dead_es_c,
-	tentacles = {}
+	dead_counter = dead_es_c
 })
 quickset(
 	entity,

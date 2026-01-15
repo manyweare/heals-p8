@@ -78,7 +78,7 @@ function cat(...)
 	return f
 end
 
---by @magic_chopstick
+--by @magic_chopstick (https://www.lexaloffle.com/bbs/?tid=151352)
 function quickset(obj, keys, vals)
 	local v, k = split(vals), split(keys)
 	-- remove/comment out below before publication
@@ -98,7 +98,6 @@ function quickset(obj, keys, vals)
 	end
 end
 
---from bbs (TODO: find op and credit)
 function is_empty(t)
 	for _, _ in pairs(t) do
 		return false
@@ -106,33 +105,7 @@ function is_empty(t)
 	return true
 end
 
--- function for calculating
--- exponents to a higher degree of
--- accuracy than using the ^ operator.
--- created by samhocevar.
--- https://www.lexaloffle.com/bbs/?tid=27864
--- @param x number to apply exponent to.
--- @param a exponent to apply.
--- @return the result of the calculation.
--- function pow(x, a)
--- 	if (a == 0) return 1
--- 	if (a < 0) x, a = 1 / x, -a
--- 	local ret, a0, xn = 1, flr(a), x
--- 	a -= a0
--- 	while a0 >= 1 do
--- 		if (a0 % 2 >= 1) ret *= xn xn, a0 = xn * xn, shr(a0, 1)
--- 	end
--- 	while a > 0 do
--- 		while a < 1 do
--- 			x, a = sqrt(x), a + a
--- 		end
--- 		ret, a = ret * x, a - 1
--- 	end
--- 	return ret
--- end
-
---ease library by:
---https://www.lexaloffle.com/bbs/?tid=40577
+--ease library by (https://www.lexaloffle.com/bbs/?tid=40577)
 function lerp(a, b, t)
 	return a + (b - a) * t
 end
@@ -194,8 +167,7 @@ function col(a, b, r)
 	return (x * x + y * y) < r * r
 end
 
---adapted from musurca
---https://www.lexaloffle.com/bbs/?tid=36059
+--adapted from @musurca (https://www.lexaloffle.com/bbs/?tid=36059)
 function approx_dist(x1, y1, x2, y2)
 	local dx, dy = abs(x2 - x1), abs(y2 - y1)
 	local maskx, masky = dx >> 31, dy >> 31
@@ -244,11 +216,24 @@ function is_in_range(a, b, r)
 end
 
 function is_hurt(e)
-	return (e.hp > 0) and (e.hp < e.hpmax)
+	return e.hp > 0 and e.hp < e.hpmax
 end
 
 function closest_hurt(e, ...)
 	return find_closest(e, all_hurt(...))
+end
+
+function most_hurt(...)
+	local m, lowhp = {}, 32767
+	for k, v in pairs({ ... }) do
+		for e in all(v) do
+			if is_hurt(e) and e.hp < lowhp then
+				m = e
+				lowhp = e.hp
+			end
+		end
+	end
+	return m
 end
 
 function all_hurt(...)
@@ -263,7 +248,7 @@ end
 
 function rand_in_circle(x, y, r)
 	local theta = rnd() * 2 * pi
-	local rx = x + r * cos(theta)
+	local rx, ry = x + r * cos(theta)
 	local ry = y + r * sin(theta)
 	return { x = rx, y = ry }
 end

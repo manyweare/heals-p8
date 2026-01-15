@@ -83,7 +83,7 @@ end
 
 function unit:update_spawning()
 	local _ENV = self
-	--blink
+	--blink when spawning
 	if frame < 45 then
 		self:tgl_anim(5, ss[2], 1)
 		if (frame % 5 < 2.5) then
@@ -112,6 +112,7 @@ end
 function unit:update_dead()
 	local _ENV = self
 	sprite = ss[1]
+	--clear from memory
 	if frame > 300 then
 		if name == "entity" then
 			del(_G.dead_es, self)
@@ -201,6 +202,12 @@ function unit:die()
 	--counters
 	dead_counter += 1
 	live_counter = max(0, live_counter - 1)
+end
+
+function unit:level_up()
+	local _ENV = self
+	hpmax = round(level_up_stat(10, _G.p.lvl, hpmax))
+	dmg = max(base_dmg, level_up_stat(5, _G.p.lvl, base_dmg) / 3)
 end
 
 --agent functions

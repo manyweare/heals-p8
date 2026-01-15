@@ -38,7 +38,7 @@
 -- active abilities? rez, tranq, ?
 
 function _init()
-	version = "V0.3"
+	version = "V0.4"
 	-- map coords
 	map_x, map_y = 0, 0
 	--total playtime

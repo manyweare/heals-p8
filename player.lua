@@ -2,22 +2,17 @@
 
 --init input tables
 input_last, inputs, input_data, wasd = {}, {}, {}, split("4,7,26,22,0,40")
---perennial player position
-px, py = 63, 63
---screen pos change used for scrolling map
-psx, psy = 0, 0
+--perennial player position and pscreenx position change
+px, py, psx, psy = 63, 63, 0, 0
 
 -- player class
-p = object:new({
-	ss = split("16, 17"),
-	tentacles = {}
-})
+p = object:new()
 
 function init_player()
 	quickset(
 		p,
-		"lvl,curxp,totalxp,inv_f,inv_c,hp,hpmax,regen,regen_spd,x,y,dx,dy,w,h,r,spd,maxspd,sprite,frame,animspd,flipx,flipy",
-		"1,0,0,30,0,1,5,.5,30,63,63,0,0,8,8,8,1,1,16,0,5,false,false"
+		"lvl,curxp,totalxp,inv_f,inv_c,hp,hpmax,regen,regenspd,x,y,dx,dy,w,h,spd,sprite,ss,frame,animspd,flipx,flipy",
+		"1,0,0,30,0,1,5,.5,30,63,63,0,0,8,8,1,16,{16|17},0,5,false,false"
 	)
 	--create_tentacles(n, sx, sy, r1, r2, l, c)
 	p.tentacles = create_tentacles(8, 63, 63, 2.2, 1, 7, split("7, 7, 7, 9"))
@@ -48,7 +43,7 @@ function p:update()
 		end
 	end
 	--regen
-	if _G.playtime % regen_spd == 0 then
+	if _G.playtime % regenspd == 0 then
 		hp = min(hp + regen, hpmax)
 	end
 	update_tentacles(self)

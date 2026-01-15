@@ -4,13 +4,11 @@
 live_es_c, spawning_es_c, dead_es_c, healed_es_c = 0, 0, 0, 0
 --enemy counters
 live_ens_c, spawning_ens_c, dead_ens_c, en_wave_c = 0, 0, 0, 0
-
-xpmax, xpmod = 5, 1
-boss_is_active = false
+--
+xpmax, xpmod, boss_is_active = 5, 1, false
 
 function init_manager()
 	lvlup_options = {}
-	boss_is_active = false
 end
 
 function resume_game()
@@ -53,8 +51,7 @@ end
 function spawn_ens(class, num)
 	num = num or 1
 	for i = 1, num do
-		local e = {}
-		local pos = rand_in_circle(px, py, 64)
+		local e, pos = {}, rand_in_circle(px, py, 64)
 		if class == "s" then
 			e = en_small:new(pos)
 		elseif class == "m" then
@@ -125,15 +122,10 @@ function heal_upgrade(h, stat)
 	if (h.type == "aoe") h.range = min(h.range + 2, 72)
 end
 
-function object:level_up()
-	self.hpmax = round(level_up_stat(10, p.lvl, self.hpmax))
-	self.dmg = max(self.base_dmg, level_up_stat(5, p.lvl, self.base_dmg) / 3)
-end
-
 function lvlup()
 	sfx(-1)
 	sfx(sfxt.lvlup)
-	lvlanim = 1
+	lvlup_f = 1
 	p.lvl += 1
 	p.hpmax = round(level_up_stat(10, p.lvl, p.hpmax))
 	xpmax = round(level_up_stat(10, p.lvl, xpmax))
@@ -181,6 +173,11 @@ function update_gameover_screen()
 end
 
 function draw_gameover_screen()
-	print("you died!", uix + 4, uiy + 46, 8)
+	print("you died...", uix + 4, uiy + 46, 8)
 	print("press ❎ to restart", uix + 4, uiy + 54, 7)
+	line(uix + 4, uiy + 63, uix + 120, uiy + 63, 1)
+	print("level:" .. tostr(p.lvl), uix + 4, uiy + 70, 13)
+	print("time:" .. tostr(round(playtime / 60)) .. "s")
+	print("healed:" .. tostr(healed_es_c))
+	-- print("units perished: " .. tostr(dead_es_c))
 end
