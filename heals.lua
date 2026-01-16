@@ -5,7 +5,7 @@ base_hrange, hrange = 36, 36
 
 -- heal class
 heal = object:new()
-quickset(heal, "lvl,lt,tmr,clrs,heal_sfx", "1,12,0,{9|11|10|3},4")
+quickset(heal, "lvl,lt,tmr,clrs,heal_sfx", "1,8,0,{9|11|10|3},4")
 
 -- sub-classes --
 
@@ -20,11 +20,11 @@ quickset(beam, "type,name,pwr,freq", "beam,beam,1,15")
 
 -- CHAIN --
 chain = heal:new({
-	range = hrange * 1.5,
+	range = hrange * 2,
 	new_heal = function() new_chain_heal() end,
 	draw = function(self) self:d_chain_heal() end
 })
-quickset(chain, "type,name,pwr,freq,clrs,src,num_chains", "chain,chain,1,30,{11|10|3|15},{},3")
+quickset(chain, "type,name,pwr,freq,src,num_chains,lt", "chain,chain,1.5,45,{},3,20")
 
 -- AURA --
 aoe = heal:new({
@@ -52,7 +52,7 @@ quickset(orb, "type,name,pwr,freq,spd,lt,burst_range,orb_index,size", "orb,orbs,
 function init_heals()
 	-- player abilities
 	all_heals = { beam, aoe, proj, chain, orb }
-	curr_heals = { beam }
+	curr_heals = { chain }
 
 	--current heals in the queue
 	heals = {}
@@ -132,7 +132,7 @@ function new_chain_heal()
 			add(chains, h)
 			del(_entities, _tgt)
 			_src = _tgt
-			--range reduced with each jump
+			--range and power reduced with each jump
 			range *= .75
 			pwr /= 2
 		end
@@ -229,10 +229,6 @@ end
 function heal:animate()
 	local _ENV = self
 	if type == "projectile" then
-		-- local dir = get_dir(tx, ty, x, y)
-		-- dx, dy = cos(dir), sin(dir)
-		-- x -= dx * spd
-		-- y -= dy * spd
 		local dir = get_dir(x, y, tx, ty)
 		local dx, dy = cos(dir), sin(dir)
 		x += dx * spd
@@ -242,23 +238,23 @@ function heal:animate()
 		ty += psy
 		if (col(self, vector(tx, ty), 4)) self:burst_heal()
 	elseif type == "orb" then
-		local d = orb_index / _G.max_h_orbs
+		local d = orb_index / max_h_orbs
 		x = px + (range + (orb_index * 2)) * cos(d * t() * spd)
 		y = py + (range + (orb_index * 2)) * sin(d * t() * spd)
 		range = min(hrange, range + .05)
 		size = min(2, size + .001)
-		local t = all_hurt(_G.entities)
+		local t = all_hurt(entities)
 		for e in all(t) do
 			if col(self, e, 8) then
 				self:burst_heal(t)
-				_G.h_orbs -= 1
+				h_orbs -= 1
 			end
 		end
 	end
 	lt -= 1
 	if lt < 0 then
-		del(_G.heals, self)
-		if (type == "orb") _G.h_orbs -= 1
+		del(heals, self)
+		if (type == "orb") h_orbs -= 1
 	end
 end
 
@@ -271,7 +267,7 @@ function d_cast_fx()
 	local eyex = px
 	if (p.flipx) eyex -= 1
 	if (cast_lt > 10) then
-		circfill(eyex, py, 3, heal.clrs[2])
+		circ(eyex, py, 4, heal.clrs[2])
 		circ(eyex, py, 2, heal.clrs[1])
 	elseif (cast_lt > 6) then
 		circfill(eyex, py, 1, heal.clrs[2])
@@ -292,7 +288,26 @@ function heal:d_beam_heal()
 end
 
 function heal:d_chain_heal()
-	self:d_beam_heal()
+	local _ENV = self
+	-- self:d_beam_heal()
+	local start, target = src, tgt
+	local seg = { x0 = src.x, y0 = src.y, x1 = 0, y1 = 0 }
+	local clr, segs = 15, 4
+	for i = 1, segs do
+		seg.x1 = start.x + ((target.x - start.x) * (i / segs)) + rnd(2) - 1
+		seg.y1 = start.y + ((target.y - start.y) * (i / segs)) + rnd(2) - 1
+		seg.x0, seg.y0 = start.x, start.y
+		-- add(points, seg)
+		if (lt > 10) then
+			clr = clrs[2]
+		elseif (lt > 3) then
+			clr = clrs[3]
+		else
+			clr = clrs[4]
+		end
+		line(seg.x0, seg.y0, seg.x1, seg.y1, clr)
+		start = vector(seg.x1, seg.y1)
+	end
 end
 
 function heal:d_proj_heal()

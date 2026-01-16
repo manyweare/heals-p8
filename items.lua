@@ -34,10 +34,11 @@ function draw_items()
 end
 
 function ixp:update()
-    self.frame += 1
-    if (self.frame == 10) self.tgt = vector(p.x, p.y)
+    local _ENV = self
+    frame += 1
+    if (frame == 10) tgt = vector(px, py)
     self:update_pos()
-    if col(self.pos, vector(p.x, p.y), 6) then
+    if col(pos, vector(px, py), 6) then
         addxp()
         sfx(sfxt.ixp)
         del(items, self)
@@ -45,8 +46,9 @@ function ixp:update()
 end
 
 function ixp:draw()
-    -- if (self.frame % 5 == 0) self.tgl = not self.tgl
-    -- if (self.tgl) pset(self.pos.x, self.pos.y, 11)
-    circfill(self.pos.x, self.pos.y, 1, 0)
-    pset(self.pos.x, self.pos.y, 7)
+    local _ENV = self
+    -- if (frame % 5 == 0) tgl = not tgl
+    -- if (tgl) pset(pos.x, pos.y, 11)
+    circfill(pos.x, pos.y, 1, 0)
+    pset(pos.x, pos.y, 7)
 end

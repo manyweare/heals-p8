@@ -2,10 +2,6 @@
 
 function init_fx()
 	fx = {}
-	-- fx settings
-	hfx_size = 2
-	hfx_clr = split("7,11,-13")
-	hfx_amt = 4
 end
 
 function update_fx()
@@ -69,9 +65,7 @@ function add_fx(x, y, lt, dx, dy, r, clrs, is_sw)
 		clrs = clrs
 	}
 	if is_sw then
-		f.is_sw = true
-		f.maxr = f.r
-		f.r = 0
+		f.is_sw, f.maxr, f.r = true, f.r, 0
 	end
 	add(fx, f)
 end
@@ -85,7 +79,7 @@ function lvlup_fx()
 			1 - rnd(2),
 			1 - rnd(2),
 			rnd(1) + 2,
-			split("7, 10, 9, 2")
+			split("7,10,9,2")
 		)
 	end
 end
@@ -99,15 +93,14 @@ function heal_fx(x, y)
 			0,
 			rnd(1) - 1.2,
 			rnd(1) + 2,
-			split("11, 10, 15")
+			split("11,10,15,15")
 		)
 	end
 end
 
 function trail_fx(x, y, clrs)
-	-- emit only 25% of the time
-	local emit = rnd() < .5
-	if emit then
+	-- emit only a % of the time
+	if rnd() < .5 then
 		add_fx(
 			x,
 			y,
@@ -115,7 +108,7 @@ function trail_fx(x, y, clrs)
 			0,
 			rnd(1) - 1.1,
 			1,
-			split("9, 11, 10")
+			split("9,11,10,10")
 		)
 	end
 end
@@ -180,8 +173,6 @@ function orb_fx(x, y)
 	end
 end
 
--- add_fx(x, y, lt, dx, dy, r, clrs)
-
 function explode(x, y, r, t, num)
 	for i = 0, num do
 		add_fx(
@@ -206,8 +197,6 @@ function explode(x, y, r, t, num)
 		true
 	)
 end
-
--- add_fx(x, y, lt, dx, dy, r, clrs)
 
 function splatfx(x, y, t)
 	t = t or split("8,8,12,14")

@@ -7,7 +7,7 @@
 
 pi = 3.14
 
--- vector library by @thacuber2a03
+-- vector library by @thacuber2a03 (https://www.lexaloffle.com/bbs/?tid=50410)
 function vector(x, y) return { x = x or 0, y = y or 0 } end
 
 function v_polar(a, l) return vector(l * cos(a), l * sin(a)) end

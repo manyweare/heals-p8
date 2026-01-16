@@ -1,12 +1,5 @@
 --ui
 
---TODO:
---use quickset to save tokens
---fix xp/hp bars -DONE
---level up menu art
---level up bg scales with text length
---heal numbers using sprites or p8scii
-
 function init_ui()
 	uix, uiy, uih, uiw = 0, 0, 8, 127
 	uif, uisel, uixp, uispr = 1, 1, 0, { 5, 6 }
@@ -117,7 +110,7 @@ function d_hp_bar(a)
 	line(x - 4, y - 8, x + w - 4, y - 8, 1)
 	if (state == "decaying") clr = 6
 	--flash bar if hp < 20%
-	if (hp == 1 or hp <= round(hpmax / 20)) and uif % 10 < 5 then
+	if hp <= round(hpmax / 20) and uif % 10 < 5 then
 		rect(x - 5, y - 9, x + w - 3, y - 7, 1)
 		clr = 7
 	end

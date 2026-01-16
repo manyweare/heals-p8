@@ -97,13 +97,13 @@ function unit:update_spawning()
 		tgl_tentacles = true
 		if name == "entity" then
 			state = "decaying"
-			add(_G.entities, self)
-			del(_G.spawning_es, self)
+			add(entities, self)
+			del(spawning_es, self)
 			live_counter += 1
 		else
 			state = "alive"
-			add(_G.enemies, self)
-			del(_G.spawning_ens, self)
+			add(enemies, self)
+			del(spawning_ens, self)
 			live_counter += 1
 		end
 	end
@@ -115,9 +115,9 @@ function unit:update_dead()
 	--clear from memory
 	if frame > 300 then
 		if name == "entity" then
-			del(_G.dead_es, self)
+			del(dead_es, self)
 		else
-			del(_G.dead_ens, self)
+			del(dead_ens, self)
 		end
 	end
 end
@@ -143,7 +143,7 @@ function unit:reset_pos(new_r)
 	if (state == "dead" or state == "decaying") return
 	new_r = new_r or 64
 	if x > 172 or x < -44 or y > 172 or y < -44 then
-		local pos = rand_in_circle(_G.px, _G.py, new_r)
+		local pos = rand_in_circle(px, py, new_r)
 		x, y = pos.x, pos.y
 	end
 end
@@ -206,8 +206,8 @@ end
 
 function unit:level_up()
 	local _ENV = self
-	hpmax = round(level_up_stat(10, _G.p.lvl, hpmax))
-	dmg = max(base_dmg, level_up_stat(5, _G.p.lvl, base_dmg) / 3)
+	hpmax = round(level_up_stat(10, p.lvl, hpmax))
+	dmg = max(base_dmg, level_up_stat(5, p.lvl, base_dmg) / 3)
 end
 
 --agent functions
