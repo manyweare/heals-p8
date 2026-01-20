@@ -5,7 +5,7 @@
 -- 	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
 -- end
 
-pi = 3.14
+pi = 3.1416
 
 -- vector library by @thacuber2a03 (https://www.lexaloffle.com/bbs/?tid=50410)
 function vector(x, y) return { x = x or 0, y = y or 0 } end
@@ -153,46 +153,56 @@ function sync_screen_pos(x, y)
 	y += psy
 end
 
-function find_orbit_pos(o, i, r, t)
+function find_orbit_pos(a, i, r, t)
 	r = r or 18
 	local d = i / #t
-	local x, y = o.x + r * cos(d), o.y + r * sin(d)
+	local x, y = a.x + r * cos(d), a.y + r * sin(d)
 	return vector(x, y)
 end
 
-function col(a, b, r)
-	local x, y = abs(a.x - b.x), abs(a.y - b.y)
-	if x > r then return false end
-	if y > r then return false end
-	return (x * x + y * y) < r * r
+function col(a, r1, b, r2)
+	local dx, dy, r = b.x - a.x, b.y - a.y, r1 + r2
+	return dx * dx + dy * dy <= r * r
 end
 
 --adapted from @musurca (https://www.lexaloffle.com/bbs/?tid=36059)
-function approx_dist(x1, y1, x2, y2)
-	local dx, dy = abs(x2 - x1), abs(y2 - y1)
-	local maskx, masky = dx >> 31, dy >> 31
-	local a0, b0 = (dx + maskx) ^^ maskx, (dy + masky) ^^ masky
-	if a0 > b0 then
-		return a0 * 0.9609 + b0 * 0.3984
-	end
-	return b0 * 0.9609 + a0 * 0.3984
+-- function approx_dist(a, b)
+-- 	local dx, dy = b.x - a.x, b.y - a.y
+-- 	local maskx, masky = dx >> 31, dy >> 31
+-- 	local a0, b0 = (dx + maskx) ^^ maskx, (dy + masky) ^^ masky
+-- 	if a0 > b0 then
+-- 		return a0 * 0.9609 + b0 * 0.3984
+-- 	end
+-- 	return b0 * 0.9609 + a0 * 0.3984
+-- end
+
+function approx_dist(a, b)
+	local dx, dy = b.x - a.x, b.y - a.y
+	dx, dy = dx ^^ (dx >> 31), dy ^^ (dy >> 31)
+	return dist_trig(dx, dy)
+end
+
+--adapted from @pancelor (https://www.lexaloffle.com/bbs/?pid=168322#p)
+function dist_trig(dx, dy)
+	local a = atan2(dx, dy)
+	return dx * cos(a) + dy * sin(a)
+end
+
+function is_hurt(e)
+	return e.hp > 0 and e.hp < e.hpmax
+end
+
+function is_in_range(a, b, r)
+	return approx_dist(a, b) < r
 end
 
 function nearby(a, t, r)
 	local n = {}
 	for k, v in pairs(t) do
-		if (approx_dist(a.pos, v.pos) < r) add(n, v)
+		if (is_in_range(a, v, r)) add(n, v)
 	end
 	return n
 end
-
--- function offscreen(t)
--- 	local o = {}
--- 	for e in all(t) do
--- 		if (e.x > 128 or e.x < 0 or e.y > 128 or e.y < 0) add(o, e)
--- 	end
--- 	return o
--- end
 
 function find_closest(u, t, r)
 	-- c = initial range check
@@ -202,7 +212,7 @@ function find_closest(u, t, r)
 	r = r or c
 	for e in all(t) do
 		if e != u then
-			d = approx_dist(u.x, u.y, e.x, e.y)
+			d = approx_dist(u, e)
 			if (d < c) and (d < r) then
 				c, ce = d, e
 			end
@@ -211,12 +221,14 @@ function find_closest(u, t, r)
 	return ce
 end
 
-function is_in_range(a, b, r)
-	return approx_dist(a.x, a.y, b.x, b.y) < r
-end
-
-function is_hurt(e)
-	return e.hp > 0 and e.hp < e.hpmax
+function all_hurt(...)
+	local a = {}
+	for k, v in pairs({ ... }) do
+		for e in all(v) do
+			if (is_hurt(e)) add(a, e)
+		end
+	end
+	return a
 end
 
 function closest_hurt(e, ...)
@@ -236,19 +248,9 @@ function most_hurt(...)
 	return m
 end
 
-function all_hurt(...)
-	local a = {}
-	for k, v in pairs({ ... }) do
-		for e in all(v) do
-			if (is_hurt(e)) add(a, e)
-		end
-	end
-	return a
-end
-
 function rand_in_circle(x, y, r)
 	local theta = rnd() * 2 * pi
-	local rx, ry = x + r * cos(theta)
+	local rx = x + r * cos(theta)
 	local ry = y + r * sin(theta)
 	return { x = rx, y = ry }
 end

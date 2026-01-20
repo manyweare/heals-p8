@@ -24,7 +24,7 @@ chain = heal:new({
 	new_heal = function() new_chain_heal() end,
 	draw = function(self) self:d_chain_heal() end
 })
-quickset(chain, "type,name,pwr,freq,src,num_chains,lt", "chain,chain,1.5,45,{},3,20")
+quickset(chain, "type,name,pwr,freq,src,num_chains,lt", "chain,chain,2,45,{},3,20")
 
 -- AURA --
 aoe = heal:new({
@@ -39,7 +39,7 @@ proj = heal:new({
 	new_heal = function() new_proj_heal() end,
 	draw = function(self) self:d_proj_heal() end
 })
-quickset(proj, "type,name,pwr,freq,spd,spr,lt,range,burst_range", "projectile,bomb,3,90,.2,53,90,128,24")
+quickset(proj, "type,name,pwr,freq,spd,spr,lt,range,burst_range", "projectile,bomb,4,90,.25,53,90,128,24")
 
 -- ORBS --
 orb = heal:new({
@@ -47,12 +47,12 @@ orb = heal:new({
 	new_heal = function() new_orb_heal() end,
 	draw = function(self) self:d_orb_heal() end
 })
-quickset(orb, "type,name,pwr,freq,spd,lt,burst_range,orb_index,size", "orb,orbs,2,90,.33,600,16,1,1")
+quickset(orb, "type,name,pwr,freq,spd,lt,burst_range,orb_index,size", "orb,orbs,2,30,.5,600,16,1,1")
 
 function init_heals()
 	-- player abilities
 	all_heals = { beam, aoe, proj, chain, orb }
-	curr_heals = { chain }
+	curr_heals = { beam }
 
 	--current heals in the queue
 	heals = {}
@@ -60,7 +60,7 @@ function init_heals()
 	--eye orb glow lt
 	cast_lt = 12
 	--orb heals
-	h_orbs, max_h_orbs = 0, 3
+	h_orbs, max_h_orbs = 0, 5
 end
 
 function update_heals()
@@ -92,14 +92,16 @@ end
 
 function new_beam_heal()
 	-- must find a closest hurt entity
-	local c = closest_hurt(p, entities)
-	if not is_empty(c) and is_in_range(p, c, beam.range) then
+	-- local in_range = nearby(p, entities, beam.range)
+	local _nearby = nearby(p, entities, beam.range)
+	local _tgt = most_hurt(_nearby)
+	if not is_empty(_tgt) then
 		local h = beam:new({
-			tgt = c,
+			tgt = _tgt,
 			x = px,
 			y = py,
-			tx = c.x,
-			ty = c.y,
+			tx = _tgt.x,
+			ty = _tgt.y,
 			pwr = beam.pwr,
 			tmr = beam.freq
 		})
@@ -168,12 +170,12 @@ end
 
 function new_proj_heal()
 	--fires at most hurt entity or random if none found
-	local _tgt = most_hurt(entities, spawning_es)
+	local _nearby = nearby(p, entities, proj.range)
+	local _tgt = most_hurt(_nearby)
 	if is_empty(_tgt) then
-		local _t = cat(entities, spawning_es)
-		_tgt = rnd(_t)
+		_tgt = rnd(_nearby)
 	end
-	if not is_empty(_tgt) and is_in_range(p, _tgt, proj.range) then
+	if not is_empty(_tgt) then
 		local h = proj:new({
 			tgt = _tgt,
 			x = px,
@@ -233,28 +235,28 @@ function heal:animate()
 		local dx, dy = cos(dir), sin(dir)
 		x += dx * spd
 		y += dy * spd
-		spd *= 1.05
+		spd *= 1.1
 		tx += psx
 		ty += psy
-		if (col(self, vector(tx, ty), 4)) self:burst_heal()
+		if (col(self, 4, vector(tx, ty), 2)) self:burst_heal()
 	elseif type == "orb" then
 		local d = orb_index / max_h_orbs
 		x = px + (range + (orb_index * 2)) * cos(d * t() * spd)
 		y = py + (range + (orb_index * 2)) * sin(d * t() * spd)
 		range = min(hrange, range + .05)
 		size = min(2, size + .001)
-		local t = all_hurt(entities)
+		local t = all_hurt(nearby(self, _G.entities, 12))
 		for e in all(t) do
-			if col(self, e, 8) then
+			if col(self, 4, e, e.r) then
 				self:burst_heal(t)
-				h_orbs -= 1
+				_G.h_orbs -= 1
 			end
 		end
 	end
 	lt -= 1
 	if lt < 0 then
-		del(heals, self)
-		if (type == "orb") h_orbs -= 1
+		del(_G.heals, self)
+		if (type == "orb") _G.h_orbs -= 1
 	end
 end
 

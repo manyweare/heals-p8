@@ -99,8 +99,9 @@ function heal_fx(x, y)
 end
 
 function trail_fx(x, y, clrs)
+	clrs = clrs or split("9,11,10,3")
 	-- emit only a % of the time
-	if rnd() < .5 then
+	if rnd() < .25 then
 		add_fx(
 			x,
 			y,
@@ -108,7 +109,7 @@ function trail_fx(x, y, clrs)
 			0,
 			rnd(1) - 1.1,
 			1,
-			split("9,11,10,10")
+			clrs
 		)
 	end
 end
@@ -130,12 +131,12 @@ end
 
 function aoe_fx_fill(x, y, r, clrs)
 	for i = 1, r do
-		if rnd() < .33 then
+		if rnd() < .25 then
 			local pt = rand_in_circle(x, y, i)
 			add_fx(
 				pt.x,
 				pt.y,
-				2 + (i * 6),
+				i * 4,
 				0,
 				0,
 				1,

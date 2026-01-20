@@ -24,23 +24,24 @@ end
 function object:move_to(tx, ty)
 	local _ENV = self
 	local dir = get_dir(tx, ty, x, y)
+	--dx,dy needed for other checks
 	dx, dy = cos(dir), sin(dir)
 	x -= dx * spd
 	y -= dy * spd
 end
 
-function object:move_apart(t, r)
+function object:move_apart(t, d)
 	local _ENV = self
 	if (#t < 2) return
-	local dist, dir, dif
+	local dist, dir, diff
 	for i = 1, #t do
 		if t[i] != self then
-			if col(_ENV, t[i], 8) then
-				dist = approx_dist(x, y, t[i].x, t[i].y)
+			if col(self, d / 2, t[i], d / 2) then
+				dist = approx_dist(self, t[i])
 				dir = get_dir(x, y, t[i].x, t[i].y)
-				dif = r - dist
-				t[i].x += cos(dir) * dif
-				t[i].y += sin(dir) * dif
+				diff = d - dist
+				t[i].x += cos(dir) * diff
+				t[i].y += sin(dir) * diff
 			end
 		end
 	end
@@ -63,13 +64,18 @@ end
 ----- unit class -----
 
 unit = object:new()
+quickset(
+	unit,
+	"x,y,dx,dy,r,hp,frame,flip",
+	"0,0,0,0,4,0,0,false"
+)
 
 function unit:update()
 	local _ENV = self
-	if (tentacles) update_tentacles(self)
 	frame += 1
-	self:reset_pos()
 	sync_pos(self)
+	self:reset_pos()
+	if (tentacles) update_tentacles(self)
 	if state == "dead" then
 		self:update_dead()
 	elseif state == "spawning" then
@@ -85,40 +91,17 @@ function unit:update_spawning()
 	local _ENV = self
 	--blink when spawning
 	if frame < 45 then
-		self:tgl_anim(5, ss[2], 1)
 		if (frame % 5 < 2.5) then
-			tgl_tentacles = true
-		else
+			sprite = 1
 			tgl_tentacles = false
+		else
+			sprite = ss[2]
+			tgl_tentacles = true
 		end
 	else
 		--come alive once done blinking
 		frame = 0
-		tgl_tentacles = true
-		if name == "entity" then
-			state = "decaying"
-			add(entities, self)
-			del(spawning_es, self)
-			live_counter += 1
-		else
-			state = "alive"
-			add(enemies, self)
-			del(spawning_ens, self)
-			live_counter += 1
-		end
-	end
-end
-
-function unit:update_dead()
-	local _ENV = self
-	sprite = ss[1]
-	--clear from memory
-	if frame > 300 then
-		if name == "entity" then
-			del(dead_es, self)
-		else
-			del(dead_ens, self)
-		end
+		self:come_alive()
 	end
 end
 
@@ -148,13 +131,17 @@ function unit:reset_pos(new_r)
 	end
 end
 
+function unit:anim_move(f1, f2)
+	self:tgl_anim(30, f1, f2)
+end
+
 function unit:attack(tgt, f1, f2, is_friendly)
 	local _ENV = self
 	is_friendly = is_friendly or false
 	frame = 0
-	self:tgl_anim(attspd, f1, f2, attframe)
 	attframe += 1
-	if attframe >= attspd then
+	self:tgl_anim(attspd, f1, f2, attframe)
+	if attframe == attspd then
 		attframe = 0
 		sfx(attack_sfx, 2)
 		self:shoot(tgt, is_friendly)
@@ -184,30 +171,20 @@ function unit:take_dmg(dmg)
 	if (hp <= 0) self:die()
 end
 
-function unit:die()
-	local _ENV = self
-	self:destroy()
-	frame = 1
-	state = "dead"
-	--visuals
-	if name == "entity" then
-		for i = 1, 10 do
-			aoe_fx_fill(x, y, 6, split("8,8,12,14"))
-			aoe_fx_fill(x, y, 10, split("12,8,12,14"))
-			aoe_fx_fill(x, y, 12, split("12,12,14,14"))
-		end
-	end
-	splatfx(x, y)
-	sfx(die_sfx)
-	--counters
-	dead_counter += 1
-	live_counter = max(0, live_counter - 1)
-end
-
 function unit:level_up()
 	local _ENV = self
 	hpmax = round(level_up_stat(10, p.lvl, hpmax))
 	dmg = max(base_dmg, level_up_stat(5, p.lvl, base_dmg) / 3)
+	xp = p.lvl
+end
+
+function unit:die()
+	local _ENV = self
+	state = "dead"
+	frame = 0
+	splatfx(x, y)
+	sfx(die_sfx)
+	self:destroy()
 end
 
 --agent functions
@@ -228,7 +205,6 @@ function agent:update_pos()
 	elseif behavior == "arrive" then
 		self:arrive(tgt, 12)
 	end
-	-- self:separate(nearby)
 	self:move()
 end
 

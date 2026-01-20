@@ -25,7 +25,6 @@ function update_map()
             t.x, t.y = r.x, r.y
         end
     end
-    printh(stat(0), "log.p8l", true)
 end
 
 function draw_map()

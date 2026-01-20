@@ -102,7 +102,7 @@ function d_xp_bar()
 end
 
 function d_hp_bar(a)
-	local x, y, w, hp, hpmax, state = a.x, a.y, a.w, a.hp, a.hpmax, a.state
+	local x, y, w, hp, hpmax, state = a.x, a.y, a.r * 2, a.hp, a.hpmax, a.state
 	if (state == "spawning") return
 	if (hp >= hpmax) return
 	local _hp = min((hp / hpmax) * w, w)

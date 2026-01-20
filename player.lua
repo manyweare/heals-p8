@@ -3,7 +3,7 @@
 --init input tables
 input_last, inputs, input_data, wasd = {}, {}, {}, split("4,7,26,22,0,40")
 --perennial player position and pscreenx position change
-px, py, psx, psy = 63, 63, 0, 0
+px, py, pr, psx, psy = 63, 63, 6, 0, 0
 
 -- player class
 p = object:new()
@@ -11,8 +11,8 @@ p = object:new()
 function init_player()
 	quickset(
 		p,
-		"lvl,curxp,totalxp,inv_f,inv_c,hp,hpmax,regen,regenspd,x,y,dx,dy,w,h,spd,sprite,ss,frame,animspd,flipx,flipy",
-		"1,0,0,30,0,1,5,.5,30,63,63,0,0,8,8,1,16,{16|17},0,5,false,false"
+		"lvl,curxp,totalxp,inv_f,inv_c,hp,hpmax,regen,regenspd,x,y,r,spd,sprite,ss,frame,animspd,flipx,flipy",
+		"1,0,0,30,0,1,5,.5,30,63,63,4,1,16,{16|17},0,5,false,false"
 	)
 	--create_tentacles(n, sx, sy, r1, r2, l, c)
 	p.tentacles = create_tentacles(8, 63, 63, 2.2, 1, 7, split("7, 7, 7, 9"))
@@ -39,7 +39,7 @@ function p:update()
 		local ce = find_closest(self, _G.enemies, 16)
 		if not is_empty(ce) then
 			--collision dmg is half of normal dmg
-			if (col(self, ce, 8)) self:take_dmg(ce.dmg / 2, true)
+			if (col(p, pr, ce, ce.r)) self:take_dmg(ce.dmg / 2, true)
 		end
 	end
 	--regen

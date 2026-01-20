@@ -70,15 +70,16 @@ function update_tentacles(o)
     for t in all(o.tentacles) do
         t.tx += psx
         t.ty += psy
-        d_center = approx_dist(o.x, o.y, t.ex, t.ey)
-        d_move = approx_dist(t.ex, t.ey, t.tx, t.ty)
-        if d_center >= t.max_length and d_move < 0.01 then
-            --(o.dx * t.length / 2) = moves the target pos (tx,ty)
-            --to direction obj is headed (dx,dy)
-            local r = rand_in_circle(o.x, o.y, t.length)
-            t.tx = r.x - o.dx * (t.length / 2)
-            t.ty = r.y - o.dy * (t.length / 2)
-            t.start_time = time()
+        if state != "dead" then
+            d_center = approx_dist(o, vector(t.ex, t.ey))
+            d_move = approx_dist(vector(t.ex, t.ey), vector(t.tx, t.ty))
+            if d_center >= t.max_length and d_move < 0.01 then
+                --moves the target pos to direction obj is headed (dx,dy)
+                local r = rand_in_circle(o.x, o.y, t.length)
+                t.tx = r.x - o.dx * 2 * (t.length * .25)
+                t.ty = r.y - o.dy * 2 * (t.length * .25)
+                t.start_time = time()
+            end
         end
         --animation speed = ((time() - start_time) % 1) * modifier
         timer = mid(0, ((time() - t.start_time) % 1) * 2.25, 1)

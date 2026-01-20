@@ -76,16 +76,24 @@ function draw_game()
     draw_dead_ens()
     draw_dead_es()
     draw_player()
+    draw_items()
     draw_fx()
     draw_entities()
     draw_enemies()
     draw_heals()
-    draw_items()
     draw_bullets()
     draw_range()
     draw_ui()
     draw_hud()
     camera(camx, camy)
+    -- printh("mem:" .. tostr(stat(0)), "log.p8l", true)
+    -- printh(
+    --     "units: " .. tostr(live_ens_c + live_es_c) .. "\n"
+    --             .. "cpu: " .. tostr(round(stat(1) * 100)) .. "\n"
+    --             .. "cpu/unit: " .. tostr(round(stat(1) * 100 / (live_ens_c + live_es_c))) .. "\n"
+    --             .. "-----",
+    --     "log.p8l", true
+    -- )
 end
 
 function draw_upgrade()

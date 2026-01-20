@@ -3,14 +3,11 @@
 enemies, spawning_ens, dead_ens = {}, {}, {}
 
 --enemy class
-enemy = unit:new({
-	live_counter = live_ens_c,
-	dead_counter = dead_ens_c
-})
+enemy = unit:new()
 quickset(
 	enemy,
-	"name,state,x,y,w,h,dx,dy,frame,attframe,hitframe,flip,attack_sfx,die_sfx",
-	"enemy,spawning,0,0,8,8,0,0,0,0,0,false,5,1"
+	"name,state,attframe,hitframe,attack_sfx,die_sfx",
+	"enemy,spawning,0,0,5,1"
 )
 
 --enemy types
@@ -20,7 +17,7 @@ en_small = enemy:new({
 quickset(
 	en_small,
 	"type,hp,hpmax,dmg,base_dmg,spd,xp,sprite,attspd,animspd,search_range",
-	"small,5,5,.5,.5,.25,1,64,15,30,86"
+	"small,5,5,.5,.5,.5,1,64,15,30,64"
 )
 
 en_medium = enemy:new({
@@ -29,7 +26,7 @@ en_medium = enemy:new({
 quickset(
 	en_medium,
 	"type,hp,hpmax,dmg,base_dmg,spd,xp,sprite,attspd,animspd,search_range",
-	"medium,10,10,2,2,.25,3,80,20,30,64"
+	"medium,10,10,2,2,.33,3,80,20,30,64"
 )
 
 en_turret = enemy:new({
@@ -38,7 +35,7 @@ en_turret = enemy:new({
 quickset(
 	en_turret,
 	"type,hp,hpmax,dmg,base_dmg,spd,xp,sprite,attspd,animspd,search_range",
-	"turret,5,5,1,1,-0.15,3,96,30,30,86"
+	"turret,5,5,1.25,1.25,-0.15,3,96,30,30,86"
 )
 
 function init_enemies()
@@ -72,42 +69,55 @@ end
 
 function enemy:update_alive()
 	local _ENV = self
-	local tgt = _G.p
+	local tgt = p
 	if not is_empty(_G.entities) then
 		local c = find_closest(self, _G.entities, search_range)
 		if (not is_empty(c)) tgt = c
 	end
+	local tx, ty = tgt.x, tgt.y
 	if type == "turret" then
 		--always moves away from tgt
-		self:move_to(tgt.x, tgt.y)
-		if col(self, tgt, search_range) then
-			self:attack(tgt, ss[3], ss[4])
+		self:move_to(tx, ty)
+		if col(self, search_range, tgt, tgt.r) then
+			self:attack(tgt, ss[4], ss[5])
 		else
-			self:anim_move()
+			attframe = 0
+			self:anim_move(ss[2], ss[3])
 		end
-		self:flip_spr(tgt.x)
-		return
 	else
-		if col(self, tgt, 8) then
-			self:attack(tgt, ss[3], ss[4])
+		if col(self, r, tgt, tgt.r) then
+			self:attack(tgt, ss[4], ss[5])
 		else
-			self:move_to(tgt.x, tgt.y)
-			self:anim_move()
+			attframe = 0
+			self:move_to(tx, ty)
+			self:anim_move(ss[2], ss[3])
 		end
 	end
-	self:move_apart(_G.enemies, 10)
-	self:flip_spr(tgt.x)
+	self:move_apart(_G.enemies, 8)
+	self:flip_spr(tx)
 end
 
-function enemy:anim_move()
+function enemy:update_dead()
 	local _ENV = self
-	attframe = 0
-	self:tgl_anim(animspd, ss[2], ss[3])
+	sprite = ss[1]
+	if (frame > 300) del(_G.dead_ens, self)
+end
+
+function enemy:come_alive()
+	local _ENV = self
+	tgl_tentacles = true
+	_G.live_ens_c += 1
+	add(_G.enemies, self)
+	del(_G.spawning_ens, self)
+	state = "alive"
 end
 
 function enemy:destroy()
 	local _ENV = self
+	sprite = ss[1]
 	drop_xp(vector(x, y), xp)
+	_G.live_ens_c -= 1
+	_G.dead_ens_c += 1
 	add(_G.dead_ens, self)
 	del(_G.enemies, self)
 end

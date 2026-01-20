@@ -17,26 +17,30 @@ function resume_game()
 end
 
 function update_spawner()
-	--entity spawning DEBUG--
-	if #entities < 3 and #spawning_es == 0 then
-		local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
-	end
-	if playtime % 150 == 0 then
-		if #entities < 5 and #spawning_es == 0 then
-			local r = rnd() < .5 and spawn_es("melee") or spawn_es("turret")
+	-- spawning test --
+	if playtime % 30 == 0 and live_es_c < 5 + round(p.lvl / 3) and #spawning_es == 0 then
+		if rnd() > .5 then
+			spawn_es("t")
+		else
+			spawn_es("m")
 		end
 	end
-	--enemy spawning DEBUG--
-	if #enemies < 1 and #spawning_ens == 0 then
-		local r = rnd() < .5 and spawn_ens("t") or spawn_ens("m")
+	if playtime % 120 == 0 and live_ens_c <= live_es_c and #spawning_ens == 0 then
+		local r = rnd()
+		if r >= .5 then
+			spawn_ens("s")
+		elseif r < .5 and r > .1 then
+			spawn_ens("t")
+		else
+			spawn_ens("m")
+		end
 		en_wave_c += 1
 	end
-	if playtime % 300 == 0 then
-		local num = round(en_wave_c / 3)
-		spawn_ens("m", round(num / 5))
-		spawn_ens("t", round(num / 3))
-		spawn_ens("s", num)
-		en_wave_c += 1
+	if playtime % 1800 == 0 then
+		local r = round(p.lvl / 2)
+		spawn_ens("m", 1 * r)
+		spawn_ens("t", 2 * r)
+		spawn_ens("s", 3 * r)
 	end
 	--start spawning bosses and entities after 2m
 	--     --miniboss every 3m
@@ -67,25 +71,23 @@ end
 function spawn_es(class, num)
 	num = num or 1
 	for i = 1, num do
-		if #entities < 8 then
+		if #entities < 48 then
 			local pos = rand_in_circle(63, 63, 64)
 			local e, _e = {}, {
 				x = pos.x,
 				y = pos.y,
-				flip = rnd() < .5
+				flip = rnd() < .5,
+				main_clrs = split("7, 7, 3, 15")
 			}
-			if class == "melee" then
+			if class == "m" then
 				e = e_melee:new(_e)
-				e.hp = 1 + flr(rnd(e_melee.hpmax - 1))
-				e.main_clrs = split("7, 7, 7, 10")
-				e.tentacles = create_tentacles(6, e.x, e.y, 1.75, 1, 5, e.main_clrs)
-			elseif class == "turret" then
+				e.tentacles = create_tentacles(6, e.x, e.y, 2, 1, 8, e.main_clrs)
+			elseif class == "t" then
 				e = e_turret:new(_e)
-				e.hp = 1 + flr(rnd(e_turret.hpmax - 1))
-				e.main_clrs = split("7, 7, 7, 3")
-				e.tentacles = create_tentacles(4, e.x, e.y, 1.75, 1, 4, e.main_clrs)
+				e.tentacles = create_tentacles(4, e.x, e.y, 1.75, 1, 5, e.main_clrs)
 			end
 			e:level_up()
+			e.hp = (e.hpmax / 5) + flr(rnd(e.hpmax - (e.hpmax / 5)))
 			add(spawning_es, e)
 		end
 	end

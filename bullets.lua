@@ -5,8 +5,8 @@ bullets = {}
 bullet = object:new()
 quickset(
     bullet,
-    "x,y,ix,iy,tx,ty,r,spd,frame,lifetime,tgl,friendly",
-    "0,0,0,0,0,0,4,1,1,150,false,false"
+    "x,y,r,ix,iy,tx,ty,spd,frame,lifetime,tgl,friendly",
+    "0,0,2,0,0,0,0,1,1,150,false,false"
 )
 
 function update_bullets()
@@ -38,24 +38,24 @@ function bullet:update()
     end
     if friendly then
         for en in all(enemies) do
-            if col(self, vector(en.x, en.y), 6) then
-                en:take_dmg(dmg)
-                self:die()
-            end
+            self:col(en)
         end
     else
-        if col(self, vector(px, py), 8) then
-            p:take_dmg(dmg)
-            self:die()
-        else
+        if not self:col(p) then
             for e in all(entities) do
-                if col(self, vector(e.x, e.y), 6) then
-                    e:take_dmg(dmg)
-                    self:die()
-                end
+                self:col(e)
             end
         end
     end
+end
+
+function bullet:col(a)
+    if col(self, self.r, a, a.r) then
+        a:take_dmg(self.dmg)
+        self:die()
+        return true
+    end
+    return false
 end
 
 function bullet:draw()
