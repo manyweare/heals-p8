@@ -1,5 +1,7 @@
 --tentacles
 
+-- tentacle = class:new({})
+
 function create_tentacle(sx, sy, r1, r2, l, c)
     --random length
     local r = round(rnd(l / 2))
@@ -60,14 +62,14 @@ function draw_tentacles(tentacles, main_clrs, state)
     elseif state == "dead" then
         clrs = split("1, 1, 2, 2")
     end
-    for t in all(tentacles) do
+    for i, t in inext, tentacles do
         draw_tentacle(t, clrs)
     end
 end
 
 function update_tentacles(o)
     local timer, d_center, d_move
-    for t in all(o.tentacles) do
+    for i, t in inext, o.tentacles do
         t.tx += psx
         t.ty += psy
         if state != "dead" then

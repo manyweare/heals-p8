@@ -1,10 +1,10 @@
 --heals
 
 --range for non aura heals
-base_hrange, hrange = 36, 36
+base_hrange, hrange = 42, 42
 
 -- heal class
-heal = object:new()
+heal = class:new()
 quickset(heal, "lvl,lt,tmr,clrs,heal_sfx", "1,8,0,{9|11|10|3},4")
 
 -- sub-classes --
@@ -20,11 +20,11 @@ quickset(beam, "type,name,pwr,freq", "beam,beam,1,15")
 
 -- CHAIN --
 chain = heal:new({
-	range = hrange * 2,
+	range = hrange,
 	new_heal = function() new_chain_heal() end,
 	draw = function(self) self:d_chain_heal() end
 })
-quickset(chain, "type,name,pwr,freq,src,num_chains,lt", "chain,chain,2,45,{},3,20")
+quickset(chain, "type,name,pwr,freq,src,num_chains,lt", "chain,chain,2,60,{},3,20")
 
 -- AURA --
 aoe = heal:new({
@@ -66,20 +66,20 @@ end
 function update_heals()
 	-- update timer and check ellapsed
 	-- if ellapsed, fire off a heal
-	for h in all(curr_heals) do
+	for i, h in inext, curr_heals do
 		h.tmr += 1
 		if h.tmr >= h.freq then
 			h.tmr = 0
 			h.new_heal()
 		end
 	end
-	for h in all(heals) do
+	for i, h in inext, heals do
 		h:animate()
 	end
 end
 
 function draw_heals()
-	for i, h in pairs(heals) do
+	for i, h in inext, heals do
 		if (h.type != "aoe") then
 			d_cast_fx()
 			h:draw()
@@ -119,7 +119,7 @@ function new_chain_heal()
 	local _entities = cat(_entities, entities)
 	--create all heals in the chain
 	for i = 1, chain.num_chains do
-		_tgt = closest_hurt(_src, entities)
+		_tgt = closest_hurt(_src, _entities)
 		if not is_empty(_tgt) and is_in_range(_src, _tgt, max(16, range)) then
 			local h = chain:new({
 				src = _src,
@@ -135,13 +135,13 @@ function new_chain_heal()
 			del(_entities, _tgt)
 			_src = _tgt
 			--range and power reduced with each jump
-			range *= .75
+			-- range *= .75
 			pwr /= 2
 		end
 	end
 	--fire off heals added to chain
 	--TODO: add delay between each jump?
-	for h in all(chains) do
+	for i, h in inext, chains do
 		add(heals, h)
 		h:fire_heal()
 	end
@@ -150,7 +150,7 @@ end
 
 function new_aoe_heal()
 	local t = all_hurt(entities)
-	for e in all(t) do
+	for i, e in inext, t do
 		if is_in_range(p, e, aoe.range) then
 			local h = aoe:new({
 				tgt = e,
@@ -200,7 +200,7 @@ function new_orb_heal()
 		y = py,
 		pwr = orb.pwr,
 		spd = orb.spd,
-		orb_index = rnd(max_h_orbs) + 1,
+		orb_index = rndi(1, max_h_orbs),
 		tmr = orb.freq
 	})
 	add(heals, h)
@@ -219,7 +219,7 @@ function heal:burst_heal(t)
 	t = t or all_hurt(entities)
 	explode(x, y, burst_range, clrs, 1)
 	sfx(sfxt.explode)
-	for e in all(t) do
+	for i, e in inext, t do
 		if is_in_range(self, e, burst_range) then
 			tgt, tx, ty = e, e.x, e.y
 			self:fire_heal()
@@ -246,7 +246,7 @@ function heal:animate()
 		range = min(hrange, range + .05)
 		size = min(2, size + .001)
 		local t = all_hurt(nearby(self, _G.entities, 12))
-		for e in all(t) do
+		for i, e in inext, t do
 			if col(self, 4, e, e.r) then
 				self:burst_heal(t)
 				_G.h_orbs -= 1
@@ -296,8 +296,8 @@ function heal:d_chain_heal()
 	local seg = { x0 = src.x, y0 = src.y, x1 = 0, y1 = 0 }
 	local clr, segs = 15, 4
 	for i = 1, segs do
-		seg.x1 = start.x + ((target.x - start.x) * (i / segs)) + rnd(2) - 1
-		seg.y1 = start.y + ((target.y - start.y) * (i / segs)) + rnd(2) - 1
+		seg.x1 = start.x + ((target.x - start.x) * (i / segs)) + rndf(-1, 1)
+		seg.y1 = start.y + ((target.y - start.y) * (i / segs)) + rndf(-1, 1)
 		seg.x0, seg.y0 = start.x, start.y
 		-- add(points, seg)
 		if (lt > 10) then

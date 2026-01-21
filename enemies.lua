@@ -44,26 +44,26 @@ end
 
 function update_enemies()
 	local all_ens = { enemies, spawning_ens, dead_ens }
-	for k, v in pairs(all_ens) do
-		for e in all(v) do
-			e:update()
+	for i, v in inext, all_ens do
+		for i, en in inext, v do
+			en:update()
 		end
 	end
 end
 
 function draw_enemies()
-	local all_es = { enemies, spawning_ens }
-	for k, v in pairs(all_es) do
-		for e in all(v) do
-			e:draw()
+	local all_ens = { enemies, spawning_ens }
+	for i, v in inext, all_ens do
+		for i, en in inext, v do
+			en:draw()
 		end
 	end
 end
 
 --separate function to draw on different z-index
 function draw_dead_ens()
-	for e in all(dead_ens) do
-		e:draw()
+	for i, en in inext, dead_ens do
+		en:draw()
 	end
 end
 
@@ -98,26 +98,24 @@ function enemy:update_alive()
 end
 
 function enemy:update_dead()
-	local _ENV = self
-	sprite = ss[1]
-	if (frame > 300) del(_G.dead_ens, self)
+	self.sprite = self.ss[1]
+	if (self.frame > 120) del(dead_ens, self)
 end
 
 function enemy:come_alive()
-	local _ENV = self
-	tgl_tentacles = true
-	_G.live_ens_c += 1
-	add(_G.enemies, self)
-	del(_G.spawning_ens, self)
-	state = "alive"
+	self.tgl_tentacles = true
+	live_ens_c += 1
+	add(enemies, self)
+	del(spawning_ens, self)
+	self.state = "alive"
 end
 
 function enemy:destroy()
 	local _ENV = self
-	sprite = ss[1]
-	drop_xp(vector(x, y), xp)
-	_G.live_ens_c -= 1
-	_G.dead_ens_c += 1
-	add(_G.dead_ens, self)
-	del(_G.enemies, self)
+	self.sprite = self.ss[1]
+	drop_xp(vector(self.x, self.y), self.xp)
+	live_ens_c -= 1
+	dead_ens_c += 1
+	add(dead_ens, self)
+	del(enemies, self)
 end

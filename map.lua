@@ -10,7 +10,7 @@ function init_map()
     }
     redraw_map = true
     tiles = rand_in_circlefill(63, 63, 128)
-    for t in all(tiles) do
+    for i, t in inext, tiles do
         t.spr = mid(1, ceil(rnd(4)), 4)
     end
 end
@@ -18,7 +18,7 @@ end
 function update_map()
     mapx += psx
     mapy += psy
-    for t in all(tiles) do
+    for i, t in inext, tiles do
         sync_pos(t)
         if t.x > 172 or t.x < -44 or t.y > 172 or t.y < -44 then
             local r = rand_in_circle(63, 63, 64)

@@ -3,9 +3,11 @@
 _G = _ENV
 _G.__index = _G
 
--- object constructor --
-object = setmetatable({}, { __index = _ENV })
-function object:new(o)
+------------ class constructor ------------
+
+class = setmetatable({}, { __index = _ENV })
+
+function class:new(o)
 	o = o or {}
 	local a = {}
 	-- copy defaults
@@ -21,7 +23,7 @@ function object:new(o)
 	return a
 end
 
-function object:move_to(tx, ty)
+function class:move_to(tx, ty)
 	local _ENV = self
 	local dir = get_dir(tx, ty, x, y)
 	--dx,dy needed for other checks
@@ -30,7 +32,7 @@ function object:move_to(tx, ty)
 	y -= dy * spd
 end
 
-function object:move_apart(t, d)
+function class:move_apart(t, d)
 	local _ENV = self
 	if (#t < 2) return
 	local dist, dir, diff
@@ -47,11 +49,11 @@ function object:move_apart(t, d)
 	end
 end
 
-function object:flip_spr(tx)
+function class:flip_spr(tx)
 	self.flip = self.x > tx
 end
 
-function object:tgl_anim(spd, f1, f2, counter)
+function class:tgl_anim(spd, f1, f2, counter)
 	local _ENV = self
 	counter = counter or frame
 	if (counter % spd < spd / 2) then
@@ -61,9 +63,9 @@ function object:tgl_anim(spd, f1, f2, counter)
 	end
 end
 
------ unit class -----
+------------ unit class ------------
 
-unit = object:new()
+unit = class:new()
 quickset(
 	unit,
 	"x,y,dx,dy,r,hp,frame,flip",
@@ -173,9 +175,9 @@ end
 
 function unit:level_up()
 	local _ENV = self
-	hpmax = round(level_up_stat(10, p.lvl, hpmax))
-	dmg = max(base_dmg, level_up_stat(5, p.lvl, base_dmg) / 3)
-	xp = p.lvl
+	hpmax = round(level_up_stat(10, plvl, hpmax))
+	dmg = max(base_dmg, level_up_stat(5, plvl, base_dmg) / 3)
+	xp = plvl
 end
 
 function unit:die()
@@ -184,12 +186,13 @@ function unit:die()
 	frame = 0
 	splatfx(x, y)
 	sfx(die_sfx)
-	self:destroy()
+	self:destroy(x, y)
 end
 
---agent functions
+------------ agent class ------------
+
 --adapted from Daniel Shiffman's Nature of Code
-agent = object:new({
+agent = class:new({
 	pos = vector(),
 	vel = vector(),
 	accel = vector(),

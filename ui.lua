@@ -4,13 +4,14 @@ function init_ui()
 	uix, uiy, uih, uiw = 0, 0, 8, 127
 	uif, uisel, uixp, uispr = 1, 1, 0, { 5, 6 }
 	lvlup_f, lvlup_clr, lvlup_tgl = 0, 7, true
+	all_es = {}
 end
 
 function update_ui()
 	uif += 1
 	if (uif > 30) uif = 1
 	uix, uiy = camx, camy
-	uixp = min((p.curxp / xpmax) * uiw, uiw)
+	uixp = min((curxp / xpmax) * uiw, uiw)
 end
 
 function update_lvlup()
@@ -46,16 +47,15 @@ function draw_hud()
 	spr(uispr[2], uix + 10, uiy + 1)
 	print(":" .. tostr(#entities), uix + 18, uiy + 3, 7)
 	--text
-	print("lvl:" .. tostr(p.lvl), uix + 92, uiy + 3, 7)
+	print("lvl:" .. tostr(plvl), uix + 92, uiy + 3, 7)
 	d_xp_bar()
 	d_hp_bar(p)
-	for e in all(entities) do
-		d_hp_bar(e)
-		d_offscreen_marker(e.x, e.y, 4)
-	end
-	for e in all(spawning_es) do
-		d_hp_bar(e)
-		d_offscreen_marker(e.x, e.y, 4)
+	all_es = { entities, spawning_es }
+	for k, v in inext, all_es do
+		for i, e in inext, v do
+			d_hp_bar(e)
+			d_offscreen_marker(e.x, e.y, 4)
+		end
 	end
 	line()
 end
@@ -102,19 +102,21 @@ function d_xp_bar()
 end
 
 function d_hp_bar(a)
-	local x, y, w, hp, hpmax, state = a.x, a.y, a.r * 2, a.hp, a.hpmax, a.state
-	if (state == "spawning") return
-	if (hp >= hpmax) return
-	local _hp = min((hp / hpmax) * w, w)
+	if (a.hp >= a.hpmax) return
+	if (a.state == "spawning") return
+	--caching for token savings
+	local x, y, w, wh = a.x - a.r, a.y - a.r * 2, a.r * 2, a.r
+	if (a == p) y += 2
+	local _hp = min((a.hp / a.hpmax) * w, w)
 	local clr = 8
-	line(x - 4, y - 8, x + w - 4, y - 8, 1)
-	if (state == "decaying") clr = 6
-	--flash bar if hp < 20%
-	if hp <= round(hpmax / 20) and uif % 10 < 5 then
-		rect(x - 5, y - 9, x + w - 3, y - 7, 1)
+	if (a.state == "decaying") clr = 6
+	line(x, y, x + w, y, 1)
+	--flash bar if hp is low
+	if a.hp <= a.hpmax * .25 and uif % 10 < 5 then
+		rect(x - 1, y - 1, x + w + 1, y + 1, 1)
 		clr = 7
 	end
-	line(x - 4, y - 8, x + _hp - 4, y - 8, clr)
+	line(x, y, x + _hp, y, clr)
 end
 
 --p=padding

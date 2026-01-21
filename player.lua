@@ -3,16 +3,18 @@
 --init input tables
 input_last, inputs, input_data, wasd = {}, {}, {}, split("4,7,26,22,0,40")
 --perennial player position and pscreenx position change
-px, py, pr, psx, psy = 63, 63, 6, 0, 0
+px, py, psx, psy, pspd = 63, 63, 0, 0, 1
+--player stats
+plvl, curxp, totalxp = 1, 0, 0
 
 -- player class
-p = object:new()
+p = class:new()
 
 function init_player()
 	quickset(
 		p,
-		"lvl,curxp,totalxp,inv_f,inv_c,hp,hpmax,regen,regenspd,x,y,r,spd,sprite,ss,frame,animspd,flipx,flipy",
-		"1,0,0,30,0,1,5,.5,30,63,63,4,1,16,{16|17},0,5,false,false"
+		"x,y,dx,dy,r,hp,hpmax,inv_f,inv_c,regen,regenspd,sprite,ss,frame,animspd,flipx,flipy",
+		"63,63,0,0,6,1,5,30,0,.5,15,16,{16|17},0,5,false,false"
 	)
 	--create_tentacles(n, sx, sy, r1, r2, l, c)
 	p.tentacles = create_tentacles(8, 63, 63, 2.2, 1, 7, split("7, 7, 7, 9"))
@@ -39,13 +41,11 @@ function p:update()
 		local ce = find_closest(self, _G.enemies, 16)
 		if not is_empty(ce) then
 			--collision dmg is half of normal dmg
-			if (col(p, pr, ce, ce.r)) self:take_dmg(ce.dmg / 2, true)
+			if (col(p, r, ce, ce.r)) self:take_dmg(ce.dmg / 2, true)
 		end
 	end
 	--regen
-	if _G.playtime % regenspd == 0 then
-		hp = min(hp + regen, hpmax)
-	end
+	if (playtime % regenspd == 0) hp = min(hp + regen, hpmax)
 	update_tentacles(self)
 end
 
@@ -90,11 +90,11 @@ function set_direction()
 	psx, psy = p.dx, p.dy
 	--set speed of each
 	if abs(x) == abs(y) then
-		psx *= p.spd * 0.7
-		psy *= p.spd * 0.7
+		psx *= pspd * 0.7
+		psy *= pspd * 0.7
 	else
-		psx *= p.spd
-		psy *= p.spd
+		psx *= pspd
+		psy *= pspd
 	end
 end
 
@@ -130,7 +130,15 @@ end
 
 --draws circle around player
 function draw_range()
-	--inverted draw, visibility range
-	-- poke(0x5f34, 0x2)
-	-- circfill(63, 63, hrange + 24, 0 | 0x1800)
+	-- inverted draw, visibility range
+	fillp(0x5f5f)
+	for i = 12, 64 - hrange do
+		circ(63, 63, hrange + i, 0)
+	end
+	fillp()
+	-- circ(62, 63, hrange, 2)
+	-- circ(63, 62, hrange, 2)
+	-- circ(63, 63, hrange, 2)
+	poke(0x5f34, 0x2)
+	circfill(63, 63, 64, 0 | 0x1800)
 end

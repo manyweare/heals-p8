@@ -5,7 +5,7 @@ function init_fx()
 end
 
 function update_fx()
-	for f in all(fx) do
+	for i, f in inext, fx do
 		local c, r, t, lt, clrs = f.c, f.r, f.t, f.lt, f.clrs
 		t += 1
 		if t > lt then del(fx, f) end
@@ -41,7 +41,7 @@ function update_fx()
 end
 
 function draw_fx()
-	for f in all(fx) do
+	for i, f in inext, fx do
 		if f.r <= 1 then
 			pset(f.x, f.y, f.c)
 		else
@@ -75,10 +75,10 @@ function lvlup_fx()
 		add_fx(
 			p.x,
 			p.y,
-			15 + rnd(15),
-			1 - rnd(2),
-			1 - rnd(2),
-			rnd(1) + 2,
+			rndi(15, 30),
+			rndf(-1, 1),
+			rndf(-1, 1),
+			rndi(3, 4),
 			split("7,10,9,2")
 		)
 	end
@@ -91,8 +91,8 @@ function heal_fx(x, y)
 			y,
 			8 + rnd(5),
 			0,
-			rnd(1) - 1.2,
-			rnd(1) + 2,
+			rndf(-1.2, -.2),
+			rndi(2, 3),
 			split("11,10,15,15")
 		)
 	end
@@ -105,9 +105,9 @@ function trail_fx(x, y, clrs)
 		add_fx(
 			x,
 			y,
-			8 + rnd(6),
+			rndi(8, 14),
 			0,
-			rnd(1) - 1.1,
+			rndf(-.1, -.5),
 			1,
 			clrs
 		)
@@ -120,7 +120,7 @@ function aoe_fx(x, y, r, clrs)
 		add_fx(
 			pt.x,
 			pt.y + 2,
-			6 + rnd(4),
+			rndi(6, 10),
 			0,
 			-.3,
 			1,
@@ -131,14 +131,14 @@ end
 
 function aoe_fx_fill(x, y, r, clrs)
 	for i = 1, r do
-		if rnd() < .25 then
+		if i % 2 == 0 and rnd() < .25 then
 			local pt = rand_in_circle(x, y, i)
 			add_fx(
 				pt.x,
 				pt.y,
 				i * 4,
 				0,
-				0,
+				-.1,
 				1,
 				clrs
 			)
@@ -149,12 +149,12 @@ end
 function proj_fx(x, y)
 	for i = 0, 2 do
 		add_fx(
-			x + rnd(4) - 2,
-			y + rnd(4) - 2,
-			6 + rnd(4),
+			x + rndf(-2, 2),
+			y + rndf(-2, 2),
+			rndi(6, 10),
 			0,
 			0,
-			rnd(1) + 1,
+			rndi(0, 2),
 			split("10,3,15,2")
 		)
 	end
@@ -163,12 +163,12 @@ end
 function orb_fx(x, y)
 	for i = 0, 3 do
 		add_fx(
-			x + rnd(2) - 1,
-			y + rnd(2) - 1,
-			4 + rnd(4),
+			x + rndf(-1, 1),
+			y + rndf(-1, 1),
+			rndi(4, 8),
 			0,
 			0,
-			rnd(1) + .5,
+			rndf(.5, 1.5),
 			split("10,3,15,2")
 		)
 	end
@@ -180,8 +180,8 @@ function explode(x, y, r, t, num)
 			x,
 			y,
 			12,
-			rnd(2) - 1,
-			rnd(2) - 1,
+			rndf(-1, 1),
+			rndf(-1, 1),
 			3,
 			t
 		)
@@ -206,8 +206,8 @@ function splatfx(x, y, t)
 			x,
 			y,
 			8 + rnd(8),
-			rnd(2) - 1,
-			rnd(2) - 1,
+			rndf(-1, 1),
+			rndf(-1, 1),
 			2,
 			t
 		)
@@ -219,9 +219,9 @@ function bulletfx(x, y)
 		add_fx(
 			x,
 			y,
-			7 + rnd(8),
-			rnd(2) - 1,
-			rnd(2) - 1,
+			rndi(7, 15),
+			rndf(-1, 1),
+			rndf(-1, 1),
 			2,
 			split("7,8,12,14")
 		)

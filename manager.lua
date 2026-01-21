@@ -4,8 +4,8 @@
 live_es_c, spawning_es_c, dead_es_c, healed_es_c = 0, 0, 0, 0
 --enemy counters
 live_ens_c, spawning_ens_c, dead_ens_c, en_wave_c = 0, 0, 0, 0
---
-xpmax, xpmod, boss_is_active = 5, 1, false
+--manager stats
+xpmax, xpmod, lvl_cap, boss_is_active = 5, 1, 25, false
 
 function init_manager()
 	lvlup_options = {}
@@ -16,18 +16,26 @@ function resume_game()
 	_draw = draw_game
 end
 
+function cheat()
+	-- if btn(4) then
+	-- 	lvlup()
+	-- 	_update = update_upgrade
+	-- 	_draw = draw_upgrade
+	-- end
+end
+
 function update_spawner()
-	-- spawning test --
-	if playtime % 30 == 0 and live_es_c < 5 + round(p.lvl / 3) and #spawning_es == 0 then
-		if rnd() > .5 then
+	-- debug --
+	if btnp(🅾️) then
+		if rndf(0, 1) > .4 then
 			spawn_es("t")
 		else
 			spawn_es("m")
 		end
 	end
-	if playtime % 120 == 0 and live_ens_c <= live_es_c and #spawning_ens == 0 then
-		local r = rnd()
-		if r >= .5 then
+	if btnp(❎) then
+		local r = rndf(0, 1)
+		if r > .5 then
 			spawn_ens("s")
 		elseif r < .5 and r > .1 then
 			spawn_ens("t")
@@ -36,12 +44,31 @@ function update_spawner()
 		end
 		en_wave_c += 1
 	end
-	if playtime % 1800 == 0 then
-		local r = round(p.lvl / 2)
-		spawn_ens("m", 1 * r)
-		spawn_ens("t", 2 * r)
-		spawn_ens("s", 3 * r)
-	end
+	-- spawning test --
+	-- if playtime % 30 == 0 and live_es_c < 5 + round(plvl / 3) and #spawning_es == 0 then
+	-- 	if rnd() > .5 then
+	-- 		spawn_es("t")
+	-- 	else
+	-- 		spawn_es("m")
+	-- 	end
+	-- end
+	-- if playtime % 120 == 0 and live_ens_c <= live_es_c and #spawning_ens == 0 then
+	-- 	local r = rnd()
+	-- 	if r >= .5 then
+	-- 		spawn_ens("s")
+	-- 	elseif r < .5 and r > .1 then
+	-- 		spawn_ens("t")
+	-- 	else
+	-- 		spawn_ens("m")
+	-- 	end
+	-- 	en_wave_c += 1
+	-- end
+	-- if playtime % 1800 == 0 then
+	-- 	local r = round(plvl / 2)
+	-- 	spawn_ens("m", 1 * r)
+	-- 	spawn_ens("t", 2 * r)
+	-- 	spawn_ens("s", 3 * r)
+	-- end
 	--start spawning bosses and entities after 2m
 	--     --miniboss every 3m
 	--         --spawn miniboss
@@ -87,7 +114,8 @@ function spawn_es(class, num)
 				e.tentacles = create_tentacles(4, e.x, e.y, 1.75, 1, 5, e.main_clrs)
 			end
 			e:level_up()
-			e.hp = (e.hpmax / 5) + flr(rnd(e.hpmax - (e.hpmax / 5)))
+			local n = ceil(e.hpmax * .2)
+			e.hp = rndi(n, e.hpmax - n)
 			add(spawning_es, e)
 		end
 	end
@@ -97,17 +125,18 @@ end
 
 function addxp(n)
 	n = n or 1
+	if (plvl == lvl_cap) return
 	local ovrxp = 0
 	n *= xpmod
 	--check for lvl up and overflow
-	if p.curxp + n >= xpmax then
-		ovrxp = (p.curxp + n) - xpmax
-		p.curxp = ovrxp
+	if curxp + n >= xpmax then
+		ovrxp = (curxp + n) - xpmax
+		curxp = ovrxp
 		lvlup()
 	else
-		p.curxp += n * xpmod
+		curxp += n
 	end
-	p.totalxp += n * xpmod
+	totalxp += n
 end
 
 --increases stat using leveling curve
@@ -121,25 +150,29 @@ function heal_upgrade(h, stat)
 	h.lvl += 1
 	h.pwr = level_up_stat(10, h.lvl, stat)
 	if (h.type == "orb") max_h_orbs += 1
-	if (h.type == "aoe") h.range = min(h.range + 2, 72)
+	if (h.type == "aoe") h.range = min(h.range + 2, 64)
 end
 
 function lvlup()
 	sfx(-1)
 	sfx(sfxt.lvlup)
 	lvlup_f = 1
-	p.lvl += 1
-	p.hpmax = round(level_up_stat(10, p.lvl, p.hpmax))
-	xpmax = round(level_up_stat(10, p.lvl, xpmax))
-	hrange = level_up_stat(5, p.lvl, hrange)
-	--lengthen tentacles
-	for t in all(p.tentacles) do
-		t.length += .1
-		t.max_length += .1
+	plvl += 1
+	hrange = level_up_stat(5, plvl, hrange)
+	xpmax = round(level_up_stat(10, plvl, xpmax))
+	p.hpmax = round(level_up_stat(10, plvl, p.hpmax))
+	p.regen = round(level_up_stat(10, plvl, p.regen))
+	if (plvl % 5 == 0) then
+		add(p.tentacles, create_tentacle(59, 59, 2.2, 1, 7, split("7, 7, 7, 9")))
+		--lengthen tentacles
+		for i, t in inext, p.tentacles do
+			t.r1 += .2
+			t.length += 1
+			t.max_length += 1
+		end
 	end
-	if (p.lvl % 5 == 0) add(p.tentacles, create_tentacle(59, 59, 2.2, 1, 7, split("7, 7, 7, 9")))
 	--lvl up current active entities
-	for e in all(entities) do
+	for i, e in inext, entities do
 		e:level_up()
 	end
 	--create list of random lvl up uptions
@@ -151,14 +184,6 @@ function lvlup()
 	--change states
 	_update = update_upgrade
 	_draw = draw_upgrade
-end
-
-function cheat()
-	if btn(4) then
-		lvlup()
-		_update = update_upgrade
-		_draw = draw_upgrade
-	end
 end
 
 function game_over()
@@ -176,9 +201,9 @@ end
 
 function draw_gameover_screen()
 	print("you died...", uix + 4, uiy + 46, 8)
-	print("press ❎ to restart", uix + 4, uiy + 54, 7)
+	print("press ctrl/cmd + r to restart", uix + 4, uiy + 54, 7)
 	line(uix + 4, uiy + 63, uix + 120, uiy + 63, 1)
-	print("level:" .. tostr(p.lvl), uix + 4, uiy + 70, 13)
+	print("level:" .. tostr(plvl), uix + 4, uiy + 70, 13)
 	print("time:" .. tostr(round(playtime / 60)) .. "s")
 	print("healed:" .. tostr(healed_es_c))
 	-- print("units perished: " .. tostr(dead_es_c))

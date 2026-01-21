@@ -37,6 +37,16 @@ function round(n)
 	return (n % 1 < 0.5) and flr(n) or ceil(n)
 end
 
+--int rnd
+function rndi(n, x)
+	return flr(rnd(x + 1 - n)) + n
+end
+
+--non int rnd
+function rndf(n, x)
+	return rnd(x - n + 0x.0001) + n
+end
+
 --https://pico-8.fandom.com/wiki/Math
 function log2(n)
 	if (n <= 0) return nil
@@ -58,9 +68,9 @@ function log2(n)
 	return t / 0.69314
 end
 
---map a value from one range to another
+--map value from one range to another
 function map_value(n, min1, max1, min2, max2)
-	return (((n - min1) * (max2 - min2)) / (max1 - min1)) + min2
+	return ((n - min1) * (max2 - min2)) / (max1 - min1) + min2
 end
 
 --by @shiftalow (https://www.lexaloffle.com/bbs/?tid=32411)
@@ -99,7 +109,7 @@ function quickset(obj, keys, vals)
 end
 
 function is_empty(t)
-	for _, _ in pairs(t) do
+	for _, _ in inext, t do
 		return false
 	end
 	return true
@@ -198,7 +208,7 @@ end
 
 function nearby(a, t, r)
 	local n = {}
-	for k, v in pairs(t) do
+	for i, v in inext, t do
 		if (is_in_range(a, v, r)) add(n, v)
 	end
 	return n
@@ -210,7 +220,7 @@ function find_closest(u, t, r)
 	-- 32767 is the largest num p8 supports
 	local c, d, ce = 32767, 0, {}
 	r = r or c
-	for e in all(t) do
+	for i, e in inext, t do
 		if e != u then
 			d = approx_dist(u, e)
 			if (d < c) and (d < r) then
@@ -223,8 +233,8 @@ end
 
 function all_hurt(...)
 	local a = {}
-	for k, v in pairs({ ... }) do
-		for e in all(v) do
+	for i, v in inext, { ... } do
+		for i, e in inext, v do
 			if (is_hurt(e)) add(a, e)
 		end
 	end
@@ -237,8 +247,8 @@ end
 
 function most_hurt(...)
 	local m, lowhp = {}, 32767
-	for k, v in pairs({ ... }) do
-		for e in all(v) do
+	for i, v in inext, { ... } do
+		for i, e in inext, v do
 			if is_hurt(e) and e.hp < lowhp then
 				m = e
 				lowhp = e.hp
@@ -249,7 +259,7 @@ function most_hurt(...)
 end
 
 function rand_in_circle(x, y, r)
-	local theta = rnd() * 2 * pi
+	local theta = rndf(0, 1)
 	local rx = x + r * cos(theta)
 	local ry = y + r * sin(theta)
 	return { x = rx, y = ry }

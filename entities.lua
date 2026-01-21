@@ -26,7 +26,7 @@ e_turret = entity:new({
 quickset(
 	e_turret,
 	"type,dmg,base_dmg,hpmax,spd,attspd,search_range,sprite",
-	"turret,1,1,2,.5,30,64,33"
+	"turret,1,1,2,.5,30,76,33"
 )
 
 function init_entities()
@@ -35,8 +35,8 @@ end
 
 function update_entities()
 	local all_es = { entities, spawning_es, dead_es }
-	for k, v in pairs(all_es) do
-		for e in all(v) do
+	for k, v in inext, all_es do
+		for i, e in inext, v do
 			e:update()
 		end
 	end
@@ -44,8 +44,8 @@ end
 
 function draw_entities()
 	local all_es = { entities, spawning_es }
-	for k, v in pairs(all_es) do
-		for e in all(v) do
+	for i, v in inext, all_es do
+		for i, e in inext, v do
 			e:draw()
 		end
 	end
@@ -53,7 +53,7 @@ end
 
 --separate function to be drawn in different z-index
 function draw_dead_es()
-	for e in all(dead_es) do
+	for i, e in inext, dead_es do
 		e:draw()
 	end
 end
@@ -67,7 +67,13 @@ function entity:update_decaying()
 			decay_amount = 0
 		end
 		self:tgl_anim(30, 33, 34)
-		aoe_fx_fill(x, y, 12, split("15,1,2,2"))
+		if frame % 30 == 0 then
+			for i = 1, 12 do
+				aoe_fx_fill(x, y, 10, split("15,1,1,2"))
+				aoe_fx_fill(x, y, 12, split("1,1,2,2"))
+				aoe_fx_fill(x, y, 16, split("1,2,2,2"))
+			end
+		end
 	else
 		frame = 0
 		sfx(healed_sfx)
@@ -127,12 +133,6 @@ function entity:update_alive()
 	self:flip_spr(tgt.x)
 end
 
-function entity:update_dead()
-	local _ENV = self
-	sprite = ss[1]
-	if (frame > 300) del(_G.dead_es, self)
-end
-
 function entity:heal(hpwr)
 	local _ENV = self
 	hp = min(hpmax, hp + hpwr)
@@ -140,24 +140,28 @@ function entity:heal(hpwr)
 	frame = 0
 end
 
+function entity:update_dead()
+	self.sprite = self.ss[1]
+	if (self.frame > 360) del(dead_es, self)
+end
+
 function entity:come_alive()
-	local _ENV = self
-	tgl_tentacles = true
-	_G.live_es_c += 1
-	add(_G.entities, self)
-	del(_G.spawning_es, self)
-	state = "decaying"
+	self.tgl_tentacles = true
+	live_es_c += 1
+	add(entities, self)
+	del(spawning_es, self)
+	self.state = "decaying"
 end
 
 function entity:destroy()
-	local _ENV = self
+	local x, y = self.x, self.y
 	for i = 1, 10 do
 		aoe_fx_fill(x, y, 10, split("8,8,12,14"))
 		aoe_fx_fill(x, y, 12, split("12,8,12,14"))
 		aoe_fx_fill(x, y, 16, split("12,12,14,14"))
 	end
-	_G.live_es_c -= 1
-	_G.dead_es_c += 1
-	del(_G.entities, self)
-	add(_G.dead_es, self)
+	live_es_c -= 1
+	dead_es_c += 1
+	del(entities, self)
+	add(dead_es, self)
 end
