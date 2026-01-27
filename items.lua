@@ -9,17 +9,32 @@ ixp = agent:new({
 })
 
 function drop_xp(pos, num)
-	for i = 1, num do
+	local i, xpval = 1, 1
+	while i <= num do
 		local x, y = pos.x, pos.y
+		--set initial tgt pos away from player a random amount
 		x = (x > 63) and x + rndf(4, 6) or x - rndf(4, 6)
 		y = (y > 63) and y + rndf(4, 6) or y - rndf(4, 6)
+		--find how many times num is divisible by an amount
+		--to generate bigger xp orbs
+		if i % 10 == 0 then
+			xpval = 10
+			i += 10
+		elseif i % 5 == 0 then
+			xpval = 5
+			i += 5
+		else
+			xpval = 1
+		end
 		local xp = ixp:new({
 			pos = pos,
 			maxspd = rndf(2.5, 4.5),
 			maxfrc = rndf(.25, .65),
-			tgt = pos
+			tgt = pos,
+			val = xpval
 		})
 		add(items, xp)
+		i += 1
 	end
 end
 
@@ -56,7 +71,7 @@ function ixp:update()
 		end
 		--heading to player so check for collision again
 		if col(pos, 2, p, p.r) then
-			addxp()
+			addxp(val)
 			sfx(_G.sfxt.ixp)
 			del(_G.items, self)
 		end
@@ -66,7 +81,14 @@ end
 function ixp:draw()
 	local _ENV = self
 	circfill(pos.x, pos.y, 1, 1)
-	pset(pos.x, pos.y, 7)
+	if val == 10 then
+		circfill(pos.x, pos.y, 2, 3)
+		circfill(pos.x, pos.y, 1, 9)
+	elseif val == 5 then
+		circfill(pos.x, pos.y, 1, 9)
+	else
+		pset(pos.x, pos.y, 9)
+	end
 	-- trail_fx(pos.x, pos.y - 1)
-	if (frame % 10 < 5) circfill(pos.x, pos.y, 1, 3)
+	if (frame % 10 < 5) pset(pos.x, pos.y, 1, 7)
 end

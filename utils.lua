@@ -1,9 +1,4 @@
---tools
-
--- function print_align(t, x, y, c, u, v)
--- 	local ox, oy = print(t, 0, 128)
--- 	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
--- end
+--utils
 
 pi = 3.1416
 
@@ -27,6 +22,14 @@ function v_angle(v) return atan2(v.x, v.y) end
 function v_rot(v, a) return v_polar(a, v_mag(v)) end
 function v_rotby(v, a) return v_rot(v, v_angle(v) + a) end
 function v_lerp(a, b, t) return v_add(a, v_scale(v_sub(b, a), t)) end
+
+-- function v_smag(v, n)
+-- 	local magsqr = v.x * v.x + v.y * v.y
+-- 	local mag = sqrt(magsqr)
+-- 	-- scale(norm(div(v,mag(sqrt(magsqr(dot(v,v)))))), n)
+-- 	local vn = vector()
+-- 	local vs = vector(vn.x * n, vn.y * n)
+-- end
 
 function v_limit(v, n)
 	if (v_magsq(v) > n * n) v = v_setmag(v, n)
@@ -109,11 +112,16 @@ function quickset(obj, keys, vals)
 end
 
 function is_empty(t)
-	for _, _ in inext, t do
+	for _, _ in pairs(t) do
 		return false
 	end
 	return true
 end
+
+-- function print_align(t, x, y, c, u, v)
+-- 	local ox, oy = print(t, 0, 128)
+-- 	print(t, x - ox * u, y - (oy - 128) * (v or 0), c)
+-- end
 
 --ease library by (https://www.lexaloffle.com/bbs/?tid=40577)
 function lerp(a, b, t)

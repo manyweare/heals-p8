@@ -53,10 +53,8 @@ function init_heals()
 	-- player abilities
 	all_heals = { beam, aoe, proj, chain, orb }
 	curr_heals = { beam }
-
 	--current heals in the queue
 	heals = {}
-
 	--eye orb glow lt
 	cast_lt = 12
 	--orb heals
@@ -64,8 +62,8 @@ function init_heals()
 end
 
 function update_heals()
-	-- update timer and check ellapsed
-	-- if ellapsed, fire off a heal
+	-- update timer and check ellapsed for all current heals
+	-- if ellapsed, add heal to queue
 	for i, h in inext, curr_heals do
 		h.tmr += 1
 		if h.tmr >= h.freq then
@@ -91,10 +89,10 @@ function draw_heals()
 end
 
 function new_beam_heal()
-	-- must find a closest hurt entity
-	-- local in_range = nearby(p, entities, beam.range)
-	local _nearby = nearby(p, entities, beam.range)
-	local _tgt = most_hurt(_nearby)
+	-- must find target entity
+	local in_range = nearby(p, entities, beam.range)
+	-- local _tgt = most_hurt(_nearby)
+	local _tgt = closest_hurt(p, in_range)
 	if not is_empty(_tgt) then
 		local h = beam:new({
 			tgt = _tgt,
@@ -135,8 +133,8 @@ function new_chain_heal()
 			del(_entities, _tgt)
 			_src = _tgt
 			--range and power reduced with each jump
-			-- range *= .75
-			pwr /= 2
+			range *= .9
+			pwr *= .5
 		end
 	end
 	--fire off heals added to chain

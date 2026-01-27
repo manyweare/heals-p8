@@ -1,3 +1,10 @@
 {
-    "editor.defaultFormatter": null
+    "editor.defaultFormatter": "PollywogGames.pico8-ls",
+    "[lua]": {
+        "editor.defaultFormatter": "PollywogGames.pico8-ls"
+    },
+    "editor.formatOnPaste": true,
+    "[pico-8-lua]": {
+        "editor.defaultFormatter": "PollywogGames.pico8-ls"
+    }
 }
